@@ -1,8 +1,9 @@
 $schema: "https://moonrepo.dev/schemas/tasks.json"
 
 inheritedBy:
-  toolchains: ["typescript"]
-
+  toolchains: ['typescript']
+  order: 10
+  
 fileGroups:
   sources:
     - "src/**/*"
@@ -12,7 +13,7 @@ fileGroups:
     - "tests/**/*"
 
 tasks:
-  check-type:
+  check-types:
     command: "tsc"
     args: ["--noEmit"]
     toolchains: ["javascript", "node"]
@@ -24,12 +25,12 @@ tasks:
 
   lint-ox:
     command: "oxlint"
-    args: ["--config", "$workspaceRoot/.oxlintrc.json"]
+    args: ["--config", "$workspaceRoot/oxlintrc.json"]
     toolchains: ["javascript", "node"]
     inputs:
       - "@group(sources)"
       - "@group(tests)"
-      - "/.oxlintrc.json"
+      - "/oxlintrc.json"
     outputs: []
     options:
       affectedFiles: true
@@ -38,8 +39,6 @@ tasks:
     command: "eslint"
     args: ["-c", "$workspaceRoot/eslint.config.mjs"]
     toolchains: ["javascript", "node"]
-    deps:
-      - "~:lint-ox"
     inputs:
       - "@group(sources)"
       - "@group(tests)"
@@ -51,7 +50,10 @@ tasks:
   lint:
     command: "noop"
     deps:
+      - "~:lint-ox"
       - "~:lint-es"
+    options:
+      runDepsInParallel: false
 
   test:
     command: "bun"

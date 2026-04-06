@@ -2,6 +2,7 @@ $schema: 'https://moonrepo.dev/schemas/tasks.json'
 
 inheritedBy:
   tags: ['astro-plugin']
+  order: 20
 
 fileGroups:
   sources:
@@ -12,6 +13,20 @@ fileGroups:
     - 'tests/**/*'
 
 tasks:
+
+  check-types:
+    command: "pnpm"
+    args: ["exec", "astro", "check"]
+    toolchains: ["javascript", "node"]
+    inputs:
+      - "@group(sources)"
+      - "@group(tests)"
+      - "tsconfig.json"
+    outputs: []
+    options:
+      mergeArgs: replace
+
+
   test:
     command: 'vitest'
     args: ['run']
@@ -22,6 +37,8 @@ tasks:
       - 'vitest.config.ts'
     options:
       runInCI: true
+      mergeArgs: replace
+
 
   test-watch:
     command: 'vitest'

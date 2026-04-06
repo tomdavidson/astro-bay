@@ -19,6 +19,16 @@ tasks:
     options:
       runInCI: false
 
+  check-types:
+    command: "node_modules/.bin/astro"
+    args: ["check"]
+    toolchains: ["javascript", "node"]
+    inputs:
+      - "@group(sources)"
+      - "@group(tests)"
+      - "tsconfig.json"
+    outputs: []
+
   # Build the application
   build:
     command: 'astro build'
