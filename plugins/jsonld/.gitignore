@@ -1,0 +1,3 @@
+test/fixtures/*/dist/
+test/fixtures/*/.astro/
+.astro-jsonld-state.json

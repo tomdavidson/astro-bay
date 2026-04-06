@@ -1,0 +1,44 @@
+{
+  "name": "@astro-bay/jsonld",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Astro integration that emits Solid-compatible Linked Data alongside HTML pages",
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "json-ld",
+    "linked-data",
+    "schema.org",
+    "solid",
+    "skos",
+    "ldes"
+  ],
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./config": "./src/config.ts"
+  },
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "dependencies": {
+    "neverthrow": "^8.0.0",
+    "ts-pattern": "^5.0.0"
+  },
+  "devDependencies": {
+    "astro": "^5.0.0",
+    "fast-check": "^3.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "TDD=1 vitest --watch",
+    "typecheck": "tsc --noEmit",
+    "lint:ox": "oxlint --fix --config ../../oxlint.config.ts",
+    "lint:es": "eslint --fix",
+    "build:fixture": "cd test/fixtures/basic-site && astro build",
+    "test:e2e": "pnpm build:fixture && ASTRO_JSONLD_E2E=1 vitest run test/"
+  }
+}
