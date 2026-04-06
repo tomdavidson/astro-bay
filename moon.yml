@@ -4,6 +4,18 @@ tags:
   - "tooling"
 
 tasks:
+
+  sync-release:
+    script: "bun scripts/sync-release-please.ts"
+    inputs:
+      - "/plugins/*/package.json"
+      - "/apps/*/package.json"
+      - "/release-please-config.json"
+      - "/.release-please-manifest.json"
+    options:
+      runInCI: false
+      runFromWorkspaceRoot: true
+
   fmt:
     script: "dprint fmt"
     inputs:

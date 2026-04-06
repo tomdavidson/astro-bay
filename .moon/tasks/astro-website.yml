@@ -1,5 +1,8 @@
 $schema: 'https://moonrepo.dev/schemas/tasks.json'
 
+inheritedBy:
+  tags: ['astro-website']
+
 fileGroups:
   astro:
     - 'public/**/*'
@@ -24,6 +27,8 @@ tasks:
       - '@group(sources)'
     outputs:
       - 'dist'
+    options:
+      runInCI: true
 
   # Typecheck `.astro` files
   check:
@@ -31,11 +36,15 @@ tasks:
     inputs:
       - '@group(astro)'
       - '@group(sources)'
+    options:
+      runInCI: true
 
   # Run the development server
   dev:
     command: 'astro dev'
-    preset: 'server'
+    preset: 'server'    
+    options:
+      runInCI: false
 
   # Serve the built application
   preview:
@@ -43,3 +52,5 @@ tasks:
     deps:
       - 'build'
     preset: 'server'
+    options:
+      runInCI: false

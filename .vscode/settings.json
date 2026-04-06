@@ -26,13 +26,15 @@
       ".moon/workspace.yml"
     ]
   },
-
   "editor.defaultFormatter": "dprint.dprint",
   "editor.formatOnSave": true,
-
-  "[json]": {
-    "editor.defaultFormatter": "dprint.dprint",
-    "editor.formatOnSave": true
-  }
-
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, .nvmrc, .prototools",
+    "tsconfig.json": "tsconfig.*.json",
+    "renovate.json": ".release-please-manifest.json, release-please-config.json",
+    "dprint.json": ".editorconfig",
+    "oxlintrc.json": "eslint.config.*"
+  },
+  "git.ignoreLimitWarning": true
 }

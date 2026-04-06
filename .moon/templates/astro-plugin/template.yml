@@ -6,22 +6,22 @@ description: "Scaffold a strict, functional Astro 6 integration package for astr
 destination: "plugins/[name]"
 
 variables:
-  - name: name
+  name:
     type: string
     required: true
     prompt: "Plugin name (e.g., rss, sitemap, content-hub)"
 
-  - name: description
+  description:
     type: string
     default: "An Astro 6 integration."
     prompt: "Short description of the plugin"
 
-  - name: hasContentLayer
+  hasContentLayer:
     type: boolean
     default: false
     prompt: "Does this plugin read Astro Content Collections?"
 
-  - name: hasInjectedPages
+  hasInjectedPages:
     type: boolean
     default: false
     prompt: "Does this plugin inject routes/pages into the user's site?"

@@ -162,7 +162,7 @@ const config = [
   },
 
   // Deduplicate: turn off anything oxlint already handles
-  ...oxlint.buildFromOxlintConfigFile('./.oxlintrc.json'),
+  ...oxlint.buildFromOxlintConfigFile('./oxlintrc.json'),
 ]
 
 // eslint-disable no-default-export

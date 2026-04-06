@@ -1,0 +1,37 @@
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+inheritedBy:
+  tags: ['astro-plugin']
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+    - 'src/**/*.astro'
+  tests:
+    - 'src/**/*.spec.ts'
+    - 'tests/**/*'
+
+tasks:
+  test:
+    command: 'vitest'
+    args: ['run']
+    toolchains: ['javascript', 'node']
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+      - 'vitest.config.ts'
+    options:
+      runInCI: true
+
+  test-watch:
+    command: 'vitest'
+    args: ['run', "--watch"]
+    toolchains: ['javascript', 'node']
+    env:
+      TDD: '1'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+      - 'vitest.config.ts'
+    options:
+      runInCI: false

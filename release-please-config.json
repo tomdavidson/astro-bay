@@ -1,7 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "plugins": [
-    { "type": "node-workspace" }
+    {
+      "type": "node-workspace"
+    }
   ],
   "release-type": "node",
   "bump-minor-pre-major": true,
@@ -11,8 +13,9 @@
   "include-v-in-tag": true,
   "tag-separator": "-",
   "packages": {
-    "plugins/rss": {},
-    "plugins/sitemap": {},
-    "plugins/content-collections": {}
+    "plugins/astro-content-hub": {},
+    "plugins/astro-jsonld": {},
+    "plugins/astro-pagefind-resolve": {},
+    "plugins/astro-taxonomy": {}
   }
 }

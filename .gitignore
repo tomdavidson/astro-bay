@@ -1,4 +1,40 @@
+# Dependencies
+node_modules/
 
-# moon
-.moon/cache
-.moon/docker
+# Build output
+dist/
+.output/
+
+# Astro
+.astro/
+
+# Moon
+.moon/cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Testing
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Proto
+.proto/

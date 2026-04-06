@@ -1,6 +1,12 @@
 $schema: "https://moonrepo.dev/schemas/workspace.json"
 
-projects: ["plugins/*", "apps/", "website"]
+projects:
+  globs:
+    - 'plugins/*'
+    - 'apps/*'
+    - 'website'
+  sources:
+    root: '.'
 
 generator:
   templates:
