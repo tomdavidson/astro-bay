@@ -1,9 +1,9 @@
 $schema: "https://moonrepo.dev/schemas/tasks.json"
 
 inheritedBy:
-  toolchains: ['typescript']
+b  toolchains: ['typescript']
   order: 10
-  
+
 fileGroups:
   sources:
     - "src/**/*"
