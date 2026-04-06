@@ -77,14 +77,14 @@
     // ─────────────────────────────────────────────────────────────
     // DECLARATIVE ITERATION (nudges toward array methods)
     // ─────────────────────────────────────────────────────────────
-    "unicorn/no-for-loop": "error",
+    // "unicorn/no-for-loop": "error",  // not implmented  in oxlint
     "unicorn/no-array-for-each": "warn",
     "unicorn/prefer-array-flat-map": "error",
     "unicorn/prefer-array-find": "error",
     "unicorn/prefer-array-some": "error",
     "unicorn/prefer-array-index-of": "error",
     "unicorn/no-array-reduce": "allow",
-    "unicorn/no-array-push-push": "warn",
+    // "unicorn/no-array-push-push": "warn", // not implmented  in oxlint
     "unicorn/prefer-set-has": "warn",
     // ─────────────────────────────────────────────────────────────
     // ASYNC / PROMISE SAFETY (type-aware + runtime-ish)
@@ -176,7 +176,7 @@
     "no-void": ["error", { "allowAsStatement": true }],
     "unicorn/no-empty-file": "error",
     // Subtle "dead code" / refactor safety
-    "no-useless-assignment": "warn",
+    // "no-useless-assignment": "warn",  // not implmented  in oxlint
     // Small performance-ish correctness
     "oxc/approx-constant": "warn",
     "no-useless-call": "warn",
@@ -234,7 +234,7 @@
       "files": ["**/*.infra.ts", "**/infra/**/*.ts", "src/cli/**/*.ts"],
       "rules": {
         // Loops and forEach are acceptable in IO code (warn, not error)
-        "unicorn/no-for-loop": "warn",
+        // "unicorn/no-for-loop": "warn",  // not implmented  in oxlint
         "unicorn/no-array-for-each": "off",
 
         // process.env access is expected in infra
