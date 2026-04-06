@@ -1,3 +1,4 @@
+// eslint-disable typescript/TS2307 -- oxlint cannot resolve .astro modules
 export { default as ArticleCard } from './ArticleCard.astro'
 export { default as TopicBadge } from './TopicBadge.astro'
 export { default as TopicList } from './TopicList.astro'

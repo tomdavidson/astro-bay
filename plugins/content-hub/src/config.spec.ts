@@ -27,6 +27,8 @@ describe('resolveConfig', () => {
     })
 
     expect(config.pagination).toEqual({ pageSize: 20 })
+    expect(config.browse).toEqual({ pageSize: 20 })
+    expect(config.jsonld).toEqual({ enabled: true })
 
     expect(config.locale).toEqual({
       lang: 'en',
@@ -126,5 +128,54 @@ describe('resolveConfig', () => {
     )
 
     expect(config.locale.indexTitle).toBe('Articles')
+  })
+
+
+
+  test('resolveConfig_browsePageSize_overridesPaginationPageSize', () => {
+    const config = expectOk(
+      resolveConfig({
+        collections: ['vault'],
+        pagination: { pageSize: 10 },
+        browse: { pageSize: 30 },
+      }),
+    )
+
+    expect(config.browse.pageSize).toBe(30)
+    expect(config.pagination.pageSize).toBe(10)
+  })
+
+
+
+  test('resolveConfig_paginationPageSize_mapsToLegacyCompat', () => {
+    const config = expectOk(
+      resolveConfig({
+        collections: ['vault'],
+        pagination: { pageSize: 15 },
+      }),
+    )
+
+    expect(config.browse.pageSize).toBe(15)
+  })
+
+
+
+  test('resolveConfig_jsonldEnabled_defaultsToTrue', () => {
+    const config = expectOk(resolveConfig({ collections: ['vault'] }))
+
+    expect(config.jsonld.enabled).toBe(true)
+  })
+
+
+
+  test('resolveConfig_jsonldEnabled_canBeDisabled', () => {
+    const config = expectOk(
+      resolveConfig({
+        collections: ['vault'],
+        jsonld: { enabled: false },
+      }),
+    )
+
+    expect(config.jsonld.enabled).toBe(false)
   })
 })

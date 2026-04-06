@@ -5,7 +5,7 @@ export type { TaxonomyGraphModule } from './transform/ancestors.ts'
 export type TopicHierarchyNode = {
   readonly slug: string
   readonly label: string
-  readonly parent: string | null
+  readonly parent: string | undefined
   readonly children: ReadonlyArray<string>
   readonly count: number
 }
@@ -23,18 +23,17 @@ type GraphLike = {
 
 const countByResolvedTopic = (
   entries: ReadonlyArray<NormalizedEntry>,
-): ReadonlyMap<string, number> =>
-  entries.reduce<ReadonlyMap<string, number>>(
-    (acc, entry) =>
-      entry.resolvedTopics.reduce<ReadonlyMap<string, number>>(
-        (inner, slug) => {
-          const current = inner.get(slug) ?? 0
-          return new Map([...inner, [slug, current + 1]])
-        },
-        acc,
-      ),
-    new Map<string, number>(),
-  )
+): ReadonlyMap<string, number> => {
+  const counts = new Map<string, number>()
+  for (const entry of entries) {
+    for (const slug of entry.resolvedTopics) {
+      counts.set(slug, (counts.get(slug) ?? 0) + 1)
+    }
+  }
+  return counts
+}
+
+const DEFAULT_RELATED_LIMIT = 8
 
 export const getRelatedTopics = (
   slug: string,
@@ -46,16 +45,16 @@ export const getRelatedTopics = (
 
   const excluded = new Set<string>([
     slug,
-    ...(graph !== undefined ? graph.ancestors(slug).map((a) => a.slug) : []),
-    ...(graph?.children !== undefined ? graph.children(slug).map((c) => c.slug) : []),
-  ]);
-  
+    ...(graph !== undefined ? graph.ancestors(slug).map((a: AncestorNode) => a.slug) : []),
+    ...(graph?.children !== undefined ? graph.children(slug).map((c: AncestorNode) => c.slug) : []),
+  ])
+
   const coOccurrences = matching.reduce<ReadonlyMap<string, number>>(
     (acc, entry) =>
       entry.resolvedTopics
-        .filter(t => !excluded.has(t))
+        .filter((t: string) => !excluded.has(t))
         .reduce<ReadonlyMap<string, number>>(
-          (inner, topic) => new Map([...inner, [topic, (inner.get(topic) ?? 0) + 1]]),
+          (inner: ReadonlyMap<string, number>, topic: string) => new Map([...inner, [topic, (inner.get(topic) ?? 0) + 1]]),
           acc,
         ),
     new Map<string, number>(),
@@ -64,7 +63,7 @@ export const getRelatedTopics = (
   const topicMap = buildTopicMap(entries)
 
   return [...coOccurrences.entries()]
-    .sort(([, a], [, b]) => b - a)
+    .toSorted(([, a], [, b]) => b - a)
     .slice(0, limit)
     .map(([topicSlug, count]) => ({
       slug: topicSlug,
@@ -111,17 +110,17 @@ export const getTopicHierarchy = (
       .map(slug => ({
         slug,
         label: topicMap.get(slug) ?? slug,
-        parent: null as string | null,
+        parent: undefined as string | undefined,
         children: [] as ReadonlyArray<string>,
         count: counts.get(slug) ?? 0,
       }))
-      .sort((a, b) => b.count - a.count)
+      .toSorted((a, b) => b.count - a.count)
   }
 
   return slugs
     .map(slug => {
       const parentChain = graph.ancestors(slug)
-      const parent = parentChain.length > 0 ? (parentChain[0]?.slug ?? null) : null
+      const parent = parentChain.length > 0 ? (parentChain[0]?.slug ?? undefined) : undefined
       const children = (graph.children?.(slug) ?? [])
         .map(c => c.slug)
         .filter(c => topicMap.has(c))
@@ -134,7 +133,7 @@ export const getTopicHierarchy = (
         count: counts.get(slug) ?? 0,
       }
     })
-    .sort((a, b) => b.count - a.count)
+    .toSorted((a, b) => b.count - a.count)
 }
 
 export const slugifyTopic = (raw: string): string =>
@@ -212,7 +211,7 @@ const addToBucket = (
   const existing = buckets.get(slug)
   return new Map([
     ...buckets,
-    [slug, existing !== undefined ? [...existing, entry] : [entry]],
+    [slug, existing === undefined ? [entry] : [...existing, entry]],
   ])
 }
 
@@ -231,7 +230,7 @@ export const groupByTopic = (
     new Map<string, ReadonlyArray<NormalizedEntry>>() as ReadonlyMap<string, ReadonlyArray<NormalizedEntry>>,
   )
   return new Map(
-    [...buckets.entries()].map(([slug, bucket]) => [slug, [...bucket].sort(compareByDateDesc)]),
+    [...buckets.entries()].map(([slug, bucket]) => [slug, [...bucket].toSorted(compareByDateDesc)]),
   )
 }
 
@@ -242,7 +241,7 @@ export const topicsWithCounts = (
 ): ReadonlyArray<TopicWithCount> =>
   [...topicMap.entries()]
     .map(([slug, label]) => ({ slug, label, count: grouped.get(slug)?.length ?? 0 }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .toSorted((a, b) => b.count - a.count || a.label.localeCompare(b.label))
 
 
 export const entriesForTopic = (

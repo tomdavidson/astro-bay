@@ -38,7 +38,7 @@ export default defineConfig({
       collections: ['vault', 'feed'],
       permalinks: { articleBase: 'articles' },
       taxonomy:   { route: 'topics' },
-      pagination: { pageSize: 20 },
+      browse:     { pageSize: 20 },
       locale:     { lang: 'en', dateLocale: 'en-US' },
     }),
   ],
@@ -153,7 +153,7 @@ export default defineConfig({
         aliasField: 'aliases',
         articleBase: 'articles',
       },
-      pagination: { pageSize: 20 },
+      browse: { pageSize: 20 },
       locale: { lang: 'en', dateLocale: 'en-US' },
       transforms: [
         tagWithOpenCalais({ apiKey: process.env.OPENCALAIS_KEY! }),
@@ -231,7 +231,55 @@ const items = filterPublished(sorted)
 ```
 
 
-### 6. WebSub Notification
+### 6. JSON-LD Structured Data
+
+When `@astro-bay/jsonld` is installed as a peer dependency, the integration exposes JSON-LD providers for articles and topics. The `contentHub()` factory returns a `ContentHubIntegration` object with a `getJsonLdProviders()` method that returns provider objects compatible with `@astro-bay/jsonld`'s provider registration.
+
+```ts
+// astro.config.ts
+import { defineConfig } from 'astro/config'
+import contentHub from '@astro-bay/content-hub'
+import jsonLd from '@astro-bay/jsonld'
+
+const hub = contentHub({
+  collections: ['vault', 'feed'],
+})
+
+export default defineConfig({
+  site: 'https://example.com',
+  integrations: [
+    hub,
+    jsonLd({ providers: hub.getJsonLdProviders() }),
+  ],
+})
+```
+
+The article provider emits `BlogPosting` nodes with `headline`, `datePublished`, `about` (topic references), and `sameAs` (alias URLs). The topics provider emits `DefinedTerm` nodes with `skos:inScheme` linking back to the topic index. Both providers also emit `CollectionPage` nodes for their respective index pages.
+
+Disable JSON-LD generation by setting `jsonld: { enabled: false }` in the integration options. Every injected page includes a `<link rel="alternate" type="application/ld+json">` pointing to its corresponding `.jsonld` file.
+
+
+### 7. Browse Data for Client-Side Tables
+
+Every article index and topic hub page embeds a `<script type="application/json" id="browse-data">` element containing a JSON array of `BrowseRow` objects. This enables client-side table rendering with TanStack Table or similar libraries without an additional data fetch.
+
+```ts
+import { toBrowseData, createBrowseColumns } from '@astro-bay/content-hub/browse'
+import type { BrowseRow } from '@astro-bay/content-hub/browse'
+```
+
+`BrowseRow` is a minimal projection of `NormalizedEntry` containing only `uid`, `title`, `date` (ISO string or null), `topics`, `excerpt`, and `source`. The `createBrowseColumns()` function returns TanStack Table column definitions with sensible defaults for sorting and filtering (date sorts nulls-last, topics filter by intersection).
+
+Client-side hydration:
+
+```ts
+// In a client-side script
+const el = document.getElementById('browse-data')
+const rows: BrowseRow[] = JSON.parse(el?.textContent ?? '[]')
+```
+
+
+### 8. WebSub Notification
 
 WebSub hub pinging is handled outside the integration, typically in a post-build script or CI step. After a successful build that generates `feed.xml`, ping the hub:
 
@@ -373,6 +421,7 @@ The `TransformContext` provides `ctx.cache` (a mutable `Map` scoped to the curre
 | `astro-taxonomy` | Optional peer. Content hub consumes its virtual module for ancestor expansion. Falls back to flat topics when absent. |
 | `astro-loader-obsidian` | Optional peer. Provides the Obsidian vault content loader. |
 | `@ascorbic/feed-loader` | Optional peer. Provides the RSS/Atom feed content loader. |
+| `@astro-bay/jsonld` | Optional peer. Receives JSON-LD providers from `getJsonLdProviders()` for structured data generation. |
 | `astro-pagefind` | External. Indexes built HTML, reads `data-pagefind-*` attributes emitted by content hub. |
 | `astro-pagefind-resolve` | External. Consumes Pagefind's index (including uid/topic attributes) for smart 404 resolution. |
 | `@astrojs/rss` | External. Generates outgoing RSS/Atom/JSON feeds using the exported utility functions. |
@@ -400,6 +449,17 @@ import {
   toRssItem,           // (entry, articleBase) => RssItem
   toFeedItems,         // (entries, articleBase) => RssItem[] (filters drafts + feed-origin)
 } from '@astro-bay/content-hub/utils'
+
+import {
+  toBrowseRow,         // (entry) => BrowseRow
+  toBrowseData,        // (entries) => BrowseRow[]
+  createBrowseColumns, // () => ColumnDef<BrowseRow>[]
+} from '@astro-bay/content-hub/browse'
+
+import {
+  createContentHubProvider, // (opts) => JsonLdProvider (articles)
+  createTopicsProvider,     // (opts) => JsonLdProvider (topics)
+} from '@astro-bay/content-hub/jsonld'
 ```
 
 
@@ -419,7 +479,7 @@ import {
 
 ## Code Organization
 
-The codebase follows a functional core / imperative shell architecture. Domain modules (`aggregate`, `taxonomy`, `permalinks`, `paginate`, `config`, `transform/pipeline`) contain zero I/O and zero Astro imports. They are pure functions that take data in and return data out. `hub-data.ts` and `integration.ts` form the imperative shell: they call Astro APIs, manage the build cache, and wire the domain functions together.
+The codebase follows a functional core / imperative shell architecture. Domain modules (`aggregate`, `taxonomy`, `permalinks`, `paginate`, `config`, `transform/pipeline`, `browse`, `jsonld-provider`) contain zero I/O and zero Astro imports. They are pure functions that take data in and return data out. `hub-data.ts` and `integration.ts` form the imperative shell: they call Astro APIs, manage the build cache, and wire the domain functions together.
 
 ```
 src/
@@ -430,6 +490,8 @@ src/
 ├── taxonomy.ts           slugifyTopic, buildTopicMap, groupByTopic, topicsWithCounts
 ├── paginate.ts           Pure pagination utility
 ├── permalinks.ts         UID and alias collision detection (Result-based)
+├── browse.ts             BrowseRow projection and TanStack Table column definitions
+├── jsonld-provider.ts    JSON-LD provider factories for articles and topics
 ├── registry.ts           Cross-hub route prefix uniqueness enforcement
 ├── hub-data.ts           Central getHubData() with module-level build cache (imperative shell)
 ├── integration.ts        AstroIntegration factory: hooks, injectRoute, updateConfig (imperative shell)
@@ -465,8 +527,10 @@ Tests are co-located with source using Vitest's `import.meta.vitest` for unit an
 | `NormalizedEntry` type | Stable |
 | `Transform`, `TransformContext` types | Stable |
 | `PageSlice` type | Stable |
-| Exported utilities | Stable |
+| Exported utilities (`/utils`, `/browse`, `/jsonld`) | Stable |
 | Pagefind data attributes | Stable (contract with search/resolve plugins) |
+| Browse data embed (`#browse-data`) | Stable |
+| JSON-LD provider shape | Stable |
 | Virtual module shape | Internal |
 | Injected route paths | Stable (user-configurable) |
 
@@ -477,3 +541,4 @@ Features under consideration for future releases:
 
 - **SSR support.** Currently all injected routes are prerendered at build time. A future version will support Astro's `output: 'server'` and `output: 'hybrid'` modes, where article and topic pages render on request using `Astro.params` validation and the exported `paginate()` utility for request-time slicing. This includes cache strategy guidance and 404 handling for unknown UIDs, unknown topic slugs, and out-of-range page numbers.
 - **Configurable search attribute markup.** The current Pagefind `data-pagefind-*` attributes are hardcoded. A future version will support a configurable attribute renderer so the integration can emit markup compatible with other search tools (Algolia, Meilisearch, Lunr, etc.) or disable search attributes entirely.
+- **Browse component.** A ready-made Astro component that hydrates the `#browse-data` embed with TanStack Table, providing sort, filter, and pagination out of the box.

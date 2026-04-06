@@ -11,7 +11,7 @@ type AncestorNode = {
 
 type AncestorFn = (slug: string) => ReadonlyArray<AncestorNode>
 
-type TaxonomyGraphModule = {
+export type TaxonomyGraphModule = {
   readonly edges: ReadonlyArray<unknown>
   readonly ancestors: AncestorFn
 }
@@ -48,12 +48,12 @@ const expandWithAncestors = (
  * Returns undefined when the peer is not installed or the graph
  * has no edges (no hierarchy to expand).
  *
- * Uses `.catch(() => undefined)` for the dynamic import — the
+ * Uses `.catch(() => { return })` for the dynamic import — the
  * peer may not be installed.
  */
 export const loadTaxonomyGraph = async (): Promise<TaxonomyGraphModule | undefined> => {
   // @ts-expect-error optional peer, may not be installed
-  const mod: unknown = await import('astro-taxonomy:graph').catch(() => undefined)
+  const mod: unknown = await import('astro-taxonomy:graph').catch(() => { return })
   if (!isTaxonomyGraphModule(mod)) return undefined
   if (mod.edges.length === 0) return undefined
   return mod

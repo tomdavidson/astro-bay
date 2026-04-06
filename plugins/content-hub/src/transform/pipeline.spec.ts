@@ -8,6 +8,7 @@ const makeEntry = (overrides: Partial<NormalizedEntry> = {}): NormalizedEntry =>
   collectionName: 'vault',
   title: 'Original',
   topics: [],
+  resolvedTopics: [],
   aliases: [],
   date: undefined,
   draft: false,
@@ -50,7 +51,7 @@ describe('runTransforms', () => {
 
   test('runs transforms sequentially per entry', async () => {
     const entry = makeEntry()
-    const seen: readonly string[] = []
+    const seen: string[] = []
 
     const first: EntryTransform = async current => {
       seen.push(`first:${current.title}`)

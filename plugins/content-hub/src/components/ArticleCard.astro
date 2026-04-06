@@ -5,7 +5,8 @@ import DateDisplay from './DateDisplay.astro'
 import SourceBadge from './SourceBadge.astro'
 import TopicBadge from './TopicBadge.astro'
 
-interface Props {
+type Props = {
+
   entry: NormalizedEntry
   baseUrl: string
   taxonomyBase?: string

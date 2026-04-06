@@ -59,6 +59,7 @@ export const me = (
   collectionName: 'c',
   title: uid,
   topics: [],
+  resolvedTopics: [],
   aliases,
   date: undefined,
   draft: false,

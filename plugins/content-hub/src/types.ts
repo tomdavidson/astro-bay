@@ -15,7 +15,7 @@ export type NormalizedEntry = {
   readonly excerpt: string | undefined
   readonly source: 'vault' | 'feed' | 'custom'
   readonly link: string | undefined
-  readonly meta: ReadonlyRecord<string, unknown>
+  readonly meta: Readonly<Record<string, unknown>>
 }
 
 export type TransformContext = {

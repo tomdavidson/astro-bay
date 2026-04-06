@@ -1,8 +1,9 @@
 import type { AstroIntegration, InjectedRoute } from 'astro'
-import type { EntryTransform } from '../types.ts'
+import type { EntryTransform, NormalizedEntry } from '../types.ts'
 import { resolveConfig, type PluginOptions, type ResolvedConfig } from '../config.ts'
 import { claimHubName, claimRoutePrefix, resetRegistry } from './registry.ts'
 import { buildVirtualModulePlugin, buildVirtualModuleTypes } from '../virtual/module.ts'
+import { createContentHubProvider, createTopicsProvider } from '../jsonld-provider.ts'
 
 
 
@@ -181,12 +182,67 @@ const resolveOrThrow = (options: PluginOptions): Omit<ResolvedConfig, 'siteUrl'>
 
 
 
-export const contentHub = (options: PluginOptions): AstroIntegration => {
+export type ContentHubIntegration = AstroIntegration & {
+  readonly getJsonLdProviders: () => ReadonlyArray<{
+    readonly name: string
+    readonly provide: () => Promise<ReadonlyArray<unknown>>
+  }>
+}
+
+
+
+export const contentHub = (options: PluginOptions): ContentHubIntegration => {
   const partial = resolveOrThrow(options)
   const state = { resolvedFullConfig: { ...partial, siteUrl: '' } satisfies ResolvedConfig }
 
+  const resolveHubData = async () => {
+    const { getCollection } = await import('astro:content')
+    const { getHubData } = await import('./hub-data.ts')
+
+    return getHubData(state.resolvedFullConfig, getCollection, {
+      logger: {
+        warn: (msg: string) => console.warn(msg),
+        info: (msg: string) => console.warn(`INFO: ${msg}`),
+      },
+      command: 'build',
+    })
+  }
+
+  const getJsonLdProviders = () => {
+    if (!state.resolvedFullConfig.jsonld.enabled) return []
+
+    const lazyArticles = {
+      name: 'content-hub-articles' as const,
+      provide: async () => {
+        const data = await resolveHubData()
+        const { siteUrl: site, permalinks: { articleBase }, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
+        const entries: ReadonlyArray<NormalizedEntry> = [...data.uidMap.values()]
+        const provider = createContentHubProvider({ site, articleBase, taxonomyRoute, entries })
+        return provider.provide()
+      },
+    }
+
+    const lazyTopics = {
+      name: 'content-hub-topics' as const,
+      provide: async () => {
+        const data = await resolveHubData()
+        const { siteUrl: site, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
+        const provider = createTopicsProvider({
+          site,
+          taxonomyRoute,
+          topicMap: data.topicMap,
+          groupedEntries: data.grouped,
+        })
+        return provider.provide()
+      },
+    }
+
+    return [lazyArticles, lazyTopics]
+  }
+
   return {
     name: `astro-content-hub-${partial.name}`,
+    getJsonLdProviders,
     hooks: {
       'astro:config:setup': async (ctx) => {
         await handleSetup(ctx, partial, state.resolvedFullConfig)

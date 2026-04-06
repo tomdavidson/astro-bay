@@ -1,6 +1,5 @@
 // Consumer-facing convenience wrapper. Runs inside Astro pages/endpoints only.
 import rawConfig from 'astro-content-hub:config'
-// @ts-expect-error virtual module
 import { getCollection as rawGetCollection } from 'astro:content'
 import { getHubData as getHubDataInternal } from './hub-data.ts'
 import type { HubData } from '../types.ts'

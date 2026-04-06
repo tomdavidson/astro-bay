@@ -1,3 +1,4 @@
+// eslint-disable-next-line eslint-plugin-import/no-default-export
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({

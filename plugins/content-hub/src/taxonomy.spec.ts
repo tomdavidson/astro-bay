@@ -104,7 +104,7 @@ describe('getChildTopics', () => {
   })
 
   test('returns empty when graph is undefined', () => {
-    expect(getChildTopics('anything', undefined)).toEqual([])
+    expect(getChildTopics("anything", undefined)).toEqual([])
   })
 })
 
@@ -138,7 +138,7 @@ describe('getSiblingTopics', () => {
   })
 
   test('returns empty when graph is undefined', () => {
-    expect(getSiblingTopics('anything', undefined)).toEqual([])
+    expect(getSiblingTopics("anything", undefined)).toEqual([])
   })
 })
 
@@ -166,7 +166,7 @@ describe('getTopicHierarchy', () => {
       eResolved('b', ['zoning'], ['zoning']),
     ]
     const result = getTopicHierarchy(entries)
-    expect(result.every(n => n.parent === null)).toBe(true)
+    expect(result.every(n => n.parent === undefined)).toBe(true)
     expect(result.every(n => n.children.length === 0)).toBe(true)
   })
 

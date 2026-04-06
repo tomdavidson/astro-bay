@@ -35,6 +35,18 @@ export type LocaleConfig = {
 
 
 
+export type BrowseConfig = {
+  readonly pageSize: number
+}
+
+
+
+export type JsonLdConfig = {
+  readonly enabled: boolean
+}
+
+
+
 export type PluginOptions = {
   readonly name?: string
   readonly collections: ReadonlyArray<string>
@@ -42,7 +54,10 @@ export type PluginOptions = {
   readonly drafts?: DraftConfig
   readonly taxonomy?: Partial<TaxonomyConfig>
   readonly permalinks?: Partial<PermalinksConfig>
+  /** @deprecated Use `browse.pageSize` instead. */
   readonly pagination?: Partial<PaginationConfig>
+  readonly browse?: Partial<BrowseConfig>
+  readonly jsonld?: Partial<JsonLdConfig>
   readonly locale?: Partial<LocaleConfig>
   readonly transforms?: ReadonlyArray<EntryTransform>
 }
@@ -57,6 +72,8 @@ export type ResolvedConfig = {
   readonly taxonomy: TaxonomyConfig
   readonly permalinks: PermalinksConfig
   readonly pagination: PaginationConfig
+  readonly browse: BrowseConfig
+  readonly jsonld: JsonLdConfig
   readonly locale: LocaleConfig
   readonly transforms: ReadonlyArray<EntryTransform>
   readonly siteUrl: string
@@ -99,6 +116,20 @@ const getPageSize = (opts: PluginOptions): number => {
   const size = p.pageSize
   if (size === undefined) return DEFAULTS.pagination.pageSize
   return size
+}
+
+
+
+const getBrowsePageSize = (opts: PluginOptions): number => {
+  if (opts.browse?.pageSize !== undefined) return opts.browse.pageSize
+  return getPageSize(opts)
+}
+
+
+
+const getJsonLdEnabled = (opts: PluginOptions): boolean => {
+  if (opts.jsonld?.enabled !== undefined) return opts.jsonld.enabled
+  return true
 }
 
 
@@ -249,6 +280,8 @@ export const resolveConfig = (
     taxonomy: { ...DEFAULTS.taxonomy, ...opts.taxonomy, route: taxRoute },
     permalinks: { ...DEFAULTS.permalinks, ...opts.permalinks, articleBase: artBase },
     pagination: { ...DEFAULTS.pagination, ...opts.pagination, pageSize: pSize },
+    browse: { pageSize: getBrowsePageSize(opts) },
+    jsonld: { enabled: getJsonLdEnabled(opts) },
     locale: {
       ...DEFAULTS.locale,
       ...opts.locale,

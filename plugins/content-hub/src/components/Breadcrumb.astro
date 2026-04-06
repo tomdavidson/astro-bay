@@ -1,10 +1,12 @@
 ---
-interface BreadcrumbItem {
+type BreadcrumbItem = {
+
   label: string
   href?: string
 }
 
-interface Props {
+type Props = {
+
   items: ReadonlyArray<BreadcrumbItem>
 }
 

@@ -68,6 +68,7 @@ const breadcrumbItems = [
   lang={config.locale.lang}
   canonicalUrl={canonicalUrl}
 >
+  <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
   <main class="ch-article">
     <article data-pagefind-body>
       {isDraft && <DraftBanner />}

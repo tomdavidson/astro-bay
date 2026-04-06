@@ -24,7 +24,7 @@ const cfg: ResolvedConfig = {
         articleBase: 'articles',
     },
     pagination: { pageSize: 20 },
-    locale: { lang: 'en', dateLocale: 'en-US' },
+    locale: { lang: 'en', dateLocale: 'en-US', indexTitle: 'Articles', topicIndexTitle: 'Topics' },
     transforms: [],
     siteUrl: 'https://example.com',
 }

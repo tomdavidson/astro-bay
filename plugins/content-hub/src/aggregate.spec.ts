@@ -1,7 +1,7 @@
 import { test, expect, describe } from 'vitest'
 import { filterPublished, normalizeEntry, sortByDate } from './aggregate'
 import type { RawEntry } from './aggregate'
-import { NormalizedEntry } from './types'
+import type { NormalizedEntry } from './types'
 
 const r = (id: string, data: Record<string, unknown>, rendered = false): RawEntry =>
   ({ id, data, rendered: rendered ? { html: '<p>x</p>' } : undefined })
@@ -60,7 +60,7 @@ describe('filterPublished', () => {
 describe('sortByDate', () => {
   test('sortByDate_mixedDates_newerFirstUndatedLast', () => {
     const make = (uid: string, date?: Date): NormalizedEntry => ({
-      uid, sourceId: uid, collectionName: 'c', title: uid, date, topics: [], aliases: [], draft: false,
+      uid, sourceId: uid, collectionName: 'c', title: uid, date, topics: [], resolvedTopics: [], aliases: [], draft: false,
       excerpt: undefined, source: 'custom', link: undefined, meta: {},
     })
     const sorted = sortByDate([make('old', new Date('2023-01-01')), make('new', new Date('2025-01-01')), make('none')])

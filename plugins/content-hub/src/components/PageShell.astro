@@ -2,7 +2,8 @@
 // @ts-expect-error virtual module resolved by Vite plugin
 import Layout from 'astro-content-hub:layout'
 
-interface Props {
+type Props = {
+
   title: string
   description?: string
   lang?: string
