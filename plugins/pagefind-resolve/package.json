@@ -1,0 +1,32 @@
+{
+  "name": "@astro-bay/pagefind-resolve",
+  "version": "0.4.0",
+  "description": "Client-side 404 resolution via Pagefind with structured logging.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./components": {
+      "types": "./src/components/index.d.ts",
+      "default": "./src/components/Resolve404.astro"
+    },
+    "./logging": "./src/logging.ts",
+    "./config": "./src/config.ts",
+    "./client": "./src/client/shell.ts"
+  },
+  "peerDependencies": { "astro": ">=5.0.0", "astro-pagefind": ">=1.0.0" },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "astro": "^5.0.0",
+    "fast-check": "^3.22.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "TDD=1 vitest --watch",
+    "typecheck": "tsc --noEmit",
+    "lint:ox": "oxlint --fix",
+    "lint:es": "eslint --fix"
+  }
+}
