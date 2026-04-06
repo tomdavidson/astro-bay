@@ -1,0 +1,5 @@
+{
+  "plugins/rss": "0.1.0",
+  "plugins/sitemap": "0.1.0",
+  "plugins/content-collections": "0.1.0"
+}

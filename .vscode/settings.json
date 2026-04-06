@@ -1,0 +1,38 @@
+{
+  "yaml.schemaStore.enable": true,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml",
+    "https://json.schemastore.org/github-action.json": ".github/actions/*/action.yml",
+    "./.moon/cache/schemas/extensions.json": [
+      ".moon/extensions.yml"
+    ],
+    "./.moon/cache/schemas/project.json": [
+      "**/moon.yml"
+    ],
+    "./.moon/cache/schemas/tasks.json": [
+      ".moon/tasks.yml",
+      ".moon/tasks/**/*.yml"
+    ],
+    "./.moon/cache/schemas/template.json": [
+      "**/template.yml"
+    ],
+    "./.moon/cache/schemas/toolchain.json": [
+      ".moon/toolchain.yml"
+    ],
+    "./.moon/cache/schemas/toolchains.json": [
+      ".moon/toolchains.yml"
+    ],
+    "./.moon/cache/schemas/workspace.json": [
+      ".moon/workspace.yml"
+    ]
+  },
+
+  "editor.defaultFormatter": "dprint.dprint",
+  "editor.formatOnSave": true,
+
+  "[json]": {
+    "editor.defaultFormatter": "dprint.dprint",
+    "editor.formatOnSave": true
+  }
+
+}

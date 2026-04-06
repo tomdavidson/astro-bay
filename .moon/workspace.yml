@@ -1,0 +1,20 @@
+$schema: "https://moonrepo.dev/schemas/workspace.json"
+
+projects: ["plugins/*", "apps/", "website"]
+
+generator:
+  templates:
+    - ".moon/templates"
+
+vcs:
+  provider: "github"
+  defaultBranch: "main"
+  sync: true
+  # hooks:
+  #   pre-push:
+  #     - "moon run :lint --affected"
+  #     - "moon run :fmt-check --affected"
+  #     - "moon run :test --affected"
+
+hasher:
+  optimization: "accuracy"

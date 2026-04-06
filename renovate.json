@@ -1,0 +1,40 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    "group:monorepos",
+    "group:recommended",
+    "github>kachick/renovate-config-dprint#1.3.0"
+  ],
+  "rangeStrategy": "bump",
+  "labels": ["dependencies"],
+  "rebaseWhen": "conflicted",
+  "packageRules": [
+    {
+      "description": "Group Astro core packages",
+      "matchPackageNames": ["astro", "astro/**", "@astrojs/**"],
+      "groupName": "Astro"
+    },
+    {
+      "description": "Group Moon tooling",
+      "matchPackageNames": ["@moonrepo/**"],
+      "groupName": "Moonrepo"
+    },
+    {
+      "description": "Group all devDependencies minor and patch",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies (non-major)"
+    },
+    {
+      "description": "Automerge non-major updates",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": false
+    },
+    {
+      "description": "Do not automerge major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
+  ]
+}
