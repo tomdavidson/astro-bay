@@ -50,7 +50,7 @@ export const createBrowseColumns = (): ReadonlyArray<ColumnDef<BrowseRow>> => [
     accessorKey: 'topics',
     header: 'Topics',
     enableColumnFilter: true,
-    filterFn: (row, _columnId, filterValue: string[]) => {
+    filterFn: (row, _columnId, filterValue: readonly string[]) => {
       const topics = row.getValue<readonly string[]>('topics')
       if (filterValue.length === 0) return true
       return filterValue.some(f => topics.includes(f))

@@ -33,8 +33,6 @@ const countByResolvedTopic = (
   return counts
 }
 
-const DEFAULT_RELATED_LIMIT = 8
-
 export const getRelatedTopics = (
   slug: string,
   entries: ReadonlyArray<NormalizedEntry>,
@@ -53,7 +51,7 @@ export const getRelatedTopics = (
     (acc, entry) =>
       entry.resolvedTopics
         .filter((t: string) => !excluded.has(t))
-        .reduce<ReadonlyMap<string, number>>(
+        .reduce(
           (inner: ReadonlyMap<string, number>, topic: string) => new Map([...inner, [topic, (inner.get(topic) ?? 0) + 1]]),
           acc,
         ),

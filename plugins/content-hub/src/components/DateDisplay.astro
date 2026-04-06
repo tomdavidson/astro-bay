@@ -1,10 +1,10 @@
 ---
 import type { HTMLAttributes } from 'astro/types'
 
-interface Props extends HTMLAttributes<'time'> {
+type Props = {
   date: Date
   locale?: string
-}
+} & HTMLAttributes<'time'>
 
 const { date, locale = 'en-US', ...attrs } = Astro.props
 const iso = date.toISOString()

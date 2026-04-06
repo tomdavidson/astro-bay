@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import { getHubData } from '../infra/hub-data.ts'
 import { slugifyTopic } from '../taxonomy.ts'
-// @ts-expect-error virtual module resolved by Vite plugin
+// @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
 import PageShell from '../components/PageShell.astro'
@@ -16,7 +16,7 @@ import DraftBanner from '../components/DraftBanner.astro'
 export const prerender = true
 
 export const getStaticPaths = (async () => {
-  const data = await getHubData(config, getCollection, {
+  const data = await getHubData(config as any, getCollection, {
     logger: {
       warn: (msg: string) => console.warn(msg),
       info: (msg: string) => console.warn(`INFO: ${msg}`),
@@ -29,7 +29,7 @@ export const getStaticPaths = (async () => {
   ).flat()
 
   const entryMap = new Map(
-    collectionEntries.map((e) => [(e as { id: string }).id, e])
+    collectionEntries.map((e: any) => [(e as { id: string }).id, e])
   )
 
   return [...data.uidMap.entries()].map(([uid, entry]) => {
@@ -46,7 +46,7 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths
 
 const { entry, rawEntry, pagefindTopics } = Astro.props
-const rendered = rawEntry?.render ? await rawEntry.render() : undefined
+const rendered = (rawEntry as any)?.render ? await (rawEntry as any).render() : undefined
 const Content = rendered?.Content
 
 const articleBase = config.permalinks.articleBase

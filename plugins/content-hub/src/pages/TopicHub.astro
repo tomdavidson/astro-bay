@@ -9,7 +9,7 @@ import {
 } from '../taxonomy.ts'
 import { loadTaxonomyGraph } from '../transform/ancestors.ts'
 import { toBrowseData } from '../browse.ts'
-// @ts-expect-error virtual module resolved by Vite plugin
+// @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
 import PageShell from '../components/PageShell.astro'
@@ -22,7 +22,7 @@ import TopicBadge from '../components/TopicBadge.astro'
 export const prerender = true
 
 export const getStaticPaths = (async ({ paginate }) => {
-  const data = await getHubData(config, getCollection, {
+  const data = await getHubData(config as any, getCollection, {
     logger: {
       warn: (msg: string) => console.warn(msg),
       info: (msg: string) => console.warn(`INFO: ${msg}`),
@@ -35,7 +35,7 @@ export const getStaticPaths = (async ({ paginate }) => {
   return [...data.grouped.entries()].flatMap(([slug, entries]) => {
     const label = data.topicMap.get(slug) ?? slug
 
-    const related = getRelatedTopics({ slug, entries: data.published, graph })
+    const related = getRelatedTopics(slug, data.published, graph)
     const children = getChildTopics(slug, graph)
     const siblings = getSiblingTopics(slug, graph)
     const ancestorChain = graph ? graph.ancestors(slug) : []

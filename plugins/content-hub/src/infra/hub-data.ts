@@ -28,8 +28,10 @@ const getCachedHubData = (name: string): HubData | undefined => hubCache.get(nam
 
 
 
+type HubConfig = Omit<ResolvedConfig, 'transforms'> & { readonly transforms?: ReadonlyArray<ResolvedConfig['transforms'][number]> }
+
 const aggregateHubEntries = (
-  config: ResolvedConfig,
+  config: HubConfig,
   getCollection: GetCollection,
 ): Promise<ReadonlyArray<AggregatedEntry>> =>
   aggregateEntries(
@@ -41,7 +43,7 @@ const aggregateHubEntries = (
 
 
 const warnOnUidFallbacks = (
-  config: ResolvedConfig,
+  config: HubConfig,
   entries: ReadonlyArray<AggregatedEntry>,
   logger: Logger,
 ): void => {
@@ -70,12 +72,12 @@ const warnOnTransformErrors = (
 
 
 const getAllTransforms = async (
-  config: ResolvedConfig,
+  config: HubConfig,
 ): Promise<ReadonlyArray<ResolvedConfig['transforms'][number]>> => {
   const registryTransforms = getTransforms(config.name)
   const ancestorTransform = await buildAncestorExpansionTransform()
 
-  const combined = [...config.transforms, ...registryTransforms]
+  const combined = [...(config.transforms ?? []), ...registryTransforms]
 
   return ancestorTransform === undefined
     ? combined
@@ -85,7 +87,7 @@ const getAllTransforms = async (
 
 
 const transformEntries = async (
-  config: ResolvedConfig,
+  config: HubConfig,
   raw: ReadonlyArray<NormalizedEntry>,
   logger: Logger,
 ): Promise<ReadonlyArray<NormalizedEntry>> => {
@@ -111,7 +113,7 @@ const markDraftPreview = (entry: NormalizedEntry): NormalizedEntry =>
 
 const selectPublishedEntries = (
   transformed: ReadonlyArray<NormalizedEntry>,
-  config: ResolvedConfig,
+  config: HubConfig,
   command: string,
 ): ReadonlyArray<NormalizedEntry> => {
   const includeDrafts = command === 'dev' && config.drafts.showInDev
@@ -123,7 +125,7 @@ const selectPublishedEntries = (
 
 
 const assertNoUidCollisions = (
-  config: ResolvedConfig,
+  config: HubConfig,
   published: ReadonlyArray<NormalizedEntry>,
 ): void => {
   const collisionResult = detectCollisions(published)
@@ -160,7 +162,7 @@ const buildHubData = (
 
 
 export const getHubData = async (
-  config: ResolvedConfig,
+  config: HubConfig,
   getCollection: GetCollection,
   runtime: RuntimeContext,
 ): Promise<HubData> => {

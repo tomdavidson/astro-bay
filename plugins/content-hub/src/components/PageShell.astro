@@ -1,14 +1,13 @@
 ---
-// @ts-expect-error virtual module resolved by Vite plugin
 import Layout from 'astro-content-hub:layout'
 
 type Props = {
 
   title: string
-  description?: string
-  lang?: string
-  canonicalUrl?: string
-  pagefindIgnore?: boolean
+  description?: string | undefined
+  lang?: string | undefined
+  canonicalUrl?: string | undefined
+  pagefindIgnore?: boolean | undefined
 }
 
 const {

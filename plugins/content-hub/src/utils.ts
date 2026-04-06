@@ -30,7 +30,6 @@ import type {
     NormalizedEntry,
     TransformBatchResult,
     TransformContext,
-    TransformWarning,
 } from './types.ts'
 
 // --- RSS helpers ---

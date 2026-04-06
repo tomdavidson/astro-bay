@@ -24,6 +24,8 @@ const cfg: ResolvedConfig = {
         articleBase: 'articles',
     },
     pagination: { pageSize: 20 },
+    browse: { pageSize: 20 },
+    jsonld: { enabled: true },
     locale: { lang: 'en', dateLocale: 'en-US', indexTitle: 'Articles', topicIndexTitle: 'Topics' },
     transforms: [],
     siteUrl: 'https://example.com',
@@ -104,11 +106,11 @@ describe('buildVirtualModuleTypes', () => {
 
         expect(src).toContain("declare module 'astro-content-hub:config'")
         expect(src).toContain("declare module 'astro-content-hub:layout'")
-        expect(src).toContain("import type { ResolvedConfig } from 'astro-content-hub/config'")
+        expect(src).toContain("import type { ResolvedConfig } from '@astro-bay/content-hub/config'")
         expect(src).toContain(
             "const config: Omit<ResolvedConfig, 'transforms'> & { readonly astroCommand: string }",
         )
-        expect(src).toContain('const Layout: unknown')
+        expect(src).toContain('const Layout: any')
     })
 
     test('buildVirtualModuleTypes_named_declaresConfigAndLayoutModules', () => {

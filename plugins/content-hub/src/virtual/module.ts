@@ -88,13 +88,13 @@ export const buildVirtualModulePlugin = (config: ResolvedConfig, command: string
 export const buildVirtualModuleTypes = (hubName: string): string =>
   `
 declare module '${virtualModuleId(hubName)}' {
-  import type { ResolvedConfig } from 'astro-content-hub/config'
+  import type { ResolvedConfig } from '@astro-bay/content-hub/config'
   const config: Omit<ResolvedConfig, 'transforms'> & { readonly astroCommand: string }
   export default config
 }
 
 declare module '${virtualLayoutId(hubName)}' {
-  const Layout: unknown
+  const Layout: any
   export default Layout
 }
 `.trim()

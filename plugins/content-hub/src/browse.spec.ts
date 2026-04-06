@@ -95,9 +95,9 @@ describe('createBrowseColumns', () => {
         fc.record({
           uid: fc.string({ minLength: 1 }),
           title: fc.string({ minLength: 1 }),
-          date: fc.oneof(fc.constant(undefined), fc.date().map(d => d.toISOString())),
+          date: fc.oneof(fc.constant(), fc.date().map(d => d.toISOString())),
           topics: fc.array(fc.string({ minLength: 1 })),
-          excerpt: fc.oneof(fc.constant(undefined), fc.string()),
+          excerpt: fc.oneof(fc.constant(), fc.string()),
           source: fc.constantFrom('vault', 'feed', 'custom'),
         }),
         (row) => {

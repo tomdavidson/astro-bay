@@ -79,7 +79,7 @@ describe('createContentHubProvider', () => {
     const provider = createContentHubProvider({ site, articleBase, taxonomyRoute, entries })
     const routes = await provider.provide()
     const article = routes.find(r => r.route === '/articles/ts-post/')
-    const about = (article!.node as Record<string, unknown>).about as ReadonlyArray<{ '@id': string }>
+    const about = (article!.node as Record<string, unknown>).about as ReadonlyArray<{ readonly '@id': string }>
 
     expect(about).toHaveLength(2)
     expect(about[0]!['@id']).toBe('https://example.com/topics/typescript/')

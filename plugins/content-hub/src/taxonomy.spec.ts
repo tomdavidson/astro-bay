@@ -4,7 +4,7 @@ import type { NormalizedEntry } from './types.ts'
 
 
 const isTddEnabled = (): boolean =>
-  typeof process !== 'undefined' && process.env['TDD'] === '1'
+  process.env['TDD'] === '1'
 
 const tdd = isTddEnabled()
 
@@ -104,7 +104,7 @@ describe('getChildTopics', () => {
   })
 
   test('returns empty when graph is undefined', () => {
-    expect(getChildTopics("anything", undefined)).toEqual([])
+    expect(getChildTopics("anything")).toEqual([])
   })
 })
 
@@ -138,7 +138,7 @@ describe('getSiblingTopics', () => {
   })
 
   test('returns empty when graph is undefined', () => {
-    expect(getSiblingTopics("anything", undefined)).toEqual([])
+    expect(getSiblingTopics("anything")).toEqual([])
   })
 })
 

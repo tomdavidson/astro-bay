@@ -51,7 +51,7 @@ describe('runTransforms', () => {
 
   test('runs transforms sequentially per entry', async () => {
     const entry = makeEntry()
-    const seen: string[] = []
+    const seen: readonly string[] = []
 
     const first: EntryTransform = async current => {
       seen.push(`first:${current.title}`)

@@ -5,7 +5,7 @@ import { getHubData } from '../infra/hub-data.ts'
 import { topicsWithCounts } from '../taxonomy.ts'
 import { filterPublished, sortByDate } from '../aggregate.ts'
 import { toBrowseData } from '../browse.ts'
-// @ts-expect-error virtual module resolved by Vite plugin
+// @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
 import PageShell from '../components/PageShell.astro'
@@ -16,7 +16,7 @@ import Pagination from '../components/Pagination.astro'
 export const prerender = true
 
 export const getStaticPaths = (async ({ paginate }) => {
-  const data = await getHubData(config, getCollection, {
+  const data = await getHubData(config as any, getCollection, {
     logger: {
       warn: (msg: string) => console.warn(msg),
       info: (msg: string) => console.warn(`INFO: ${msg}`),
@@ -30,7 +30,7 @@ export const getStaticPaths = (async ({ paginate }) => {
 
 const { page } = Astro.props
 
-const data = await getHubData(config, getCollection, {
+const data = await getHubData(config as any, getCollection, {
   logger: {
     warn: (msg: string) => console.warn(msg),
     info: (msg: string) => console.warn(`INFO: ${msg}`),
