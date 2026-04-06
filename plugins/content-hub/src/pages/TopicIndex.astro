@@ -1,0 +1,139 @@
+---
+import { getCollection } from 'astro:content'
+import { getHubData } from '../infra/hub-data.ts'
+import { topicsWithCounts, getTopicHierarchy } from '../taxonomy.ts'
+import { loadTaxonomyGraph } from '../transform/ancestors.ts'
+// @ts-expect-error virtual module resolved by Vite plugin
+import config from 'astro-content-hub:config'
+
+import PageShell from '../components/PageShell.astro'
+import TopicList from '../components/TopicList.astro'
+import TopicBadge from '../components/TopicBadge.astro'
+import Breadcrumb from '../components/Breadcrumb.astro'
+
+export const prerender = true
+
+const data = await getHubData(config, getCollection, {
+  logger: {
+    warn: (msg: string) => console.warn(msg),
+    info: (msg: string) => console.warn(`INFO: ${msg}`),
+  },
+  command: config.astroCommand,
+})
+
+const graph = await loadTaxonomyGraph()
+const topics = topicsWithCounts(data.topicMap, data.grouped)
+const hierarchy = getTopicHierarchy(data.published, graph)
+
+// Separate root nodes (no parent) from nested children
+const roots = hierarchy.filter(n => n.parent === null)
+const hasHierarchy = graph !== undefined && roots.some(r => r.children.length > 0)
+
+const taxonomyRoute = config.taxonomy.route
+const articleBase = config.permalinks.articleBase
+const pageTitle = config.locale.topicIndexTitle
+
+const breadcrumbItems = [
+  { label: config.locale.indexTitle, href: `/${articleBase}` },
+  { label: pageTitle },
+]
+
+// Build a lookup from slug to hierarchy node for rendering children
+const nodeBySlug = new Map(hierarchy.map(n => [n.slug, n]))
+---
+
+<PageShell title={pageTitle} lang={config.locale.lang} pagefindIgnore>
+  <main class="ch-topic-index">
+    <Breadcrumb items={breadcrumbItems} />
+    <h1>{pageTitle}</h1>
+    <p class="ch-topic-count">{topics.length} topics</p>
+
+    <section class="ch-topic-directory" aria-label="Topic directory">
+      {topics.length === 0 ? (
+        <p class="ch-empty">No topics yet.</p>
+      ) : hasHierarchy ? (
+        <div class="ch-hierarchy">
+          {roots
+            .sort((a, b) => b.count - a.count)
+            .map(root => (
+              <div class="ch-hierarchy-group">
+                <h2>
+                  <a href={`/${taxonomyRoute}/${root.slug}`}>{root.label}</a>
+                  <span class="ch-count">({root.count})</span>
+                </h2>
+                {root.children.length > 0 && (
+                  <div class="ch-hierarchy-children">
+                    {root.children.map(childSlug => {
+                      const child = nodeBySlug.get(childSlug)
+                      return child ? (
+                        <TopicBadge
+                          topic={child.label}
+                          slug={child.slug}
+                          count={child.count}
+                          baseUrl={taxonomyRoute}
+                        />
+                      ) : null
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      ) : (
+        <TopicList topics={topics} baseUrl={taxonomyRoute} />
+      )}
+    </section>
+  </main>
+</PageShell>
+
+<style>
+  .ch-topic-index {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+  }
+  .ch-topic-count {
+    font-size: 0.875em;
+    color: var(--ch-text-muted, #6b7280);
+    margin-bottom: 1.5rem;
+  }
+  .ch-topic-directory {
+    margin-top: 0.5rem;
+  }
+  .ch-hierarchy-group {
+    margin-bottom: 2rem;
+  }
+  .ch-hierarchy-group h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  .ch-hierarchy-group h2 a {
+    color: var(--ch-text, #111827);
+    text-decoration: none;
+  }
+  .ch-hierarchy-group h2 a:hover {
+    text-decoration: underline;
+  }
+  .ch-count {
+    color: var(--ch-text-muted, #6b7280);
+    font-size: 0.875em;
+    font-weight: 400;
+    margin-left: 0.25rem;
+  }
+  .ch-hierarchy-children {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+  }
+  .ch-empty {
+    color: var(--ch-text-muted, #6b7280);
+    font-style: italic;
+  }
+</style>

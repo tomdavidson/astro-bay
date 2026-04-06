@@ -1,0 +1,102 @@
+---
+import { getCollection } from 'astro:content'
+import type { GetStaticPaths } from 'astro'
+import { getHubData } from '../infra/hub-data.ts'
+import { topicsWithCounts } from '../taxonomy.ts'
+import { filterPublished, sortByDate } from '../aggregate.ts'
+// @ts-expect-error virtual module resolved by Vite plugin
+import config from 'astro-content-hub:config'
+
+import PageShell from '../components/PageShell.astro'
+import ArticleCard from '../components/ArticleCard.astro'
+import TopicList from '../components/TopicList.astro'
+import Pagination from '../components/Pagination.astro'
+
+export const prerender = true
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const data = await getHubData(config, getCollection, {
+    logger: {
+      warn: (msg: string) => console.warn(msg),
+      info: (msg: string) => console.warn(`INFO: ${msg}`),
+    },
+    command: config.astroCommand,
+  })
+
+  const published = sortByDate(filterPublished([...data.uidMap.values()]))
+  return paginate(published, { pageSize: config.pagination.pageSize })
+}) satisfies GetStaticPaths
+
+const { page } = Astro.props
+
+const data = await getHubData(config, getCollection, {
+  logger: {
+    warn: (msg: string) => console.warn(msg),
+    info: (msg: string) => console.warn(`INFO: ${msg}`),
+  },
+  command: config.astroCommand,
+})
+
+const topics = topicsWithCounts(data.topicMap, data.grouped)
+const articleBase = config.permalinks.articleBase
+const taxonomyRoute = config.taxonomy.route
+const pageTitle = config.locale.indexTitle
+const totalPages = Math.ceil(page.total / config.pagination.pageSize)
+---
+
+<PageShell title={pageTitle} lang={config.locale.lang}>
+  <main class="ch-index">
+    <h1>{pageTitle}</h1>
+
+    {topics.length > 0 && (
+      <section class="ch-index-topics" aria-label="Topics">
+        <TopicList topics={topics} baseUrl={taxonomyRoute} limit={12} />
+        <a class="ch-all-topics-link" href={`/${taxonomyRoute}`}>
+          All {config.locale.topicIndexTitle} &rarr;
+        </a>
+      </section>
+    )}
+
+    <section aria-label="Articles">
+      {page.data.map((entry: any) => (
+        <ArticleCard
+          entry={entry}
+          baseUrl={articleBase}
+          taxonomyBase={taxonomyRoute}
+          dateLocale={config.locale.dateLocale}
+        />
+      ))}
+    </section>
+
+    <Pagination page={page.currentPage} totalPages={totalPages} baseUrl={articleBase} />
+  </main>
+</PageShell>
+
+<style>
+  .ch-index {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+  .ch-index-topics {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ch-all-topics-link {
+    font-size: 0.8125em;
+    color: var(--ch-text-muted, #6b7280);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .ch-all-topics-link:hover {
+    text-decoration: underline;
+  }
+</style>

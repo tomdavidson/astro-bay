@@ -1,0 +1,73 @@
+---
+interface Props {
+  page: number
+  totalPages: number
+  baseUrl: string
+}
+
+const { page, totalPages, baseUrl } = Astro.props
+const hasPrev = page > 1
+const hasNext = page < totalPages
+
+const pageHref = (p: number): string => {
+  const base = baseUrl.replace(/\/$/, '')
+  return p === 1 ? `/${base}` : `/${base}/${p}`
+}
+---
+
+{totalPages > 1 && (
+  <nav class="ch-pagination" aria-label="Pagination">
+    {hasPrev ? (
+      <a class="ch-pagination-link" href={pageHref(page - 1)} rel="prev">
+        &larr; Previous
+      </a>
+    ) : (
+      <span class="ch-pagination-link ch-pagination-disabled" aria-hidden="true">
+        &larr; Previous
+      </span>
+    )}
+
+    <span class="ch-pagination-indicator">
+      Page {page} of {totalPages}
+    </span>
+
+    {hasNext ? (
+      <a class="ch-pagination-link" href={pageHref(page + 1)} rel="next">
+        Next &rarr;
+      </a>
+    ) : (
+      <span class="ch-pagination-link ch-pagination-disabled" aria-hidden="true">
+        Next &rarr;
+      </span>
+    )}
+  </nav>
+)}
+
+<style>
+  .ch-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem 0;
+    font-family: var(--ch-font-body, inherit);
+    font-size: 0.875em;
+  }
+  .ch-pagination-link {
+    color: var(--ch-text, #111827);
+    text-decoration: none;
+    padding: 0.35em 0.75em;
+    border: 1px solid var(--ch-border, #e5e7eb);
+    border-radius: var(--ch-radius, 0.375rem);
+  }
+  .ch-pagination-link:hover:not(.ch-pagination-disabled) {
+    background: var(--ch-surface, #f3f4f6);
+  }
+  .ch-pagination-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .ch-pagination-indicator {
+    color: var(--ch-text-muted, #6b7280);
+  }
+</style>

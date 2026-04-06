@@ -1,0 +1,34 @@
+---
+import TopicBadge from './TopicBadge.astro'
+
+interface TopicWithCount {
+  readonly slug: string
+  readonly label: string
+  readonly count: number
+}
+
+interface Props {
+  topics: ReadonlyArray<TopicWithCount>
+  baseUrl: string
+  limit?: number
+}
+
+const { topics, baseUrl, limit } = Astro.props
+const visible = limit !== undefined ? topics.slice(0, limit) : topics
+---
+
+<div class="ch-topic-list" role="list">
+  {visible.map((t) => (
+    <div role="listitem">
+      <TopicBadge topic={t.label} slug={t.slug} count={t.count} baseUrl={baseUrl} />
+    </div>
+  ))}
+</div>
+
+<style>
+  .ch-topic-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+</style>

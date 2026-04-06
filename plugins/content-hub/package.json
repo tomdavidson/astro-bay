@@ -1,0 +1,49 @@
+{
+  "name": "@astro-bay/content-hub",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/infra/integration.ts",
+    "./components": "./src/components/index.ts",
+    "./components/ArticleCard": "./src/components/ArticleCard.astro",
+    "./components/Breadcrumb": "./src/components/Breadcrumb.astro",
+    "./components/DateDisplay": "./src/components/DateDisplay.astro",
+    "./components/DraftBanner": "./src/components/DraftBanner.astro",
+    "./components/PageShell": "./src/components/PageShell.astro",
+    "./components/Pagination": "./src/components/Pagination.astro",
+    "./components/SourceBadge": "./src/components/SourceBadge.astro",
+    "./components/TopicBadge": "./src/components/TopicBadge.astro",
+    "./components/TopicList": "./src/components/TopicList.astro",
+    "./config": "./src/config.ts",
+    "./runtime": "./src/infra/runtime.ts",
+    "./schema": "./src/schema.ts",
+    "./src/pages/Article.astro": "./src/pages/Article.astro",
+    "./src/pages/ArticleIndex.astro": "./src/pages/ArticleIndex.astro",
+    "./src/pages/TopicHub.astro": "./src/pages/TopicHub.astro",
+    "./src/pages/TopicIndex.astro": "./src/pages/TopicIndex.astro",
+    "./types": "./src/types.ts",
+    "./utils": "./src/utils.ts"
+  },
+  "peerDependencies": {
+    "astro": ">=5.0.0",
+    "zod": ">=3.23.0"
+  },
+  "dependencies": {
+    "neverthrow": "^8.0.0",
+    "ts-pattern": "^5.5.0"
+  },
+  "devDependencies": {
+    "astro": "^5.0.0",
+    "fast-check": "^3.22.0",
+    "vitest": "^2.0.0",
+    "typescript": "^5.5.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "TDD=1 vitest --watch",
+    "typecheck": "tsc --noEmit",
+    "lint:ox": "oxlint --fix",
+    "lint:es": "eslint --fix"
+  }
+}

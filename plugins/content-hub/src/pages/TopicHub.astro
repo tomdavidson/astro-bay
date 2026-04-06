@@ -1,0 +1,150 @@
+---
+import { getCollection } from 'astro:content'
+import type { GetStaticPaths } from 'astro'
+import { getHubData } from '../infra/hub-data.ts'
+import {
+  getRelatedTopics,
+  getChildTopics,
+  getSiblingTopics,
+} from '../taxonomy.ts'
+import { loadTaxonomyGraph } from '../transform/ancestors.ts'
+// @ts-expect-error virtual module resolved by Vite plugin
+import config from 'astro-content-hub:config'
+
+import PageShell from '../components/PageShell.astro'
+import ArticleCard from '../components/ArticleCard.astro'
+import Breadcrumb from '../components/Breadcrumb.astro'
+import Pagination from '../components/Pagination.astro'
+import TopicList from '../components/TopicList.astro'
+import TopicBadge from '../components/TopicBadge.astro'
+
+export const prerender = true
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const data = await getHubData(config, getCollection, {
+    logger: {
+      warn: (msg: string) => console.warn(msg),
+      info: (msg: string) => console.warn(`INFO: ${msg}`),
+    },
+    command: config.astroCommand,
+  })
+
+  const graph = await loadTaxonomyGraph()
+
+  return [...data.grouped.entries()].flatMap(([slug, entries]) => {
+    const label = data.topicMap.get(slug) ?? slug
+
+    const related = getRelatedTopics(slug, data.published, graph, 8)
+    const children = getChildTopics(slug, graph)
+    const siblings = getSiblingTopics(slug, graph)
+    const ancestorChain = graph ? graph.ancestors(slug) : []
+
+    return paginate([...entries], {
+      params: { topic: slug },
+      props: { slug, label, related, children, siblings, ancestorChain },
+      pageSize: config.pagination.pageSize,
+    })
+  })
+}) satisfies GetStaticPaths
+
+const { page, slug, label, related, children, siblings, ancestorChain } = Astro.props
+const articleBase = config.permalinks.articleBase
+const taxonomyRoute = config.taxonomy.route
+const totalPages = Math.ceil(page.total / config.pagination.pageSize)
+
+const breadcrumbItems = [
+  { label: config.locale.indexTitle, href: `/${articleBase}` },
+  { label: config.locale.topicIndexTitle, href: `/${taxonomyRoute}` },
+  ...ancestorChain.map((a: { slug: string; label: string }) => ({
+    label: a.label,
+    href: `/${taxonomyRoute}/${a.slug}`,
+  })),
+  { label },
+]
+---
+
+<PageShell title={label} lang={config.locale.lang} pagefindIgnore>
+  <main class="ch-topic-hub">
+    <Breadcrumb items={breadcrumbItems} />
+
+    <header>
+      <h1>{label}</h1>
+      <p class="ch-topic-entry-count">{page.total} articles</p>
+    </header>
+
+    {children.length > 0 && (
+      <section class="ch-topic-section" aria-label="Sub-topics">
+        <h2>Sub-topics</h2>
+        <div class="ch-topic-chips">
+          {children.map((c: { slug: string; label: string }) => (
+            <TopicBadge topic={c.label} slug={c.slug} baseUrl={taxonomyRoute} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section aria-label={`Articles about ${label}`}>
+      {page.data.map((entry: any) => (
+        <ArticleCard
+          entry={entry}
+          baseUrl={articleBase}
+          taxonomyBase={taxonomyRoute}
+          dateLocale={config.locale.dateLocale}
+        />
+      ))}
+    </section>
+
+    <Pagination page={page.currentPage} totalPages={totalPages} baseUrl={`${taxonomyRoute}/${slug}`} />
+
+    {siblings.length > 0 && (
+      <section class="ch-topic-section" aria-label="Sibling topics">
+        <h2>See also</h2>
+        <div class="ch-topic-chips">
+          {siblings.map((s: { slug: string; label: string }) => (
+            <TopicBadge topic={s.label} slug={s.slug} baseUrl={taxonomyRoute} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {related.length > 0 && (
+      <section class="ch-topic-section" aria-label="Related topics">
+        <h2>Related topics</h2>
+        <TopicList topics={related} baseUrl={taxonomyRoute} />
+      </section>
+    )}
+  </main>
+</PageShell>
+
+<style>
+  .ch-topic-hub {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0.5rem 0 0.25rem;
+  }
+  h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  .ch-topic-entry-count {
+    font-size: 0.875em;
+    color: var(--ch-text-muted, #6b7280);
+    margin-bottom: 1.5rem;
+  }
+  .ch-topic-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ch-border, #e5e7eb);
+  }
+  .ch-topic-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+</style>

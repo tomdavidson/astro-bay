@@ -1,0 +1,39 @@
+---
+// @ts-expect-error virtual module resolved by Vite plugin
+import Layout from 'astro-content-hub:layout'
+
+interface Props {
+  title: string
+  description?: string
+  lang?: string
+  canonicalUrl?: string
+  pagefindIgnore?: boolean
+}
+
+const {
+  title,
+  description,
+  lang = 'en',
+  canonicalUrl,
+  pagefindIgnore = false,
+} = Astro.props
+---
+
+{Layout ? (
+  <Layout title={title} description={description}>
+    <slot />
+  </Layout>
+) : (
+  <html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+  </head>
+  <body {...(pagefindIgnore ? { 'data-pagefind-ignore': '' } : {})}>
+    <slot />
+  </body>
+  </html>
+)}
