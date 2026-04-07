@@ -1,0 +1,13 @@
+{
+  "name": "@astro-bay/test-utils",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./astro-hooks": "./src/astro-hooks.ts"
+  },
+  "peerDependencies": {
+    "astro": "catalog:",
+    "vitest": "catalog:"
+  }
+}
