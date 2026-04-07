@@ -15,8 +15,8 @@ fileGroups:
 tasks:
 
   check-types:
-    command: "pnpm"
-    args: ["exec", "astro", "check"]
+    command: "astro"
+    args: [ "check"]
     toolchains: ["javascript", "node"]
     inputs:
       - "@group(sources)"
@@ -25,6 +25,9 @@ tasks:
     outputs: []
     options:
       mergeArgs: replace
+
+
+      
 
 
   test:

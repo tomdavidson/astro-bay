@@ -6,7 +6,7 @@ tags:
 tasks:
 
   sync-release:
-    script: "bun scripts/sync-release-please.ts"
+    script: "bun $MOON_WORKSPACE_ROOT/.moon/scripts/sync-release-please.ts"
     inputs:
       - "/plugins/*/package.json"
       - "/apps/*/package.json"

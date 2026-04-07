@@ -2,8 +2,9 @@ $schema: "https://moonrepo.dev/schemas/workspace.json"
 
 projects:
   globs:
-    - 'plugins/*'
     - 'apps/*'
+    - 'packages/*'
+    - 'plugins/*'
     - 'website'
   sources:
     root: '.'

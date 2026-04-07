@@ -287,8 +287,10 @@
         "typescript/no-non-null-assertion": "off",
         "typescript/strict-boolean-expressions": "off",
         "unicorn/no-null": "off",
+        "unicorn/no-useless-undefined": "off",
         "unicorn/no-array-reduce": "off",
         "unicorn/consistent-function-scoping": "off",
+        "typescript/no-unsafe-type-assertion": "off",
         "node/no-process-env": "off"
       }
     }

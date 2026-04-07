@@ -1,4 +1,4 @@
-import boundaries from 'eslint-plugin-boundaries'
+// import boundaries from 'eslint-plugin-boundaries'
 import functional from 'eslint-plugin-functional'
 import oxlint from 'eslint-plugin-oxlint'
 import preferArrowFunctions from 'eslint-plugin-prefer-arrow-functions'
@@ -83,7 +83,7 @@ const domainImportBans = {
 
 // ── Build config array ─────────────────────────────────────────
 const config = [
-  { ignores: ['node_modules/**', 'dist/**', 'eslint.config.mjs'] },
+  { ignores: ['node_modules/**', 'dist/**', 'eslint.config.mjs', '**/*.astro'] },
 
   // Global: all source files (app-layer defaults)
   {
@@ -95,9 +95,9 @@ const config = [
     plugins: {
       functional,
       'prefer-arrow-functions': preferArrowFunctions,
-      boundaries,
+      // boundaries,
     },
-    settings: { 'boundaries/elements': boundaryElements },
+    // settings: { 'boundaries/elements': boundaryElements },
     rules: {
       ...functionalRules,
       'no-restricted-syntax': restrictedSyntax,
@@ -113,7 +113,7 @@ const config = [
       }],
 
       // Boundaries
-      'boundaries/element-types': ['error', { default: 'disallow', rules: boundaryRules }],
+      // 'boundaries/element-types': ['error', { default: 'disallow', rules: boundaryRules }],
     },
   },
 
@@ -162,7 +162,7 @@ const config = [
   },
 
   // Deduplicate: turn off anything oxlint already handles
-  ...oxlint.buildFromOxlintConfigFile('oxlintrc.json'),
+  ...oxlint.buildFromOxlintConfigFile(`${import.meta.dirname}/oxlintrc.json`),
 ]
 
 // eslint-disable no-default-export

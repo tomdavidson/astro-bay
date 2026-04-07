@@ -4,17 +4,19 @@
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "devDependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@tailwindcss/vite": "^4.2.2",
-    "eslint": "^9.0.0",
-    "eslint-plugin-boundaries": "^5.0.0",
-    "eslint-plugin-functional": "^9.0.0",
-    "eslint-plugin-oxlint": "^1.51.0",
-    "eslint-plugin-prefer-arrow-functions": "^3.6.0",
-    "fast-check": "^3.0.0",
-    "oxlint": "^1.58.0",
-    "oxlint-tsgolint": "^0.19.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.58.0"
+    "@astrojs/check": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-boundaries": "catalog:",
+    "eslint-plugin-functional": "catalog:",
+    "eslint-plugin-oxlint": "catalog:",
+    "eslint-plugin-prefer-arrow-functions": "catalog:",
+    "fast-check": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "astro": "catalog:",
+    "vitest": "catalog:"
   }
 }
