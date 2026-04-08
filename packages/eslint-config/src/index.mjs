@@ -52,7 +52,7 @@ import { appFiles, boundaryElements, boundaryRules, domainFiles, infraFiles, tes
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 /** Absolute path to the bundled oxlintrc.json */
-export const oxlintConfigPath = resolve(__dirname, 'oxlintrc.json')
+export const oxlintConfigPath = resolve(__dirname, 'oxlintrc.jsonc')
 
 /**
  * @param {object} options
@@ -79,7 +79,7 @@ const tsConfig = options => {
     {
       name: '@astro-bay/eslint-config/global',
       files: sourceFiles,
-      languageOptions: { parser: tseslint.parser, parserOptions: { projectService: true, tsconfigRootDir } },
+      languageOptions: { parser: tseslint.parser, parserOptions: { project: true, tsconfigRootDir } },
       plugins: { functional, 'prefer-arrow-functions': preferArrowFunctions, boundaries },
       settings: { 'boundaries/elements': boundaryElements },
       rules: {

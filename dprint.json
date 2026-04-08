@@ -37,19 +37,20 @@
   "toml": {},
   "yaml": {},
   "markup": {
-    "lineWidth": 110
+    "lineWidth": 100,
+    "preferSingleLine": true,
+    "associations": [
+      "**/*.astro",
+      "**/*.html",
+      "**/*.vue",
+      "**/*.svelte"
+    ]
   },
   "excludes": [
     "**/*-lock.json",
     "dist",
     "coverage"
   ],
-  "associations": {
-    "**/*.astro": "markup",
-    "**/*.html": "markup",
-    "**/*.vue": "markup",
-    "**/*.svelte": "markup"
-  },
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.95.8.wasm",
     "https://plugins.dprint.dev/json-0.20.0.wasm",

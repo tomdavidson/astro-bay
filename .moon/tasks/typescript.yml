@@ -64,17 +64,13 @@ tasks:
 
   lint-es-fix:
     extends: "lint-es"
-    args:
-      - "--fix"
-    toolchains: ["javascript", "node"] 
+    args: ["--fix"]
     options:
       runInCI: false
 
   lint-ox-fix:
     extends: "lint-ox"
-    args:
-      - "--fix"
-    toolchains: ["javascript", "node"] 
+    args: ["--fix"]
     options:
       runInCI: false
 
@@ -112,8 +108,8 @@ tasks:
   check:
     command: "noop"
     deps:
-      - "~:lint"
       - "~:check-types"
+      - "~:lint"
       - "~:test"
 
   wf:
