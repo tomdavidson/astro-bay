@@ -6,17 +6,16 @@
   "devDependencies": {
     "@astrojs/check": "catalog:",
     "@tailwindcss/vite": "catalog:",
+    "astro": "catalog:",
     "eslint": "catalog:",
-    "eslint-plugin-boundaries": "catalog:",
-    "eslint-plugin-functional": "catalog:",
-    "eslint-plugin-oxlint": "catalog:",
-    "eslint-plugin-prefer-arrow-functions": "catalog:",
     "fast-check": "catalog:",
     "oxlint": "catalog:",
-    "oxlint-tsgolint": "catalog:",
     "typescript": "catalog:",
-    "typescript-eslint": "catalog:",
-    "astro": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@astro-bay/eslint-config": "workspace:",
+    "@astro-bay/eslint-config-astro": "workspace:"
+  },
+  "scripts": {
+    "postinstall": "install-oxlintrc"
   }
 }
