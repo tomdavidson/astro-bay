@@ -37,7 +37,7 @@ describe('getRelatedTopics', () => {
       eResolved('b', ['housing', 'zoning']),
       eResolved('c', ['housing', 'parks']),
     ]
-    const result = getRelatedTopics('housing', entries)
+    const result = getRelatedTopics({ slug: 'housing', entries })
     expect(result[0]?.slug).toBe('zoning')
     expect(result[0]?.count).toBe(2)
     expect(result[1]?.slug).toBe('transit')
@@ -45,7 +45,7 @@ describe('getRelatedTopics', () => {
 
   test('excludes the input topic itself', () => {
     const entries = [eResolved('a', ['housing', 'zoning'])]
-    const result = getRelatedTopics('housing', entries)
+    const result = getRelatedTopics({ slug: 'housing', entries })
     expect(result.every(r => r.slug !== 'housing')).toBe(true)
   })
 
@@ -60,7 +60,7 @@ describe('getRelatedTopics', () => {
       children: (slug: string) =>
         slug === 'housing' ? [{ slug: 'rent-control', label: 'Rent Control' }] : [],
     }
-    const result = getRelatedTopics('housing', entries, graph)
+    const result = getRelatedTopics({ slug: 'housing', entries, graph })
     expect(result.every(r => r.slug !== 'policy')).toBe(true)
     expect(result.every(r => r.slug !== 'rent-control')).toBe(true)
   })
@@ -68,13 +68,13 @@ describe('getRelatedTopics', () => {
   test('caps at limit', () => {
     const topics = Array.from({ length: 20 }, (_, i) => `topic-${i}`)
     const entries = [eResolved('a', ['target', ...topics])]
-    const result = getRelatedTopics('target', entries, undefined, 5)
+    const result = getRelatedTopics({ slug: 'target', entries, limit: 5 })
     expect(result).toHaveLength(5)
   })
 
   test('works without graph (flat topics)', () => {
     const entries = [eResolved('a', ['x', 'y']), eResolved('b', ['x', 'z'])]
-    const result = getRelatedTopics('x', entries)
+    const result = getRelatedTopics({ slug: 'x', entries })
     expect(result.length).toBeGreaterThan(0)
   })
 })
@@ -104,7 +104,7 @@ describe('getChildTopics', () => {
   })
 
   test('returns empty when graph is undefined', () => {
-    expect(getChildTopics("anything")).toEqual([])
+    expect(getChildTopics("anything", undefined)).toEqual([])
   })
 })
 
@@ -138,7 +138,7 @@ describe('getSiblingTopics', () => {
   })
 
   test('returns empty when graph is undefined', () => {
-    expect(getSiblingTopics("anything")).toEqual([])
+    expect(getSiblingTopics("anything", undefined)).toEqual([])
   })
 })
 

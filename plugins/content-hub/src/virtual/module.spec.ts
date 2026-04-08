@@ -23,8 +23,7 @@ const cfg: ResolvedConfig = {
         aliasField: 'aliases',
         articleBase: 'articles',
     },
-    pagination: { pageSize: 20 },
-    browse: { pageSize: 20 },
+    browse: { pageSize: 20, staticFallbackCount: 20 },
     jsonld: { enabled: true },
     locale: { lang: 'en', dateLocale: 'en-US', indexTitle: 'Articles', topicIndexTitle: 'Topics' },
     transforms: [],
@@ -97,6 +96,17 @@ describe('buildVirtualModulePlugin load', () => {
     test('plugin_load_noTransformsKey', () => {
         const src = plugin.load?.('\0astro-content-hub:config') ?? ''
         expect(src).not.toContain('transforms')
+    })
+
+    test('plugin_load_noPaginationInPayload', () => {
+        const src = plugin.load?.('\0astro-content-hub:config') ?? ''
+        expect(src).not.toContain('pagination')
+    })
+
+    test('plugin_load_containsBrowseConfig', () => {
+        const src = plugin.load?.('\0astro-content-hub:config') ?? ''
+        expect(src).toContain('browse')
+        expect(src).toContain('staticFallbackCount')
     })
 })
 

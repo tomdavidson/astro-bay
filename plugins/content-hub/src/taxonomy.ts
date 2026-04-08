@@ -15,49 +15,53 @@ type AncestorNode = {
   readonly label: string
 }
 
+
 type GraphLike = {
   readonly ancestors: (slug: string) => ReadonlyArray<AncestorNode>
   readonly children?: (slug: string) => ReadonlyArray<AncestorNode>
   readonly edges: ReadonlyArray<unknown>
 }
 
+const incrementCount = (acc: ReadonlyMap<string, number>, slug: string): ReadonlyMap<string, number> =>
+  new Map([...acc, [slug, (acc.get(slug) ?? 0) + 1]])
+
 const countByResolvedTopic = (
   entries: ReadonlyArray<NormalizedEntry>,
-): ReadonlyMap<string, number> => {
-  const counts = new Map<string, number>()
-  for (const entry of entries) {
-    for (const slug of entry.resolvedTopics) {
-      counts.set(slug, (counts.get(slug) ?? 0) + 1)
-    }
-  }
-  return counts
-}
+): ReadonlyMap<string, number> =>
+  entries
+    .flatMap(entry => entry.resolvedTopics)
+    .reduce(incrementCount, new Map<string, number>())
 
-export const getRelatedTopics = (
-  slug: string,
-  entries: ReadonlyArray<NormalizedEntry>,
-  graph?: GraphLike,
-  limit = 8,
-): ReadonlyArray<{ readonly slug: string; readonly label: string; readonly count: number }> => {
-  const matching = entries.filter(e => e.resolvedTopics.includes(slug))
+const DEFAULT_RELATED_LIMIT = 8
 
-  const excluded = new Set<string>([
+type RelatedTopicResult = { readonly slug: string; readonly label: string; readonly count: number }
+
+const buildExcludedSet = (slug: string, graph: GraphLike | undefined): ReadonlySet<string> =>
+  new Set<string>([
     slug,
-    ...(graph !== undefined ? graph.ancestors(slug).map((a: AncestorNode) => a.slug) : []),
-    ...(graph?.children !== undefined ? graph.children(slug).map((c: AncestorNode) => c.slug) : []),
+    ...(graph === undefined ? [] : graph.ancestors(slug).map((a: AncestorNode) => a.slug)),
+    ...(graph?.children === undefined ? [] : graph.children(slug).map((c: AncestorNode) => c.slug)),
   ])
 
-  const coOccurrences = matching.reduce<ReadonlyMap<string, number>>(
-    (acc, entry) =>
-      entry.resolvedTopics
-        .filter((t: string) => !excluded.has(t))
-        .reduce(
-          (inner: ReadonlyMap<string, number>, topic: string) => new Map([...inner, [topic, (inner.get(topic) ?? 0) + 1]]),
-          acc,
-        ),
-    new Map<string, number>(),
-  )
+const countCoOccurrences = (
+  matching: ReadonlyArray<NormalizedEntry>,
+  excluded: ReadonlySet<string>,
+): ReadonlyMap<string, number> =>
+  matching
+    .flatMap(entry => entry.resolvedTopics)
+    .filter(topic => !excluded.has(topic))
+    .reduce(incrementCount, new Map<string, number>())
 
+export const getRelatedTopics = (opts: {
+  readonly slug: string
+  readonly entries: ReadonlyArray<NormalizedEntry>
+  readonly graph?: GraphLike
+  readonly limit?: number
+}): ReadonlyArray<RelatedTopicResult> => {
+  const { slug, entries, graph, limit = DEFAULT_RELATED_LIMIT } = opts
+  const matching = entries.filter(e => e.resolvedTopics.includes(slug))
+  const excluded = buildExcludedSet(slug, graph)
+  const coOccurrences = countCoOccurrences(matching, excluded)
   const topicMap = buildTopicMap(entries)
 
   return [...coOccurrences.entries()]
@@ -94,44 +98,54 @@ export const getSiblingTopics = (
     .map(c => ({ slug: c.slug, label: c.label }))
 }
 
+const buildFlatNode = (
+  slug: string,
+  topicMap: ReadonlyMap<string, string>,
+  counts: ReadonlyMap<string, number>,
+): TopicHierarchyNode => ({
+  slug,
+  label: topicMap.get(slug) ?? slug,
+  parent: undefined,
+  children: [],
+  count: counts.get(slug) ?? 0,
+})
+
+const resolveParent = (parentChain: ReadonlyArray<AncestorNode>): string | undefined =>
+  parentChain.length > 0 ? parentChain[0]?.slug : undefined
+
+const resolveChildren = (
+  graph: GraphLike,
+  slug: string,
+  topicMap: ReadonlyMap<string, string>,
+): ReadonlyArray<string> =>
+  (graph.children?.(slug) ?? []).map(c => c.slug).filter(c => topicMap.has(c))
+
+type GraphNodeContext = {
+  readonly slug: string
+  readonly graph: GraphLike
+  readonly topicMap: ReadonlyMap<string, string>
+  readonly counts: ReadonlyMap<string, number>
+}
+
+const buildGraphNode = (ctx: GraphNodeContext): TopicHierarchyNode => ({
+  slug: ctx.slug,
+  label: ctx.topicMap.get(ctx.slug) ?? ctx.slug,
+  parent: resolveParent(ctx.graph.ancestors(ctx.slug)),
+  children: resolveChildren(ctx.graph, ctx.slug, ctx.topicMap),
+  count: ctx.counts.get(ctx.slug) ?? 0,
+})
+
 export const getTopicHierarchy = (
   entries: ReadonlyArray<NormalizedEntry>,
   graph?: GraphLike,
 ): ReadonlyArray<TopicHierarchyNode> => {
   const topicMap = buildTopicMap(entries)
   const counts = countByResolvedTopic(entries)
-
   const slugs = [...topicMap.keys()]
-
-  if (graph === undefined) {
-    return slugs
-      .map(slug => ({
-        slug,
-        label: topicMap.get(slug) ?? slug,
-        parent: undefined as string | undefined,
-        children: [] as ReadonlyArray<string>,
-        count: counts.get(slug) ?? 0,
-      }))
-      .toSorted((a, b) => b.count - a.count)
-  }
-
-  return slugs
-    .map(slug => {
-      const parentChain = graph.ancestors(slug)
-      const parent = parentChain.length > 0 ? (parentChain[0]?.slug ?? undefined) : undefined
-      const children = (graph.children?.(slug) ?? [])
-        .map(c => c.slug)
-        .filter(c => topicMap.has(c))
-
-      return {
-        slug,
-        label: topicMap.get(slug) ?? slug,
-        parent,
-        children,
-        count: counts.get(slug) ?? 0,
-      }
-    })
-    .toSorted((a, b) => b.count - a.count)
+  const mapper = graph === undefined
+    ? (slug: string) => buildFlatNode(slug, topicMap, counts)
+    : (slug: string) => buildGraphNode({ slug, graph, topicMap, counts })
+  return slugs.map(mapper).toSorted((a, b) => b.count - a.count)
 }
 
 export const slugifyTopic = (raw: string): string =>

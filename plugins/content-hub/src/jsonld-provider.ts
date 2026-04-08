@@ -19,6 +19,16 @@ type TopicsProviderConfig = {
 const stripTrailingSlash = (s: string): string =>
   s.endsWith('/') ? s.slice(0, -1) : s
 
+const buildAbout = (entry: NormalizedEntry, site: string, taxonomyRoute: string): Record<string, unknown> =>
+  entry.topics.length === 0
+    ? {}
+    : { about: entry.topics.map(t => ({ '@id': `${stripTrailingSlash(site)}/${taxonomyRoute}/${slugifyTopic(t)}/` })) }
+
+const buildSameAs = (entry: NormalizedEntry, site: string, articleBase: string): Record<string, unknown> =>
+  entry.aliases.length === 0
+    ? {}
+    : { sameAs: entry.aliases.map(a => `${stripTrailingSlash(site)}/${articleBase}/${a}/`) }
+
 const entryToNode = (config: {
   readonly entry: NormalizedEntry
   readonly site: string
@@ -28,34 +38,16 @@ const entryToNode = (config: {
   const { entry, site, articleBase, taxonomyRoute } = config
   const id = `${stripTrailingSlash(site)}/${articleBase}/${entry.uid}/`
 
-  const node: Record<string, unknown> = {
+  return {
     '@type': 'BlogPosting',
     '@id': id,
     headline: entry.title,
     keywords: entry.topics,
-  }
-
-  if (entry.date !== undefined) {
-    node.datePublished = entry.date.toISOString()
-  }
-
-  if (entry.excerpt !== undefined) {
-    node.description = entry.excerpt
-  }
-
-  if (entry.topics.length > 0) {
-    node.about = entry.topics.map(t => ({
-      '@id': `${stripTrailingSlash(site)}/${taxonomyRoute}/${slugifyTopic(t)}/`,
-    }))
-  }
-
-  if (entry.aliases.length > 0) {
-    node.sameAs = entry.aliases.map(
-      a => `${stripTrailingSlash(site)}/${articleBase}/${a}/`,
-    )
-  }
-
-  return node as unknown as JsonLdNode
+    ...(entry.date === undefined ? {} : { datePublished: entry.date.toISOString() }),
+    ...(entry.excerpt === undefined ? {} : { description: entry.excerpt }),
+    ...buildAbout(entry, site, taxonomyRoute),
+    ...buildSameAs(entry, site, articleBase),
+  } satisfies JsonLdNode
 }
 
 const entryToSummaryNode = (
@@ -96,39 +88,52 @@ export const createContentHubProvider = (
   },
 })
 
+type TopicNodeInput = {
+  readonly slug: string
+  readonly label: string
+  readonly base: string
+  readonly taxonomyRoute: string
+  readonly groupedEntries: ReadonlyMap<string, ReadonlyArray<NormalizedEntry>>
+}
+
+const topicToNode = (input: TopicNodeInput): JsonLdNode => {
+  const { slug, label, base, taxonomyRoute, groupedEntries } = input
+  const groupSize = groupedEntries.get(slug)?.length
+  return {
+    '@type': 'DefinedTerm',
+    '@id': `${base}/${taxonomyRoute}/${slug}/`,
+    name: label,
+    'skos:inScheme': { '@id': `${base}/${taxonomyRoute}/` },
+    ...(groupSize === undefined ? {} : { numberOfItems: groupSize }),
+  } satisfies JsonLdNode
+}
+
+const buildTopicRoutes = (
+  config: TopicsProviderConfig,
+): ReadonlyArray<RouteJsonLd> => {
+  const { site, taxonomyRoute, topicMap, groupedEntries } = config
+  const base = stripTrailingSlash(site)
+  return [...topicMap.entries()].map(([slug, label]) => ({
+    route: `/${taxonomyRoute}/${slug}/`,
+    node: topicToNode({ slug, label, base, taxonomyRoute, groupedEntries }),
+  }))
+}
+
 export const createTopicsProvider = (
   config: TopicsProviderConfig,
 ): JsonLdProvider => ({
   name: 'content-hub-topics',
   provide: async (): Promise<ReadonlyArray<RouteJsonLd>> => {
-    const { site, taxonomyRoute, topicMap, groupedEntries } = config
-    const base = stripTrailingSlash(site)
-
-    const topicRoutes: ReadonlyArray<RouteJsonLd> = [...topicMap.entries()].map(
-      ([slug, label]) => ({
-        route: `/${taxonomyRoute}/${slug}/`,
-        node: {
-          '@type': 'DefinedTerm',
-          '@id': `${base}/${taxonomyRoute}/${slug}/`,
-          name: label,
-          'skos:inScheme': { '@id': `${base}/${taxonomyRoute}/` },
-          ...(groupedEntries.get(slug) !== undefined
-            ? { numberOfItems: groupedEntries.get(slug)!.length }
-            : {}),
-        } as unknown as JsonLdNode,
-      }),
-    )
-
+    const base = stripTrailingSlash(config.site)
     const collectionRoute: RouteJsonLd = {
-      route: `/${taxonomyRoute}/`,
+      route: `/${config.taxonomyRoute}/`,
       node: {
         '@type': 'CollectionPage',
-        '@id': `${base}/${taxonomyRoute}/`,
+        '@id': `${base}/${config.taxonomyRoute}/`,
         name: 'Topics',
-        numberOfItems: topicMap.size,
+        numberOfItems: config.topicMap.size,
       },
     }
-
-    return [...topicRoutes, collectionRoute]
+    return [...buildTopicRoutes(config), collectionRoute]
   },
 })

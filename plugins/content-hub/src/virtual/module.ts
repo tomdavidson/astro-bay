@@ -25,7 +25,7 @@ const createPayload = (config: ResolvedConfig, command: string) => ({
   drafts: config.drafts,
   taxonomy: config.taxonomy,
   permalinks: config.permalinks,
-  pagination: config.pagination,
+  browse: config.browse,
   locale: config.locale,
   siteUrl: config.siteUrl,
   astroCommand: command,

@@ -1,4 +1,4 @@
-import type { ColumnDef } from '@tanstack/table-core'
+import type { ColumnDef, Row } from '@tanstack/table-core'
 import type { NormalizedEntry } from './types.ts'
 
 export type BrowseRow = {
@@ -23,56 +23,31 @@ export const toBrowseData = (
   entries: ReadonlyArray<NormalizedEntry>,
 ): ReadonlyArray<BrowseRow> => entries.map(toBrowseRow)
 
-export const createBrowseColumns = (): ReadonlyArray<ColumnDef<BrowseRow>> => [
-  {
-    id: 'title',
-    accessorKey: 'title',
-    header: 'Title',
-    enableSorting: true,
-    enableColumnFilter: true,
-  },
-  {
-    id: 'date',
-    accessorKey: 'date',
-    header: 'Date',
-    enableSorting: true,
-    sortingFn: (rowA, rowB) => {
-      const a = rowA.getValue<string | null>('date')
-      const b = rowB.getValue<string | null>('date')
-      if (a == null && b == null) return 0
-      if (a == null) return 1
-      if (b == null) return -1
-      return a.localeCompare(b)
-    },
-  },
-  {
-    id: 'topics',
-    accessorKey: 'topics',
-    header: 'Topics',
-    enableColumnFilter: true,
-    filterFn: (row, _columnId, filterValue: readonly string[]) => {
-      const topics = row.getValue<readonly string[]>('topics')
-      if (filterValue.length === 0) return true
-      return filterValue.some(f => topics.includes(f))
-    },
-  },
-  {
-    id: 'source',
-    accessorKey: 'source',
-    header: 'Source',
-    enableColumnFilter: true,
-  },
-  {
-    id: 'excerpt',
-    accessorKey: 'excerpt',
-    header: 'Excerpt',
-    enableColumnFilter: true,
-  },
-  {
-    id: 'uid',
-    accessorKey: 'uid',
-    header: 'UID',
-    enableSorting: false,
-    enableColumnFilter: false,
-  },
-]
+const compareDates = (rowA: Row<BrowseRow>, rowB: Row<BrowseRow>): number => {
+  const a = rowA.getValue<string | undefined>('date')
+  const b = rowB.getValue<string | undefined>('date')
+  if (a === undefined && b === undefined) return 0
+  if (a === undefined) return 1
+  if (b === undefined) return -1
+  return a.localeCompare(b)
+}
+
+const filterTopics = (
+  row: Row<BrowseRow>,
+  _columnId: string,
+  filterValue: readonly string[],
+): boolean => {
+  const topics = row.getValue<readonly string[]>('topics')
+  if (filterValue.length === 0) return true
+  return filterValue.some(f => topics.includes(f))
+}
+
+const titleColumn: ColumnDef<BrowseRow> = { id: 'title', accessorKey: 'title', header: 'Title', enableSorting: true, enableColumnFilter: true }
+const dateColumn: ColumnDef<BrowseRow> = { id: 'date', accessorKey: 'date', header: 'Date', enableSorting: true, sortingFn: compareDates }
+const topicsColumn: ColumnDef<BrowseRow> = { id: 'topics', accessorKey: 'topics', header: 'Topics', enableColumnFilter: true, filterFn: filterTopics }
+const sourceColumn: ColumnDef<BrowseRow> = { id: 'source', accessorKey: 'source', header: 'Source', enableColumnFilter: true }
+const excerptColumn: ColumnDef<BrowseRow> = { id: 'excerpt', accessorKey: 'excerpt', header: 'Excerpt', enableColumnFilter: true }
+const uidColumn: ColumnDef<BrowseRow> = { id: 'uid', accessorKey: 'uid', header: 'UID', enableSorting: false, enableColumnFilter: false }
+
+export const createBrowseColumns = (): ReadonlyArray<ColumnDef<BrowseRow>> =>
+  [titleColumn, dateColumn, topicsColumn, sourceColumn, excerptColumn, uidColumn]

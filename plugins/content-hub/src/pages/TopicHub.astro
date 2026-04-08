@@ -2,27 +2,23 @@
 import { getCollection } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import { getHubData } from '../infra/hub-data.ts'
-import {
-  getRelatedTopics,
-  getChildTopics,
-  getSiblingTopics,
-} from '../taxonomy.ts'
 import { loadTaxonomyGraph } from '../transform/ancestors.ts'
 import { toBrowseData } from '../browse.ts'
+import { buildTopicHubRoutes } from './static-paths.ts'
+import type { ResolvedConfig } from '../config.ts'
 // @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
 import PageShell from '../components/PageShell.astro'
-import ArticleCard from '../components/ArticleCard.astro'
 import Breadcrumb from '../components/Breadcrumb.astro'
-import Pagination from '../components/Pagination.astro'
 import TopicList from '../components/TopicList.astro'
 import TopicBadge from '../components/TopicBadge.astro'
+import BrowseTable from '../components/BrowseTable.astro'
 
 export const prerender = true
 
-export const getStaticPaths = (async ({ paginate }) => {
-  const data = await getHubData(config as any, getCollection, {
+export const getStaticPaths = (async () => {
+  const data = await getHubData(config as unknown as ResolvedConfig, getCollection, {
     logger: {
       warn: (msg: string) => console.warn(msg),
       info: (msg: string) => console.warn(`INFO: ${msg}`),
@@ -31,27 +27,12 @@ export const getStaticPaths = (async ({ paginate }) => {
   })
 
   const graph = await loadTaxonomyGraph()
-
-  return [...data.grouped.entries()].flatMap(([slug, entries]) => {
-    const label = data.topicMap.get(slug) ?? slug
-
-    const related = getRelatedTopics(slug, data.published, graph)
-    const children = getChildTopics(slug, graph)
-    const siblings = getSiblingTopics(slug, graph)
-    const ancestorChain = graph ? graph.ancestors(slug) : []
-
-    return paginate([...entries], {
-      params: { topic: slug },
-      props: { slug, label, related, children, siblings, ancestorChain },
-      pageSize: config.pagination.pageSize,
-    })
-  })
+  return [...buildTopicHubRoutes(data, graph, config.browse.staticFallbackCount)]
 }) satisfies GetStaticPaths
 
-const { page, slug, label, related, children, siblings, ancestorChain } = Astro.props
+const { slug, label, related, children, siblings, ancestorChain, entries } = Astro.props
 const articleBase = config.permalinks.articleBase
 const taxonomyRoute = config.taxonomy.route
-const totalPages = Math.ceil(page.total / config.pagination.pageSize)
 
 const breadcrumbItems = [
   { label: config.locale.indexTitle, href: `/${articleBase}` },
@@ -66,13 +47,13 @@ const breadcrumbItems = [
 
 <PageShell title={label} lang={config.locale.lang} pagefindIgnore>
   <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
-  <script type="application/json" id="browse-data" set:html={JSON.stringify(toBrowseData(page.data))} />
+  <script is:inline type="application/json" id="browse-data" set:html={JSON.stringify(toBrowseData(entries))} />
   <main class="ch-topic-hub">
     <Breadcrumb items={breadcrumbItems} />
 
     <header>
       <h1>{label}</h1>
-      <p class="ch-topic-entry-count">{page.total} articles</p>
+      <p class="ch-topic-entry-count">{entries.length} articles</p>
     </header>
 
     {children.length > 0 && (
@@ -87,17 +68,13 @@ const breadcrumbItems = [
     )}
 
     <section aria-label={`Articles about ${label}`}>
-      {page.data.map((entry: any) => (
-        <ArticleCard
-          entry={entry}
-          baseUrl={articleBase}
-          taxonomyBase={taxonomyRoute}
-          dateLocale={config.locale.dateLocale}
-        />
-      ))}
+      <BrowseTable rows={toBrowseData(entries)} />
+      <noscript>
+        <p class="ch-noscript-note">
+          Enable JavaScript for full sorting, filtering, and pagination.
+        </p>
+      </noscript>
     </section>
-
-    <Pagination page={page.currentPage} totalPages={totalPages} baseUrl={`${taxonomyRoute}/${slug}`} />
 
     {siblings.length > 0 && (
       <section class="ch-topic-section" aria-label="Sibling topics">
@@ -149,5 +126,13 @@ const breadcrumbItems = [
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
+  }
+  .ch-noscript-note {
+    font-size: 0.875em;
+    color: var(--ch-text-muted, #6b7280);
+    margin-top: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--ch-surface, #f3f4f6);
+    border-radius: var(--ch-radius, 0.375rem);
   }
 </style>

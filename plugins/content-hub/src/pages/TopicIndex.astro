@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content'
 import { getHubData } from '../infra/hub-data.ts'
 import { topicsWithCounts, getTopicHierarchy } from '../taxonomy.ts'
 import { loadTaxonomyGraph } from '../transform/ancestors.ts'
+import type { ResolvedConfig } from '../config.ts'
 // @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
@@ -13,7 +14,7 @@ import Breadcrumb from '../components/Breadcrumb.astro'
 
 export const prerender = true
 
-const data = await getHubData(config as any, getCollection, {
+const data = await getHubData(config as ResolvedConfig, getCollection, {
   logger: {
     warn: (msg: string) => console.warn(msg),
     info: (msg: string) => console.warn(`INFO: ${msg}`),

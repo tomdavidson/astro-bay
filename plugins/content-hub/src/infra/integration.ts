@@ -81,7 +81,7 @@ const injectRoutes = (
   const { articleBase, taxonomyRoute } = getRouteConfig(config)
 
   injectRoute({
-    pattern: `${articleBase}/[...page]`,
+    pattern: articleBase,
     entrypoint: 'astro-content-hub/src/pages/ArticleIndex.astro',
     prerender: true,
   })
@@ -101,7 +101,7 @@ const injectRoutes = (
   }
 
   injectRoute({
-    pattern: `${taxonomyRoute}/[topic]/[[...page]]`,
+    pattern: `${taxonomyRoute}/[topic]`,
     entrypoint: 'astro-content-hub/src/pages/TopicHub.astro',
     prerender: true,
   })
@@ -139,7 +139,7 @@ const handleSetup = async (
   const { articleBase, taxonomyRoute } = getRouteConfig(partial)
   const indexLog = partial.taxonomy.indexPage ? `, ${taxonomyRoute}` : ''
   ctx.logger.info(
-    `astro-content-hub [${partial.name}]: registered — ${articleBase}/[...page], ${articleBase}/[uid], ${taxonomyRoute}/[topic]/[[...page]]${indexLog}`,
+    `astro-content-hub [${partial.name}]: registered — ${articleBase}, ${articleBase}/[uid], ${taxonomyRoute}/[topic]${indexLog}`,
   )
 }
 
@@ -191,53 +191,48 @@ export type ContentHubIntegration = AstroIntegration & {
 
 
 
+// eslint-disable-next-line functional/prefer-readonly-type -- mutated once in astro:config:done lifecycle hook
+type HubState = { resolvedFullConfig: ResolvedConfig }
+
+const buildResolveHubData = (state: HubState) => async () => {
+  const { getCollection } = await import('astro:content')
+  const { getHubData } = await import('./hub-data.ts')
+  return getHubData(state.resolvedFullConfig, getCollection, {
+    logger: {
+      warn: (msg: string) => console.warn(msg),
+      info: (msg: string) => console.warn(`INFO: ${msg}`),
+    },
+    command: 'build',
+  })
+}
+
+const buildLazyArticles = (state: HubState, resolveHubData: ReturnType<typeof buildResolveHubData>) => ({
+  name: 'content-hub-articles' as const,
+  provide: async () => {
+    const data = await resolveHubData()
+    const { siteUrl: site, permalinks: { articleBase }, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
+    const entries: ReadonlyArray<NormalizedEntry> = [...data.uidMap.values()]
+    return createContentHubProvider({ site, articleBase, taxonomyRoute, entries }).provide()
+  },
+})
+
+const buildLazyTopics = (state: HubState, resolveHubData: ReturnType<typeof buildResolveHubData>) => ({
+  name: 'content-hub-topics' as const,
+  provide: async () => {
+    const data = await resolveHubData()
+    const { siteUrl: site, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
+    return createTopicsProvider({ site, taxonomyRoute, topicMap: data.topicMap, groupedEntries: data.grouped }).provide()
+  },
+})
+
 export const contentHub = (options: PluginOptions): ContentHubIntegration => {
   const partial = resolveOrThrow(options)
-  const state = { resolvedFullConfig: { ...partial, siteUrl: '' } satisfies ResolvedConfig }
-
-  const resolveHubData = async () => {
-    const { getCollection } = await import('astro:content')
-    const { getHubData } = await import('./hub-data.ts')
-
-    return getHubData(state.resolvedFullConfig, getCollection, {
-      logger: {
-        warn: (msg: string) => console.warn(msg),
-        info: (msg: string) => console.warn(`INFO: ${msg}`),
-      },
-      command: 'build',
-    })
-  }
+  const state: HubState = { resolvedFullConfig: { ...partial, siteUrl: '' } satisfies ResolvedConfig }
+  const resolveHubData = buildResolveHubData(state)
 
   const getJsonLdProviders = () => {
     if (!state.resolvedFullConfig.jsonld.enabled) return []
-
-    const lazyArticles = {
-      name: 'content-hub-articles' as const,
-      provide: async () => {
-        const data = await resolveHubData()
-        const { siteUrl: site, permalinks: { articleBase }, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
-        const entries: ReadonlyArray<NormalizedEntry> = [...data.uidMap.values()]
-        const provider = createContentHubProvider({ site, articleBase, taxonomyRoute, entries })
-        return provider.provide()
-      },
-    }
-
-    const lazyTopics = {
-      name: 'content-hub-topics' as const,
-      provide: async () => {
-        const data = await resolveHubData()
-        const { siteUrl: site, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
-        const provider = createTopicsProvider({
-          site,
-          taxonomyRoute,
-          topicMap: data.topicMap,
-          groupedEntries: data.grouped,
-        })
-        return provider.provide()
-      },
-    }
-
-    return [lazyArticles, lazyTopics]
+    return [buildLazyArticles(state, resolveHubData), buildLazyTopics(state, resolveHubData)]
   }
 
   return {
@@ -248,6 +243,7 @@ export const contentHub = (options: PluginOptions): ContentHubIntegration => {
         await handleSetup(ctx, partial, state.resolvedFullConfig)
       },
       'astro:config:done': ({ config, injectTypes }) => {
+         
         state.resolvedFullConfig = handleConfigDone(config.site, injectTypes, partial)
       },
       'astro:build:done': ({ logger }) => {

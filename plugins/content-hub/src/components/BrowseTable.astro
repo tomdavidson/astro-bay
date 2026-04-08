@@ -1,0 +1,75 @@
+---
+import type { BrowseRow } from '../browse.ts'
+
+type Props = {
+  readonly rows: ReadonlyArray<BrowseRow>
+}
+
+const { rows } = Astro.props as Props
+
+const formatDate = (value: string | undefined): string => {
+  if (value === undefined) return ''
+  return new Date(value).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+---
+
+{rows.length === 0 ? (
+  <p class="ch-browse-empty">No entries found.</p>
+) : (
+  <div class="ch-browse-table-wrap">
+    <table class="ch-browse-table">
+      <thead>
+        <tr>
+          <th scope="col">Title</th>
+          <th scope="col">Date</th>
+          <th scope="col">Topics</th>
+          <th scope="col">Source</th>
+          <th scope="col">Excerpt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr>
+            <td data-label="Title">{row.title}</td>
+            <td data-label="Date">{formatDate(row.date)}</td>
+            <td data-label="Topics">{row.topics.join(', ')}</td>
+            <td data-label="Source">{row.source}</td>
+            <td data-label="Excerpt">{row.excerpt ?? ''}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
+<style>
+  .ch-browse-table-wrap {
+    overflow-x: auto;
+  }
+
+  .ch-browse-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .ch-browse-table th,
+  .ch-browse-table td {
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--ch-border, #e5e7eb);
+  }
+
+  .ch-browse-table th {
+    font-weight: 600;
+  }
+
+  .ch-browse-empty {
+    color: var(--ch-text-muted, #6b7280);
+  }
+</style>

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { InjectedRoute } from 'astro'
 import type { EntryTransform } from '../types.ts'
 import {
     contentHub,
@@ -8,40 +7,13 @@ import {
     resetTransformRegistry,
 } from './integration.ts'
 import { resetRegistry } from './registry.ts'
+import {
+    makeConfigSetupContext,
+    makeConfigDoneContext,
+    makeBuildDoneContext,
+} from '@astro-bay/test-utils/astro-hooks'
 
 const noopTransform: EntryTransform = async (entry) => entry
-
-type SetupContext = {
-    readonly isRestart: boolean
-    readonly command: string
-    readonly updateConfig: (config: Record<string, unknown>) => void
-    readonly injectRoute: (route: InjectedRoute) => void
-    readonly logger: { readonly info: (msg: string) => void }
-}
-
-const makeSetupContext = (
-    overrides?: Partial<SetupContext>,
-): {
-    readonly ctx: SetupContext
-    readonly updateConfig: ReturnType<typeof vi.fn>
-    readonly injectRoute: ReturnType<typeof vi.fn>
-    readonly info: ReturnType<typeof vi.fn>
-} => {
-    const updateConfig = vi.fn()
-    const injectRoute = vi.fn()
-    const info = vi.fn()
-
-    const ctx: SetupContext = {
-        isRestart: false,
-        command: 'build',
-        updateConfig,
-        injectRoute,
-        logger: { info },
-        ...overrides,
-    }
-
-    return { ctx, updateConfig, injectRoute, info }
-}
 
 const getHooks = (integration: ReturnType<typeof contentHub>) => integration.hooks
 
@@ -94,15 +66,15 @@ describe('contentHub', () => {
         })
 
         const hooks = getHooks(integration)
-        const { ctx, injectRoute, updateConfig, info } = makeSetupContext()
+        const { params, injectRoute, updateConfig, info } = makeConfigSetupContext()
 
-        await hooks['astro:config:setup']?.(ctx as never)
+        await hooks['astro:config:setup']?.(params)
 
         expect(updateConfig).toHaveBeenCalledTimes(1)
         expect(injectRoute).toHaveBeenCalledTimes(4)
 
         expect(injectRoute).toHaveBeenNthCalledWith(1, {
-            pattern: 'articles/[...page]',
+            pattern: 'articles',
             entrypoint: 'astro-content-hub/src/pages/ArticleIndex.astro',
             prerender: true,
         })
@@ -117,7 +89,7 @@ describe('contentHub', () => {
             prerender: true,
         })
         expect(injectRoute).toHaveBeenNthCalledWith(4, {
-            pattern: 'topics/[topic]/[[...page]]',
+            pattern: 'topics/[topic]',
             entrypoint: 'astro-content-hub/src/pages/TopicHub.astro',
             prerender: true,
         })
@@ -133,14 +105,14 @@ describe('contentHub', () => {
         })
 
         const hooks = getHooks(integration)
-        const { ctx, injectRoute } = makeSetupContext()
+        const { params, injectRoute } = makeConfigSetupContext()
 
-        await hooks['astro:config:setup']?.(ctx as never)
+        await hooks['astro:config:setup']?.(params)
 
         expect(injectRoute).toHaveBeenCalledTimes(3)
 
         expect(injectRoute).toHaveBeenNthCalledWith(1, {
-            pattern: 'writing/[...page]',
+            pattern: 'writing',
             entrypoint: 'astro-content-hub/src/pages/ArticleIndex.astro',
             prerender: true,
         })
@@ -150,7 +122,7 @@ describe('contentHub', () => {
             prerender: true,
         })
         expect(injectRoute).toHaveBeenNthCalledWith(3, {
-            pattern: 'subjects/[topic]/[[...page]]',
+            pattern: 'subjects/[topic]',
             entrypoint: 'astro-content-hub/src/pages/TopicHub.astro',
             prerender: true,
         })
@@ -174,12 +146,12 @@ describe('contentHub', () => {
         const secondHooks = getHooks(second)
 
         await firstHooks['astro:config:setup']!(
-            makeSetupContext({ isRestart: false }).ctx as never,
+            makeConfigSetupContext({ isRestart: false }).params,
         )
 
         await expect(
             secondHooks['astro:config:setup']!(
-                makeSetupContext({ isRestart: true }).ctx as never,
+                makeConfigSetupContext({ isRestart: true }).params,
             ),
         ).rejects.toThrow('duplicate hub name')
     })
@@ -202,12 +174,12 @@ describe('contentHub', () => {
         const secondHooks = getHooks(second)
 
         await firstHooks['astro:config:setup']!(
-            makeSetupContext({ isRestart: false }).ctx as never,
+            makeConfigSetupContext({ isRestart: false }).params,
         )
 
         await expect(
             secondHooks['astro:config:setup']!(
-                makeSetupContext({ isRestart: true }).ctx as never,
+                makeConfigSetupContext({ isRestart: true }).params,
             ),
         ).rejects.toThrow('permalinks.articleBase')
     })
@@ -230,17 +202,17 @@ describe('contentHub', () => {
         const secondHooks = getHooks(second)
 
         await firstHooks['astro:config:setup']!(
-            makeSetupContext({ isRestart: false }).ctx as never,
+            makeConfigSetupContext({ isRestart: false }).params,
         )
 
         await expect(
             secondHooks['astro:config:setup']!(
-                makeSetupContext({ isRestart: true }).ctx as never,
+                makeConfigSetupContext({ isRestart: true }).params,
             ),
         ).rejects.toThrow('taxonomy.route')
     })
 
-    test('astro:config:done_injectsTypes', () => {
+    test('astro:config:done_injectsTypes', async () => {
         const integration = contentHub({
             name: 'writing',
             collections: ['vault'],
@@ -248,12 +220,9 @@ describe('contentHub', () => {
         })
 
         const hooks = getHooks(integration)
-        const injectTypes = vi.fn()
+        const { params, injectTypes } = makeConfigDoneContext({ site: 'https://example.com' })
 
-        hooks['astro:config:done']?.({
-            config: { site: 'https://example.com' },
-            injectTypes,
-        } as never)
+        await hooks['astro:config:done']?.(params)
 
         expect(injectTypes).toHaveBeenCalledTimes(1)
         expect(injectTypes).toHaveBeenCalledWith(
@@ -263,7 +232,7 @@ describe('contentHub', () => {
         )
     })
 
-    test('astro:config:done_withoutSite_warns', () => {
+    test('astro:config:done_withoutSite_warns', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
         const integration = contentHub({
             name: 'writing',
@@ -271,27 +240,24 @@ describe('contentHub', () => {
         })
 
         const hooks = getHooks(integration)
-        const injectTypes = vi.fn()
+        const { params } = makeConfigDoneContext({ site: undefined })
 
-        hooks['astro:config:done']?.({
-            config: { site: undefined },
-            injectTypes,
-        } as never)
+        await hooks['astro:config:done']?.(params)
 
         expect(warn).toHaveBeenCalledTimes(1)
         expect(String(warn.mock.calls[0]?.[0])).toContain('`site` not set in astro.config')
     })
 
-    test('astro:build:done_logsBuildComplete', () => {
+    test('astro:build:done_logsBuildComplete', async () => {
         const integration = contentHub({
             name: 'writing',
             collections: ['vault'],
         })
 
         const hooks = getHooks(integration)
-        const info = vi.fn()
+        const { params, info } = makeBuildDoneContext()
 
-        hooks['astro:build:done']?.({ logger: { info } } as never)
+        await hooks['astro:build:done']?.(params)
 
         expect(info).toHaveBeenCalledTimes(1)
         expect(String(info.mock.calls[0]?.[0])).toContain('build complete')

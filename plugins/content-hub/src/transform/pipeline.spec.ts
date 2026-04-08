@@ -51,7 +51,8 @@ describe('runTransforms', () => {
 
   test('runs transforms sequentially per entry', async () => {
     const entry = makeEntry()
-    const seen: readonly string[] = []
+    // eslint-disable-next-line functional/prefer-readonly-type -- mutable accumulator for test observation
+    const seen: string[] = []
 
     const first: EntryTransform = async current => {
       seen.push(`first:${current.title}`)

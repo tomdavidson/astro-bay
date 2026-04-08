@@ -8,6 +8,7 @@
     "./components": "./src/components/index.ts",
     "./components/ArticleCard": "./src/components/ArticleCard.astro",
     "./components/Breadcrumb": "./src/components/Breadcrumb.astro",
+    "./components/BrowseTable": "./src/components/BrowseTable.astro",
     "./components/DateDisplay": "./src/components/DateDisplay.astro",
     "./components/DraftBanner": "./src/components/DraftBanner.astro",
     "./components/PageShell": "./src/components/PageShell.astro",
@@ -29,7 +30,7 @@
   },
   "peerDependencies": {
     "@astro-bay/jsonld": ">=0.1.0",
-    "astro": ">=5.0.0",
+    "astro": "catalog:",
     "zod": ">=3.23.0"
   },
   "peerDependenciesMeta": {
@@ -43,11 +44,14 @@
     "ts-pattern": "^5.5.0"
   },
   "devDependencies": {
+    "@astro-bay/test-utils": "workspace:*",
     "@astro-bay/jsonld": "workspace:*",
-    "astro": "^5.0.0",
-    "fast-check": "^3.22.0",
-    "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "@astrojs/check": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "fast-check": "catalog:",
+    "typescript": "catalog:",
+    "astro": "catalog:",
+    "vitest": "catalog:"
   },
   "scripts": {
     "test": "vitest run",

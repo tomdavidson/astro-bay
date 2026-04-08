@@ -3,20 +3,20 @@ import { getCollection } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
 import { getHubData } from '../infra/hub-data.ts'
 import { topicsWithCounts } from '../taxonomy.ts'
-import { filterPublished, sortByDate } from '../aggregate.ts'
 import { toBrowseData } from '../browse.ts'
+import { buildArticleIndexRoutes } from './static-paths.ts'
+import type { ResolvedConfig } from '../config.ts'
 // @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
 import PageShell from '../components/PageShell.astro'
-import ArticleCard from '../components/ArticleCard.astro'
 import TopicList from '../components/TopicList.astro'
-import Pagination from '../components/Pagination.astro'
+import BrowseTable from '../components/BrowseTable.astro'
 
 export const prerender = true
 
-export const getStaticPaths = (async ({ paginate }) => {
-  const data = await getHubData(config as any, getCollection, {
+export const getStaticPaths = (async () => {
+  const data = await getHubData(config as ResolvedConfig, getCollection, {
     logger: {
       warn: (msg: string) => console.warn(msg),
       info: (msg: string) => console.warn(`INFO: ${msg}`),
@@ -24,13 +24,12 @@ export const getStaticPaths = (async ({ paginate }) => {
     command: config.astroCommand,
   })
 
-  const published = sortByDate(filterPublished([...data.uidMap.values()]))
-  return paginate(published, { pageSize: config.pagination.pageSize })
+  return buildArticleIndexRoutes(data, config.browse.staticFallbackCount)
 }) satisfies GetStaticPaths
 
-const { page } = Astro.props
+const { entries } = Astro.props
 
-const data = await getHubData(config as any, getCollection, {
+const data = await getHubData(config as ResolvedConfig, getCollection, {
   logger: {
     warn: (msg: string) => console.warn(msg),
     info: (msg: string) => console.warn(`INFO: ${msg}`),
@@ -39,15 +38,13 @@ const data = await getHubData(config as any, getCollection, {
 })
 
 const topics = topicsWithCounts(data.topicMap, data.grouped)
-const articleBase = config.permalinks.articleBase
 const taxonomyRoute = config.taxonomy.route
 const pageTitle = config.locale.indexTitle
-const totalPages = Math.ceil(page.total / config.pagination.pageSize)
 ---
 
 <PageShell title={pageTitle} lang={config.locale.lang} pagefindIgnore>
   <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
-  <script type="application/json" id="browse-data" set:html={JSON.stringify(toBrowseData(sortByDate(filterPublished([...data.uidMap.values()]))))} />
+  <script is:inline type="application/json" id="browse-data" set:html={JSON.stringify(toBrowseData(entries))} />
   <main class="ch-index">
     <h1>{pageTitle}</h1>
 
@@ -61,17 +58,13 @@ const totalPages = Math.ceil(page.total / config.pagination.pageSize)
     )}
 
     <section aria-label="Articles">
-      {page.data.map((entry: any) => (
-        <ArticleCard
-          entry={entry}
-          baseUrl={articleBase}
-          taxonomyBase={taxonomyRoute}
-          dateLocale={config.locale.dateLocale}
-        />
-      ))}
+      <BrowseTable rows={toBrowseData(entries)} />
+      <noscript>
+        <p class="ch-noscript-note">
+          Enable JavaScript for full sorting, filtering, and pagination.
+        </p>
+      </noscript>
     </section>
-
-    <Pagination page={page.currentPage} totalPages={totalPages} baseUrl={articleBase} />
   </main>
 </PageShell>
 
@@ -101,5 +94,13 @@ const totalPages = Math.ceil(page.total / config.pagination.pageSize)
   }
   .ch-all-topics-link:hover {
     text-decoration: underline;
+  }
+  .ch-noscript-note {
+    font-size: 0.875em;
+    color: var(--ch-text-muted, #6b7280);
+    margin-top: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--ch-surface, #f3f4f6);
+    border-radius: var(--ch-radius, 0.375rem);
   }
 </style>

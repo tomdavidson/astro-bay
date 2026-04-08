@@ -263,6 +263,24 @@ Disable JSON-LD generation by setting `jsonld: { enabled: false }` in the integr
 
 Every article index and topic hub page embeds a `<script type="application/json" id="browse-data">` element containing a JSON array of `BrowseRow` objects. This enables client-side table rendering with TanStack Table or similar libraries without an additional data fetch.
 
+#### BrowseTable component
+
+The plugin ships a ready-made Astro component that hydrates the `#browse-data` embed with TanStack Table, providing sort, filter, and pagination out of the box.
+
+```astro
+---
+import { BrowseTable } from '@astro-bay/content-hub/components'
+---
+
+<BrowseTable />
+```
+
+You can also import it from the direct entrypoint: `@astro-bay/content-hub/components/BrowseTable`.
+
+#### Manual hydration
+
+If you need full control over the table UI, you can still hydrate the embed yourself:
+
 ```ts
 import { toBrowseData, createBrowseColumns } from '@astro-bay/content-hub/browse'
 import type { BrowseRow } from '@astro-bay/content-hub/browse'
@@ -340,9 +358,10 @@ If two entries claim the same alias, the build fails with an `AliasCollision` er
 
 | Pattern | Description |
 |---------|-------------|
+| `/articles` | Article index page (client-side browse) |
 | `/articles/[uid]` | Individual article page |
 | `/topics` | Topic index (cloud with counts) |
-| `/topics/[topic]/[[...page]]` | Paginated topic hub page |
+| `/topics/[topic]` | Topic hub page (client-side browse) |
 
 All routes are prerendered at build time (`prerender: true`). Alias redirects are injected into Astro's native `redirects` config, not as injected routes. The adapter generates platform-specific redirect rules automatically.
 
@@ -503,7 +522,8 @@ src/
 │   └── module.ts         Vite virtual module plugin (@astro-bay/content-hub:config)
 └── pages/
     ├── Article.astro     Injected article page with Pagefind attributes
-    ├── TopicHub.astro    Injected paginated topic hub page
+    ├── ArticleIndex.astro     Injected article index page (client-side browse)
+    ├── TopicHub.astro    Injected topic hub page (client-side browse)
     └── TopicIndex.astro  Injected topic cloud index
 test/
 ├── builders.ts           NormalizedEntry test builder
@@ -541,4 +561,4 @@ Features under consideration for future releases:
 
 - **SSR support.** Currently all injected routes are prerendered at build time. A future version will support Astro's `output: 'server'` and `output: 'hybrid'` modes, where article and topic pages render on request using `Astro.params` validation and the exported `paginate()` utility for request-time slicing. This includes cache strategy guidance and 404 handling for unknown UIDs, unknown topic slugs, and out-of-range page numbers.
 - **Configurable search attribute markup.** The current Pagefind `data-pagefind-*` attributes are hardcoded. A future version will support a configurable attribute renderer so the integration can emit markup compatible with other search tools (Algolia, Meilisearch, Lunr, etc.) or disable search attributes entirely.
-- **Browse component.** A ready-made Astro component that hydrates the `#browse-data` embed with TanStack Table, providing sort, filter, and pagination out of the box.
+

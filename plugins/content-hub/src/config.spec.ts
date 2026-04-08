@@ -26,8 +26,7 @@ describe('resolveConfig', () => {
       articleBase: 'articles',
     })
 
-    expect(config.pagination).toEqual({ pageSize: 20 })
-    expect(config.browse).toEqual({ pageSize: 20 })
+    expect(config.browse).toEqual({ pageSize: 20, staticFallbackCount: 20 })
     expect(config.jsonld).toEqual({ enabled: true })
 
     expect(config.locale).toEqual({
@@ -49,7 +48,7 @@ describe('resolveConfig', () => {
         drafts: { showInDev: false },
         taxonomy: { route: 'subjects' },
         permalinks: { articleBase: 'writing' },
-        pagination: { pageSize: 50 },
+        browse: { pageSize: 50 },
         locale: { lang: 'fr' },
       }),
     )
@@ -69,7 +68,7 @@ describe('resolveConfig', () => {
       articleBase: 'writing',
     })
 
-    expect(config.pagination).toEqual({ pageSize: 50 })
+    expect(config.browse).toEqual({ pageSize: 50, staticFallbackCount: 50 })
     expect(config.locale).toEqual({
       lang: 'fr',
       dateLocale: 'en-US',
@@ -132,7 +131,7 @@ describe('resolveConfig', () => {
 
 
 
-  test('resolveConfig_browsePageSize_overridesPaginationPageSize', () => {
+  test('resolveConfig_browsePageSize_overridesDeprecatedPaginationPageSize', () => {
     const config = expectOk(
       resolveConfig({
         collections: ['vault'],
@@ -142,12 +141,12 @@ describe('resolveConfig', () => {
     )
 
     expect(config.browse.pageSize).toBe(30)
-    expect(config.pagination.pageSize).toBe(10)
+    expect(config.browse.staticFallbackCount).toBe(30)
   })
 
 
 
-  test('resolveConfig_paginationPageSize_mapsToLegacyCompat', () => {
+  test('resolveConfig_deprecatedPaginationPageSize_mapsToBrowsePageSize', () => {
     const config = expectOk(
       resolveConfig({
         collections: ['vault'],
@@ -156,6 +155,34 @@ describe('resolveConfig', () => {
     )
 
     expect(config.browse.pageSize).toBe(15)
+    expect(config.browse.staticFallbackCount).toBe(15)
+  })
+
+
+
+  test('resolveConfig_staticFallbackCount_defaultsToBrowsePageSize', () => {
+    const config = expectOk(
+      resolveConfig({
+        collections: ['vault'],
+        browse: { pageSize: 25 },
+      }),
+    )
+
+    expect(config.browse.staticFallbackCount).toBe(25)
+  })
+
+
+
+  test('resolveConfig_staticFallbackCount_explicitOverridesDefault', () => {
+    const config = expectOk(
+      resolveConfig({
+        collections: ['vault'],
+        browse: { pageSize: 20, staticFallbackCount: 5 },
+      }),
+    )
+
+    expect(config.browse.pageSize).toBe(20)
+    expect(config.browse.staticFallbackCount).toBe(5)
   })
 
 
@@ -177,5 +204,13 @@ describe('resolveConfig', () => {
     )
 
     expect(config.jsonld.enabled).toBe(false)
+  })
+
+
+
+  test('resolveConfig_resolvedConfigHasNoPaginationField', () => {
+    const config = expectOk(resolveConfig({ collections: ['vault'] }))
+
+    expect(config).not.toHaveProperty('pagination')
   })
 })

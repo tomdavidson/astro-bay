@@ -48,12 +48,12 @@ const expandWithAncestors = (
  * Returns undefined when the peer is not installed or the graph
  * has no edges (no hierarchy to expand).
  *
- * Uses `.catch(() => { return })` for the dynamic import — the
+ * Uses `.catch(() => undefined)` for the dynamic import — the
  * peer may not be installed.
  */
 export const loadTaxonomyGraph = async (): Promise<TaxonomyGraphModule | undefined> => {
   // @ts-expect-error optional peer, may not be installed
-  const mod: unknown = await import('astro-taxonomy:graph').catch(() => { return })
+  const mod: unknown = await import('astro-taxonomy:graph').catch(() => false as const)
   if (!isTaxonomyGraphModule(mod)) return undefined
   if (mod.edges.length === 0) return undefined
   return mod

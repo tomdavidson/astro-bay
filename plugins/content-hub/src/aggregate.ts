@@ -49,33 +49,37 @@ const getStringArray = (
 const getSourceKind = (collectionName: string): NormalizedEntry['source'] =>
   collectionName === 'vault' || collectionName === 'feed' ? collectionName : 'custom'
 
+type BuildEntryInput = {
+  readonly raw: RawEntry
+  readonly collectionName: string
+  readonly topics: ReadonlyArray<string>
+  readonly rawUid: string | undefined
+}
+
+const buildEntry = (input: BuildEntryInput): NormalizedEntry => ({
+  uid: input.rawUid ?? input.raw.id,
+  sourceId: input.raw.id,
+  collectionName: input.collectionName,
+  title: getString(input.raw.data, 'title') ?? input.raw.id,
+  topics: input.topics,
+  resolvedTopics: [...input.topics],
+  aliases: getStringArray(input.raw.data, 'aliases'),
+  date: input.raw.data['date'] instanceof Date ? input.raw.data['date'] : undefined,
+  draft: typeof input.raw.data['draft'] === 'boolean' ? input.raw.data['draft'] : false,
+  excerpt: getString(input.raw.data, 'excerpt'),
+  source: getSourceKind(input.collectionName),
+  link: getString(input.raw.data, 'link'),
+  meta: {},
+})
+
 export const normalizeEntry = (
   raw: RawEntry,
   collectionName: string,
   fields: { readonly topics: string; readonly feedCategory: string },
 ): { readonly entry: NormalizedEntry; readonly uidFallback: boolean } => {
-  const data = raw.data
-  const rawUid = getNonEmptyString(data, 'uid')
-  const topics = resolveTopics(data, fields.topics, fields.feedCategory)
-
-  return {
-    entry: {
-      uid: rawUid ?? raw.id,
-      sourceId: raw.id,
-      collectionName,
-      title: getString(data, 'title') ?? raw.id,
-      topics,
-      resolvedTopics: [...topics],
-      aliases: getStringArray(data, 'aliases'),
-      date: data['date'] instanceof Date ? data['date'] : undefined,
-      draft: typeof data['draft'] === 'boolean' ? data['draft'] : false,
-      excerpt: getString(data, 'excerpt'),
-      source: getSourceKind(collectionName),
-      link: getString(data, 'link'),
-      meta: {},
-    },
-    uidFallback: rawUid === undefined,
-  }
+  const rawUid = getNonEmptyString(raw.data, 'uid')
+  const topics = resolveTopics(raw.data, fields.topics, fields.feedCategory)
+  return { entry: buildEntry({ raw, collectionName, topics, rawUid }), uidFallback: rawUid === undefined }
 }
 
 

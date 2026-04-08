@@ -19,7 +19,7 @@ export const feedEntrySchema = z.object({
   topics: z.array(z.string()).default([]),
   aliases: z.array(z.string()).default([]),
   categories: z.array(z.string()).default([]),
-  link: z.string().url(),
+  link: z.string().url({ message: 'Invalid URL' }),
   date: z.coerce.date().optional(),
   draft: z.boolean().default(false),
   excerpt: z.string().optional(),

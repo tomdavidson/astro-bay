@@ -18,35 +18,31 @@ const createTracker = <T>(): CollisionTracker<T> => ({
   collisions: [],
 })
 
-const recordOrCollide = <T>(
-  tracker: CollisionTracker<T>,
-  key: string,
-  value: T,
-): CollisionTracker<T> => {
+const addNewEntry = <T>(tracker: CollisionTracker<T>, key: string, value: T): CollisionTracker<T> => ({
+  ...tracker,
+  seen: new Map([...tracker.seen, [key, value]]),
+})
+
+type CollisionInput<T> = {
+  readonly tracker: CollisionTracker<T>
+  readonly key: string
+  readonly existing: T
+  readonly value: T
+}
+
+const appendCollision = <T>(input: CollisionInput<T>): CollisionTracker<T> => {
+  const { tracker, key, existing, value } = input
+  const found = tracker.collisions.find(c => c.key === key)
+  return found === undefined
+    ? { ...tracker, collisions: [...tracker.collisions, { key, owners: [existing, value] }] }
+    : { ...tracker, collisions: tracker.collisions.map(c => c.key === key ? { ...c, owners: [...c.owners, value] } : c) }
+}
+
+const recordOrCollide = <T>(tracker: CollisionTracker<T>, key: string, value: T): CollisionTracker<T> => {
   const existing = tracker.seen.get(key)
-
-  if (existing === undefined) {
-    return {
-      ...tracker,
-      seen: new Map([...tracker.seen, [key, value]]),
-    }
-  }
-
-  const existingCollision = tracker.collisions.find(collision => collision.key === key)
-
-  return existingCollision === undefined
-    ? {
-      ...tracker,
-      collisions: [...tracker.collisions, { key, owners: [existing, value] }],
-    }
-    : {
-      ...tracker,
-      collisions: tracker.collisions.map(collision =>
-        collision.key === key
-          ? { ...collision, owners: [...collision.owners, value] }
-          : collision,
-      ),
-    }
+  return existing === undefined
+    ? addNewEntry(tracker, key, value)
+    : appendCollision({ tracker, key, existing, value })
 }
 
 export const me = (

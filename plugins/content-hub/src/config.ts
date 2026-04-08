@@ -20,12 +20,6 @@ export type PermalinksConfig = {
 
 
 
-export type PaginationConfig = {
-  readonly pageSize: number
-}
-
-
-
 export type LocaleConfig = {
   readonly lang: string
   readonly dateLocale: string
@@ -37,6 +31,7 @@ export type LocaleConfig = {
 
 export type BrowseConfig = {
   readonly pageSize: number
+  readonly staticFallbackCount: number
 }
 
 
@@ -54,8 +49,8 @@ export type PluginOptions = {
   readonly drafts?: DraftConfig
   readonly taxonomy?: Partial<TaxonomyConfig>
   readonly permalinks?: Partial<PermalinksConfig>
-  /** @deprecated Use `browse.pageSize` instead. */
-  readonly pagination?: Partial<PaginationConfig>
+  /** @deprecated Use `browse.pageSize` instead. Will be removed in next major. */
+  readonly pagination?: { readonly pageSize?: number }
   readonly browse?: Partial<BrowseConfig>
   readonly jsonld?: Partial<JsonLdConfig>
   readonly locale?: Partial<LocaleConfig>
@@ -71,7 +66,6 @@ export type ResolvedConfig = {
   readonly drafts: { readonly showInDev: boolean }
   readonly taxonomy: TaxonomyConfig
   readonly permalinks: PermalinksConfig
-  readonly pagination: PaginationConfig
   readonly browse: BrowseConfig
   readonly jsonld: JsonLdConfig
   readonly locale: LocaleConfig
@@ -99,7 +93,7 @@ const DEFAULTS = {
     aliasField: 'aliases',
     articleBase: 'articles',
   },
-  pagination: { pageSize: DEFAULT_PAGE_SIZE },
+  browse: { pageSize: DEFAULT_PAGE_SIZE, staticFallbackCount: DEFAULT_PAGE_SIZE },
   locale: { lang: 'en', dateLocale: 'en-US', indexTitle: '', topicIndexTitle: 'Topics' },
 } as const
 
@@ -110,19 +104,22 @@ const capitalize = (s: string): string =>
 
 
 
-const getPageSize = (opts: PluginOptions): number => {
-  const p = opts.pagination
-  if (p === undefined) return DEFAULTS.pagination.pageSize
-  const size = p.pageSize
-  if (size === undefined) return DEFAULTS.pagination.pageSize
-  return size
+const getBrowsePageSize = (opts: PluginOptions): number => {
+  if (opts.browse?.pageSize !== undefined) return opts.browse.pageSize
+  if (opts.pagination?.pageSize !== undefined) {
+    console.warn(
+      '[astro-content-hub] `pagination.pageSize` is deprecated. Use `browse.pageSize` instead.',
+    )
+    return opts.pagination.pageSize
+  }
+  return DEFAULTS.browse.pageSize
 }
 
 
 
-const getBrowsePageSize = (opts: PluginOptions): number => {
-  if (opts.browse?.pageSize !== undefined) return opts.browse.pageSize
-  return getPageSize(opts)
+const getStaticFallbackCount = (opts: PluginOptions, browsePageSize: number): number => {
+  if (opts.browse?.staticFallbackCount !== undefined) return opts.browse.staticFallbackCount
+  return browsePageSize
 }
 
 
@@ -207,8 +204,8 @@ const validateCollections = (
 
 
 const validatePageSize = (pageSize: number): string | undefined => {
-  if (!Number.isInteger(pageSize)) return '`pagination.pageSize` must be a positive integer'
-  if (pageSize < 1) return '`pagination.pageSize` must be a positive integer'
+  if (!Number.isInteger(pageSize)) return '`browse.pageSize` must be a positive integer'
+  if (pageSize < 1) return '`browse.pageSize` must be a positive integer'
   return undefined
 }
 
@@ -259,35 +256,46 @@ const getFirstError = (
 
 
 
+type ResolvedParts = {
+  readonly opts: PluginOptions
+  readonly taxRoute: string
+  readonly artBase: string
+  readonly browsePageSize: number
+}
+
+const buildResolvedConfig = (parts: ResolvedParts): Omit<ResolvedConfig, 'siteUrl'> => ({
+  name: getName(parts.opts),
+  collections: parts.opts.collections,
+  layout: getLayout(parts.opts),
+  drafts: { ...DEFAULTS.drafts, ...parts.opts.drafts },
+  taxonomy: { ...DEFAULTS.taxonomy, ...parts.opts.taxonomy, route: parts.taxRoute },
+  permalinks: { ...DEFAULTS.permalinks, ...parts.opts.permalinks, articleBase: parts.artBase },
+  browse: {
+    pageSize: parts.browsePageSize,
+    staticFallbackCount: getStaticFallbackCount(parts.opts, parts.browsePageSize),
+  },
+  jsonld: { enabled: getJsonLdEnabled(parts.opts) },
+  locale: {
+    ...DEFAULTS.locale,
+    ...parts.opts.locale,
+    indexTitle: getIndexTitle(parts.opts, parts.artBase),
+    topicIndexTitle: getTopicIndexTitle(parts.opts),
+  },
+  transforms: getTransforms(parts.opts),
+})
+
 export const resolveConfig = (
   opts: PluginOptions,
 ): Result<Omit<ResolvedConfig, 'siteUrl'>, ContentHubError> => {
   const taxRoute = getTaxonomyRoute(opts)
   const artBase = getArticleBase(opts)
-  const pSize = getPageSize(opts)
+  const browsePageSize = getBrowsePageSize(opts)
 
-  const sizeError = validatePageSize(pSize)
+  const sizeError = validatePageSize(browsePageSize)
   if (sizeError !== undefined) return err({ type: 'ConfigInvalid', message: sizeError })
 
   const errorMsg = getFirstError(opts, taxRoute, artBase)
   if (errorMsg !== undefined) return err({ type: 'ConfigInvalid', message: errorMsg })
 
-  return ok({
-    name: getName(opts),
-    collections: opts.collections,
-    layout: getLayout(opts),
-    drafts: { ...DEFAULTS.drafts, ...opts.drafts },
-    taxonomy: { ...DEFAULTS.taxonomy, ...opts.taxonomy, route: taxRoute },
-    permalinks: { ...DEFAULTS.permalinks, ...opts.permalinks, articleBase: artBase },
-    pagination: { ...DEFAULTS.pagination, ...opts.pagination, pageSize: pSize },
-    browse: { pageSize: getBrowsePageSize(opts) },
-    jsonld: { enabled: getJsonLdEnabled(opts) },
-    locale: {
-      ...DEFAULTS.locale,
-      ...opts.locale,
-      indexTitle: getIndexTitle(opts, artBase),
-      topicIndexTitle: getTopicIndexTitle(opts),
-    },
-    transforms: getTransforms(opts),
-  })
+  return ok(buildResolvedConfig({ opts, taxRoute, artBase, browsePageSize }))
 }

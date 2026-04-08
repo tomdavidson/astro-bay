@@ -1,6 +1,6 @@
-// eslint-disable-next-line eslint-plugin-import/no-default-export
 import { defineConfig } from 'vitest/config'
 
+// eslint-disable-next-line import/no-default-export -- vitest requires default export
 export default defineConfig({
   test: {
     includeSource: ['src/**/*.ts'],
