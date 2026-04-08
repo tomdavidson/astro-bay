@@ -74,7 +74,9 @@ if (!Object.hasOwn(config, '$schema')) {
 
   const insertion = `
   "$schema": ${JSON.stringify(SCHEMA)},`
-  textWithSchema = `${textWithSchema.slice(0, objectStart + 1)}${insertion}${textWithSchema.slice(objectStart + 1)}`
+  textWithSchema = `${textWithSchema.slice(0, objectStart + 1)}${insertion}${
+    textWithSchema.slice(objectStart + 1)
+  }`
 }
 
 // Use jsonc-parser.modify to apply minimal edits sequentially so comments are preserved

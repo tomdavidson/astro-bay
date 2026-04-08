@@ -71,10 +71,7 @@ export const nodeRules = {
 // ─────────────────────────────────────────────────────────────
 // Immutability (baseline, relaxed for infra)
 // ─────────────────────────────────────────────────────────────
-export const immutabilityRules = {
-  'no-var': 'error',
-  'prefer-const': 'error',
-}
+export const immutabilityRules = { 'no-var': 'error', 'prefer-const': 'error' }
 
 // ─────────────────────────────────────────────────────────────
 // General hygiene
@@ -95,33 +92,22 @@ export const hygieneRules = {
 // Ban direct DB/IO imports in the view layer.
 // ─────────────────────────────────────────────────────────────
 export const boundaryRules = {
-  'no-restricted-syntax': [
-    'warn',
-    {
-      selector: 'Program > FunctionDeclaration',
-      message: 'Extract functions to a .app.ts or .infra.ts file.',
-    },
-    {
-      selector:
-        'Program > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression[params.length>0]',
-      message: 'Extract parameterized logic to a separate TypeScript file.',
-    },
-  ],
-  'no-restricted-imports': [
-    'warn',
-    {
-      patterns: [
-        {
-          group: ['pg', 'mysql*', 'redis', 'ioredis', 'mongoose', '@prisma/*', 'kysely'],
-          message: 'View layer should not import database drivers directly. Delegate to .app.ts.',
-        },
-        {
-          group: ['fs', 'fs/*', 'child_process'],
-          message: 'No raw Node IO in the view layer. Delegate to .infra.ts or .app.ts.',
-        },
-      ],
-    },
-  ],
+  'no-restricted-syntax': ['warn', {
+    selector: 'Program > FunctionDeclaration',
+    message: 'Extract functions to a .app.ts or .infra.ts file.',
+  }, {
+    selector: 'Program > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression[params.length>0]',
+    message: 'Extract parameterized logic to a separate TypeScript file.',
+  }],
+  'no-restricted-imports': ['warn', {
+    patterns: [{
+      group: ['pg', 'mysql*', 'redis', 'ioredis', 'mongoose', '@prisma/*', 'kysely'],
+      message: 'View layer should not import database drivers directly. Delegate to .app.ts.',
+    }, {
+      group: ['fs', 'fs/*', 'child_process'],
+      message: 'No raw Node IO in the view layer. Delegate to .infra.ts or .app.ts.',
+    }],
+  }],
 }
 
 // ─────────────────────────────────────────────────────────────

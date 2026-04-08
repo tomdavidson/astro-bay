@@ -17,7 +17,6 @@ export const functionalRules = {
   'functional/no-return-void': 'error',
 }
 
-
 // ── Arrow function enforcement ─────────────────────────────────
 // ESLint owns the semantic rule (must use arrows).
 // dprint owns arrow formatting (parens, wrapping).
@@ -31,7 +30,6 @@ export const arrowFunctionRules = {
   }],
 }
 
-
 // ── AST selector bans (oxlint cannot do ESQuery selectors) ─────
 export const restrictedSyntax = ['error', {
   selector: ":function > Identifier.params[typeAnnotation.typeAnnotation.type='TSBooleanKeyword']",
@@ -43,7 +41,6 @@ export const restrictedSyntax = ['error', {
   selector: "CallExpression[callee.property.name='_unsafeUnwrapErr']",
   message: 'Use .mapErr(), .andThen(), or .match() instead.',
 }]
-
 
 // ── Domain purity: ban IO imports in domain files ──────────────
 export const domainImportBans = {
@@ -62,13 +59,11 @@ export const domainImportBans = {
   }],
 }
 
-
 // ── Domain layer overrides ─────────────────────────────────────
 export const domainRules = {
   'no-restricted-imports': ['error', domainImportBans],
   'functional/prefer-readonly-type': 'error',
 }
-
 
 // ── Infrastructure: imperative shell allowances ────────────────
 export const infraRules = {
@@ -84,7 +79,6 @@ export const infraRules = {
   }],
   'functional/no-this-expressions': 'off',
 }
-
 
 // ── Tests: fully relax FP rules ──────────────────────────────
 export const testRules = {

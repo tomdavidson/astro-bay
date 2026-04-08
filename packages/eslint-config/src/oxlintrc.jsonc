@@ -7,7 +7,7 @@
     "unicorn",
     "promise",
     "node",
-    "oxc"
+    "oxc",
   ],
   "options": {
     // Now that you installed tsgolint, keep this on.
@@ -15,7 +15,7 @@
     "typeAware": true,
     // Optional (more expensive): TS compiler diagnostics.
     // If you want "tsc-like" feedback during lint, turn on.
-    "typeCheck": true
+    "typeCheck": true,
   },
   "categories": {
     // Maximize baseline coverage.
@@ -26,7 +26,7 @@
     "pedantic": "off",
     "style": "off",
     "restriction": "off",
-    "nursery": "off"
+    "nursery": "off",
   },
   "rules": {
     // ─────────────────────────────────────────────────────────────
@@ -39,8 +39,8 @@
     "max-depth": [
       "error",
       {
-        "max": 2
-      }
+        "max": 2,
+      },
     ],
     // SEMANTIC: caps function size as a complexity proxy.
     // dprint line-wrapping changes visual lines, but this counts logical lines
@@ -50,24 +50,24 @@
       {
         "max": 25,
         "skipBlankLines": true,
-        "skipComments": true
-      }
+        "skipComments": true,
+      },
     ],
     // SEMANTIC: caps cyclomatic complexity (branch count).
     // Pure control-flow metric, no formatting tool can replicate this.
     "complexity": [
       "warn",
       {
-        "max": 5
-      }
+        "max": 5,
+      },
     ],
     // SEMANTIC: caps parameter count to enforce small function signatures.
     // dprint wraps params visually; this limits how many you can have.
     "max-params": [
       "error",
       {
-        "max": 3
-      }
+        "max": 3,
+      },
     ],
     // SEMANTIC: enforces guard-clause pattern (early return, no else after return).
     // This is control-flow shape, not whitespace. dprint cannot decide when
@@ -121,8 +121,8 @@
     "typescript/no-floating-promises": [
       "error",
       {
-        "ignoreVoid": true
-      }
+        "ignoreVoid": true,
+      },
     ],
     "typescript/no-misused-promises": "error",
     "typescript/promise-function-async": "off",
@@ -155,7 +155,7 @@
     // Discriminated unions over interfaces: enforce `type` keyword
     "typescript/consistent-type-definitions": [
       "error",
-      "type"
+      "type",
     ],
     // Keep TS escape hatches honest
     "typescript/ban-ts-comment": [
@@ -164,8 +164,8 @@
         "ts-ignore": "allow-with-description",
         "ts-expect-error": "allow-with-description",
         "ts-nocheck": true,
-        "minimumDescriptionLength": 5
-      }
+        "minimumDescriptionLength": 5,
+      },
     ],
     // ─────────────────────────────────────────────────────────────
     // MODULE HYGIENE / IMPORTS
@@ -208,9 +208,9 @@
       {
         "allow": [
           "error",
-          "warn"
-        ]
-      }
+          "warn",
+        ],
+      },
     ],
     "no-debugger": "error",
     "no-eval": "error",
@@ -223,16 +223,16 @@
         "ignore": [
           0,
           1,
-          -1
+          -1,
         ],
-        "enforceConst": true
-      }
+        "enforceConst": true,
+      },
     ],
     "no-void": [
       "error",
       {
-        "allowAsStatement": true
-      }
+        "allowAsStatement": true,
+      },
     ],
     "unicorn/no-empty-file": "error",
     // Subtle "dead code" / refactor safety
@@ -251,14 +251,14 @@
     "no-bitwise": "warn",
     "arrow-body-style": [
       "warn",
-      "as-needed"
+      "as-needed",
     ],
     "unicorn/prefer-ternary": [
       "warn",
-      "only-single-line"
+      "only-single-line",
     ],
     // Positive predicates: prefer `if (ready)` over `if (!notReady)`
-    "unicorn/no-negated-condition": "warn"
+    "unicorn/no-negated-condition": "warn",
   },
   "overrides": [
     // ─────────────────────────────────────────────────────────────
@@ -268,7 +268,7 @@
     {
       "files": [
         "**/*.domain.ts",
-        "**/domain/**/*.ts"
+        "**/domain/**/*.ts",
       ],
       "rules": {
         // Domain must be pure. Ban all IO-related imports.
@@ -288,8 +288,8 @@
         "typescript/no-unsafe-assignment": "error",
         "typescript/no-unsafe-call": "error",
         "typescript/no-unsafe-member-access": "error",
-        "typescript/strict-boolean-expressions": "error"
-      }
+        "typescript/strict-boolean-expressions": "error",
+      },
     },
     // ─────────────────────────────────────────────────────────────
     // INFRASTRUCTURE: relaxed layer — repos, adapters, IO, CLI,
@@ -300,7 +300,7 @@
       "files": [
         "**/*.infra.ts",
         "**/infra/**/*.ts",
-        "src/cli/**/*.ts"
+        "src/cli/**/*.ts",
       ],
       "rules": {
         // Loops and forEach are acceptable in IO code (warn, not error)
@@ -314,20 +314,20 @@
           {
             "max": 40,
             "skipBlankLines": true,
-            "skipComments": true
-          }
+            "skipComments": true,
+          },
         ],
         "complexity": [
           "warn",
           {
-            "max": 8
-          }
+            "max": 8,
+          },
         ],
         "max-depth": [
           "warn",
           {
-            "max": 3
-          }
+            "max": 3,
+          },
         ],
         // Classes allowed with architectural suffixes only.
         // (This mirrors the ESLint functional/no-classes ignoreIdentifierPattern.)
@@ -335,8 +335,8 @@
         // so this is a full allowance. Convention: only Controller, Adapter,
         // Module, Client, Provider, Gateway suffixes.
         "typescript/no-extraneous-class": "off",
-        "class-methods-use-this": "off"
-      }
+        "class-methods-use-this": "off",
+      },
     },
     // ─────────────────────────────────────────────────────────────
     // FRAMEWORK ENTRY POINTS: default export required by convention
@@ -345,11 +345,11 @@
     {
       "files": [
         "**/*.page.ts",
-        "**/*.astro"
+        "**/*.astro",
       ],
       "rules": {
-        "import/no-default-export": "off"
-      }
+        "import/no-default-export": "off",
+      },
     },
     // ─────────────────────────────────────────────────────────────
     // TESTS: file type, not an architectural layer.
@@ -359,7 +359,7 @@
       "files": [
         "**/*.spec.ts",
         "**/*.test.ts",
-        "src/test/**/*.ts"
+        "src/test/**/*.ts",
       ],
       "rules": {
         "max-params": "off",
@@ -382,13 +382,13 @@
         "unicorn/no-array-reduce": "off",
         "unicorn/consistent-function-scoping": "off",
         "typescript/no-unsafe-type-assertion": "off",
-        "node/no-process-env": "off"
-      }
-    }
+        "node/no-process-env": "off",
+      },
+    },
   ],
   "ignorePatterns": [
     "node_modules",
     "dist",
-    "**/*.astro"
-  ]
+    "**/*.astro",
+  ],
 }

@@ -24,18 +24,13 @@
  *   import { astroFrontmatterRules } from '@astro-bay/eslint-config-astro/rules'
  */
 
-
 import astroPlugin from 'eslint-plugin-astro'
 import functional from 'eslint-plugin-functional'
-import unicorn from 'eslint-plugin-unicorn'
 import nodePlugin from 'eslint-plugin-n'
+import unicorn from 'eslint-plugin-unicorn'
 import tseslint from 'typescript-eslint'
 
-import {
-  astroFrontmatterRules,
-  astroClientScriptRules,
-} from './rules.mjs'
-
+import { astroClientScriptRules, astroFrontmatterRules } from './rules.mjs'
 
 /**
  * @param {object} [options]
@@ -53,88 +48,60 @@ const astroConfig = (options = {}) => {
     clientScriptRules: clientOverrides = {},
   } = options
 
-
   const astroFiles = ['**/*.astro', ...extraFiles]
-
 
   const baseConfigs = astroPlugin.configs['flat/recommended']
 
-
-  const parserOptions = {
-    extraFileExtensions: ['.astro'],
-    parser: tseslint.parser,
-    projectService: true,
-  }
+  const parserOptions = { extraFileExtensions: ['.astro'], parser: tseslint.parser, project: true }
 
   if (tsconfigRootDir) {
     parserOptions.tsconfigRootDir = tsconfigRootDir
   }
 
-
-  const clientParserOptions = {
-    projectService: true,
-  }
+  const clientParserOptions = { project: true }
 
   if (tsconfigRootDir) {
     clientParserOptions.tsconfigRootDir = tsconfigRootDir
   }
 
-
   const pluginMap = { functional, unicorn, n: nodePlugin }
-
 
   const configs = [
     ...baseConfigs,
-
 
     // Astro frontmatter (the --- block)
     {
       name: '@astro-bay/eslint-config-astro/frontmatter',
       files: astroFiles,
-      languageOptions: {
-        parserOptions,
-      },
+      languageOptions: { parserOptions },
       plugins: { ...pluginMap },
-      rules: {
-        ...astroFrontmatterRules,
-        ...ruleOverrides,
-      },
+      rules: { ...astroFrontmatterRules, ...ruleOverrides },
     },
-
 
     // Client-side <script> tags extracted by eslint-plugin-astro
     {
       name: '@astro-bay/eslint-config-astro/client-scripts',
       files: ['**/*.astro/*.ts', '**/*.astro/*.js'],
-      languageOptions: {
-        parser: tseslint.parser,
-        parserOptions: clientParserOptions,
-      },
+      languageOptions: { parser: tseslint.parser, parserOptions: clientParserOptions },
       plugins: { ...pluginMap },
-      rules: {
-        ...astroClientScriptRules,
-        ...clientOverrides,
-      },
+      rules: { ...astroClientScriptRules, ...clientOverrides },
     },
   ]
-
 
   return configs
 }
 
-
 export default astroConfig
 export { astroConfig }
 
-
 export {
-  astroFrontmatterRules,
   astroClientScriptRules,
-  structuralRules,
-  functionalRules,
-  unicornRules,
-  nodeRules,
-  immutabilityRules,
-  hygieneRules,
+  astroFrontmatterRules,
   boundaryRules,
+  functionalRules,
+  hygieneRules,
+  immutabilityRules,
+  nodeRules,
+  structuralRules,
+  unicornRules,
 } from './rules.mjs'

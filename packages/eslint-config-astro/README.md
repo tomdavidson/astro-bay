@@ -31,9 +31,7 @@ pnpm add -D @astro-bay/eslint-config-astro eslint
 import astroConfig from '@astro-bay/eslint-config-astro'
 import { defineConfig } from 'eslint/config'
 
-export default defineConfig(
-  ...astroConfig({ tsconfigRootDir: import.meta.dirname }),
-)
+export default defineConfig(...astroConfig({ tsconfigRootDir: import.meta.dirname }))
 ```
 
 Then run:
@@ -66,28 +64,28 @@ import { astroFrontmatterRules, structuralRules } from '@astro-bay/eslint-config
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `tsconfigRootDir` | `string` | - | Root dir for tsconfig resolution (use `import.meta.dirname`) |
-| `files` | `string[]` | `['**/*.astro']` | Additional file globs (merged with default) |
-| `rules` | `RulesRecord` | `{}` | Override/extend frontmatter rules |
-| `clientScriptRules` | `RulesRecord` | `{}` | Override/extend client script rules |
+| Option              | Type          | Default          | Description                                                  |
+| ------------------- | ------------- | ---------------- | ------------------------------------------------------------ |
+| `tsconfigRootDir`   | `string`      | -                | Root dir for tsconfig resolution (use `import.meta.dirname`) |
+| `files`             | `string[]`    | `['**/*.astro']` | Additional file globs (merged with default)                  |
+| `rules`             | `RulesRecord` | `{}`             | Override/extend frontmatter rules                            |
+| `clientScriptRules` | `RulesRecord` | `{}`             | Override/extend client script rules                          |
 
 ## Rule Groups
 
 All rule groups are individually importable from `@astro-bay/eslint-config-astro/rules`:
 
-| Export | Purpose |
-|---|---|
-| `structuralRules` | max-depth, complexity, max-params, no-else-return, no-nested-ternary, max-statements |
-| `functionalRules` | FP relaxations: no-let warn, try/throw/expression-statements off |
-| `unicornRules` | Declarative iteration, error quality, no-null, prefer-spread |
-| `nodeRules` | process.env allowed, module hygiene |
-| `immutabilityRules` | no-var error, prefer-const error |
-| `hygieneRules` | no-console, no-eval, eqeqeq, no-throw-literal |
-| `boundaryRules` | Warns on inline function defs, bans direct DB/IO imports |
-| `astroFrontmatterRules` | All of the above composed |
-| `astroClientScriptRules` | Client script variant (tighter statements, no boundary rules) |
+| Export                   | Purpose                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `structuralRules`        | max-depth, complexity, max-params, no-else-return, no-nested-ternary, max-statements |
+| `functionalRules`        | FP relaxations: no-let warn, try/throw/expression-statements off                     |
+| `unicornRules`           | Declarative iteration, error quality, no-null, prefer-spread                         |
+| `nodeRules`              | process.env allowed, module hygiene                                                  |
+| `immutabilityRules`      | no-var error, prefer-const error                                                     |
+| `hygieneRules`           | no-console, no-eval, eqeqeq, no-throw-literal                                        |
+| `boundaryRules`          | Warns on inline function defs, bans direct DB/IO imports                             |
+| `astroFrontmatterRules`  | All of the above composed                                                            |
+| `astroClientScriptRules` | Client script variant (tighter statements, no boundary rules)                        |
 
 ## Dependencies
 

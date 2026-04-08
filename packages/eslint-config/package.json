@@ -14,7 +14,15 @@
     "install-oxlintrc": "./src/install-oxlintrc.mjs"
   },
   "files": ["src"],
-  "keywords": ["eslint", "eslintconfig", "oxlint", "typescript", "functional", "clean-architecture", "boundaries"],
+  "keywords": [
+    "eslint",
+    "eslintconfig",
+    "oxlint",
+    "typescript",
+    "functional",
+    "clean-architecture",
+    "boundaries"
+  ],
   "license": "MIT",
   "dependencies": {
     "eslint-plugin-boundaries": "^6.0.0",

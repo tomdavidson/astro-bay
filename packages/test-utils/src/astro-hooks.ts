@@ -39,10 +39,7 @@ export const makeConfigSetupContext = (
 }
 
 export const makeConfigDoneContext = (
-  overrides?: {
-    readonly site?: string | undefined
-    readonly buildOutput?: ConfigDoneParams['buildOutput']
-  },
+  overrides?: { readonly site?: string | undefined; readonly buildOutput?: ConfigDoneParams['buildOutput'] },
 ) => {
   const injectTypes = vi.fn()
   const setAdapter = vi.fn()
