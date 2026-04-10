@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { buildTypeIndex } from './type-index.domain.ts'
+import { buildTypeRegistration } from './test/builders.ts'
 
 describe('buildTypeIndex', () => {
   test('buildTypeIndex|singleRegistration|producesWebSite', () => {
     const result = JSON.parse(
       buildTypeIndex('https://example.com', { '@vocab': 'https://schema.org/' }, [
-        { rdfType: 'https://schema.org/BlogPosting', containerPath: '/articles/', label: 'Articles' },
+        buildTypeRegistration(),
       ]),
     ) as Record<string, unknown>
     expect(result['@type']).toBe('WebSite')
@@ -34,8 +35,12 @@ describe('buildTypeIndex', () => {
   test('buildTypeIndex|multipleRegistrations|allPresentInHasPart', () => {
     const result = JSON.parse(
       buildTypeIndex('https://example.com', {}, [
-        { rdfType: 'https://schema.org/BlogPosting', containerPath: '/articles/', label: 'Articles' },
-        { rdfType: 'http://www.w3.org/2004/02/skos/core#Concept', containerPath: '/topics/', label: 'Topics' },
+        buildTypeRegistration(),
+        buildTypeRegistration({
+          rdfType: 'http://www.w3.org/2004/02/skos/core#Concept',
+          containerPath: '/topics/',
+          label: 'Topics',
+        }),
       ]),
     ) as Record<string, unknown>
     const hasPart = result['hasPart'] as ReadonlyArray<unknown>

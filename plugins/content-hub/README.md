@@ -175,6 +175,16 @@ An entry tagged only "Affordable Housing" will also carry "Housing" after expans
 
 No configuration is needed. If `astro-taxonomy` is not installed, topics remain flat.
 
+#### Hierarchy semantics
+
+When `astro-taxonomy` is present, topic hierarchy on both the topic index and topic hub pages is derived from the same source: the taxonomy graph's `ancestors()` and `children()` functions. The canonical hierarchy builder is `getTopicHierarchy()`, which produces `TopicHierarchyNode` objects used by the topic index page. The topic hub pages use `getChildTopics()` and `getSiblingTopics()`, which call the same underlying graph functions and apply the same published-topic filter.
+
+This means:
+
+- A parent topic's children list on the topic index page is identical to the "Sub-topics" section on that parent's topic hub page.
+- Children and siblings that have zero published entries are excluded from both views.
+- Without `astro-taxonomy`, all hubs behave as flat lists with no parent/child/sibling relationships.
+
 
 ### 4. Search and Smart 404s (astro-pagefind, astro-pagefind-resolve)
 
@@ -389,6 +399,41 @@ integrations: [
 ]
 ```
 
+### Multi-hub Browse
+
+To render a combined browse table spanning multiple hubs, create a custom Astro page that aggregates entries from each hub's collections, merges them, and feeds the result to `BrowseTable`:
+
+```astro
+---
+// src/pages/everything.astro
+import { getCollection } from 'astro:content'
+import { aggregateEntries, filterPublished, sortByDate } from '@astro-bay/content-hub/utils'
+import { toBrowseData } from '@astro-bay/content-hub/browse'
+import { BrowseTable } from '@astro-bay/content-hub/components'
+import Layout from '../layouts/Base.astro'
+
+// Aggregate entries from both hubs' collections
+const writing = await aggregateEntries(['blog'], getCollection)
+const notes = await aggregateEntries(['vault'], getCollection)
+
+// Merge, filter drafts, sort by date
+const all = sortByDate(filterPublished([...writing, ...notes]))
+const rows = toBrowseData(all)
+---
+
+<Layout title="Everything">
+  <main>
+    <h1>Everything</h1>
+    <script type="application/json" id="browse-data" set:html={JSON.stringify(rows)} />
+    <BrowseTable rows={rows} />
+  </main>
+</Layout>
+```
+
+This page is independent of the injected hub routes. It uses the same public utilities (`aggregateEntries`, `filterPublished`, `sortByDate`, `toBrowseData`) and the same `BrowseTable` component, so sorting, filtering, and pagination work identically to the per-hub pages. The only difference is the input: entries from multiple collections merged into one array.
+
+If the two hubs share a collection name, each entry appears once because `aggregateEntries` deduplicates by `sourceId`. If they use different collections (as in the example above), there is no overlap to deduplicate.
+
 
 ## Custom Transforms
 
@@ -559,6 +604,5 @@ Tests are co-located with source using Vitest's `import.meta.vitest` for unit an
 
 Features under consideration for future releases:
 
-- **SSR support.** Currently all injected routes are prerendered at build time. A future version will support Astro's `output: 'server'` and `output: 'hybrid'` modes, where article and topic pages render on request using `Astro.params` validation and the exported `paginate()` utility for request-time slicing. This includes cache strategy guidance and 404 handling for unknown UIDs, unknown topic slugs, and out-of-range page numbers.
 - **Configurable search attribute markup.** The current Pagefind `data-pagefind-*` attributes are hardcoded. A future version will support a configurable attribute renderer so the integration can emit markup compatible with other search tools (Algolia, Meilisearch, Lunr, etc.) or disable search attributes entirely.
 

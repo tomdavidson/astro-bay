@@ -1,6 +1,7 @@
 import type { JsonLdProvider, RouteJsonLd, JsonLdNode } from '@astro-bay/jsonld/types'
 import type { NormalizedEntry } from './types.ts'
 import { slugifyTopic } from './taxonomy.ts'
+import type { TopicHierarchyNode } from './taxonomy.ts'
 
 type ArticleProviderConfig = {
   readonly site: string
@@ -14,6 +15,7 @@ type TopicsProviderConfig = {
   readonly taxonomyRoute: string
   readonly topicMap: ReadonlyMap<string, string>
   readonly groupedEntries: ReadonlyMap<string, ReadonlyArray<NormalizedEntry>>
+  readonly hierarchy?: ReadonlyArray<TopicHierarchyNode>
 }
 
 const stripTrailingSlash = (s: string): string =>
@@ -22,12 +24,27 @@ const stripTrailingSlash = (s: string): string =>
 const buildAbout = (entry: NormalizedEntry, site: string, taxonomyRoute: string): Record<string, unknown> =>
   entry.topics.length === 0
     ? {}
-    : { about: entry.topics.map(t => ({ '@id': `${stripTrailingSlash(site)}/${taxonomyRoute}/${slugifyTopic(t)}/` })) }
+    : {
+        about: entry.topics.map(t => ({
+          '@id': `${stripTrailingSlash(site)}/${taxonomyRoute}/${slugifyTopic(t)}/`,
+        })),
+      }
 
 const buildSameAs = (entry: NormalizedEntry, site: string, articleBase: string): Record<string, unknown> =>
   entry.aliases.length === 0
     ? {}
-    : { sameAs: entry.aliases.map(a => `${stripTrailingSlash(site)}/${articleBase}/${a}/`) }
+    : {
+        sameAs: entry.aliases.map(a => `${stripTrailingSlash(site)}/${articleBase}/${a}/`),
+      }
+
+const buildIsPartOf = (site: string, articleBase: string): Record<string, unknown> => ({
+  isPartOf: { '@id': `${stripTrailingSlash(site)}/${articleBase}/` },
+})
+
+const buildSourceLink = (entry: NormalizedEntry): Record<string, unknown> =>
+  entry.source === 'feed' && entry.link !== undefined
+    ? { sourceLink: entry.link }
+    : {}
 
 const entryToNode = (config: {
   readonly entry: NormalizedEntry
@@ -36,18 +53,23 @@ const entryToNode = (config: {
   readonly taxonomyRoute: string
 }): JsonLdNode => {
   const { entry, site, articleBase, taxonomyRoute } = config
-  const id = `${stripTrailingSlash(site)}/${articleBase}/${entry.uid}/`
+  const base = stripTrailingSlash(site)
+  const id = `${base}/${articleBase}/${entry.uid}/`
 
-  return {
+  const node: JsonLdNode & { readonly sourceLink?: string } = {
     '@type': 'BlogPosting',
     '@id': id,
     headline: entry.title,
     keywords: entry.topics,
     ...(entry.date === undefined ? {} : { datePublished: entry.date.toISOString() }),
     ...(entry.excerpt === undefined ? {} : { description: entry.excerpt }),
+    ...buildIsPartOf(site, articleBase),
     ...buildAbout(entry, site, taxonomyRoute),
     ...buildSameAs(entry, site, articleBase),
-  } satisfies JsonLdNode
+    ...buildSourceLink(entry),
+  }
+
+  return node
 }
 
 const entryToSummaryNode = (
@@ -94,28 +116,87 @@ type TopicNodeInput = {
   readonly base: string
   readonly taxonomyRoute: string
   readonly groupedEntries: ReadonlyMap<string, ReadonlyArray<NormalizedEntry>>
+  readonly hierarchyBySlug?: ReadonlyMap<string, TopicHierarchyNode> | undefined
+}
+
+type TopicHierarchyContext = {
+  readonly slug: string
+  readonly base: string
+  readonly taxonomyRoute: string
+  readonly hierarchyBySlug?: ReadonlyMap<string, TopicHierarchyNode> | undefined
+}
+
+type BroaderNarrower = {
+  readonly broader?: ReadonlyArray<{ readonly '@id': string }> | undefined
+  readonly narrower?: ReadonlyArray<{ readonly '@id': string }> | undefined
+}
+
+const resolveBroaderNarrower = (ctx: TopicHierarchyContext): BroaderNarrower => {
+  const { slug, base, taxonomyRoute, hierarchyBySlug } = ctx
+  if (hierarchyBySlug === undefined) return {}
+
+  const node = hierarchyBySlug.get(slug)
+  if (node === undefined) return {}
+
+  const broader =
+    node.parent === undefined
+      ? undefined
+      : [{ '@id': `${base}/${taxonomyRoute}/${node.parent}/` }]
+
+  const narrower =
+    node.children.length === 0
+      ? undefined
+      : node.children.map(childSlug => ({
+          '@id': `${base}/${taxonomyRoute}/${childSlug}/`,
+        }))
+
+  return { broader, narrower }
 }
 
 const topicToNode = (input: TopicNodeInput): JsonLdNode => {
-  const { slug, label, base, taxonomyRoute, groupedEntries } = input
+  const { slug, label, base, taxonomyRoute, groupedEntries, hierarchyBySlug } = input
   const groupSize = groupedEntries.get(slug)?.length
+  const nodeId = `${base}/${taxonomyRoute}/${slug}/`
+
+  const { broader, narrower } = resolveBroaderNarrower({
+    slug,
+    base,
+    taxonomyRoute,
+    hierarchyBySlug,
+  })
+
   return {
     '@type': 'DefinedTerm',
-    '@id': `${base}/${taxonomyRoute}/${slug}/`,
+    '@id': nodeId,
     name: label,
     'skos:inScheme': { '@id': `${base}/${taxonomyRoute}/` },
     ...(groupSize === undefined ? {} : { numberOfItems: groupSize }),
+    ...(broader === undefined ? {} : { 'skos:broader': broader }),
+    ...(narrower === undefined ? {} : { 'skos:narrower': narrower }),
   } satisfies JsonLdNode
 }
 
 const buildTopicRoutes = (
   config: TopicsProviderConfig,
 ): ReadonlyArray<RouteJsonLd> => {
-  const { site, taxonomyRoute, topicMap, groupedEntries } = config
+  const { site, taxonomyRoute, topicMap, groupedEntries, hierarchy } = config
   const base = stripTrailingSlash(site)
+
+  const hierarchyBySlug =
+    hierarchy === undefined
+      ? undefined
+      : new Map(hierarchy.map(node => [node.slug, node] as const))
+
   return [...topicMap.entries()].map(([slug, label]) => ({
     route: `/${taxonomyRoute}/${slug}/`,
-    node: topicToNode({ slug, label, base, taxonomyRoute, groupedEntries }),
+    node: topicToNode({
+      slug,
+      label,
+      base,
+      taxonomyRoute,
+      groupedEntries,
+      hierarchyBySlug,
+    }),
   }))
 }
 

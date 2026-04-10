@@ -351,6 +351,17 @@
         "import/no-default-export": "off",
       },
     },
+    {
+      "files": [
+        "**/*.config.ts",
+        "**/*.config.mts",
+        "**/*.config.mts"
+      ],
+      "rules": {
+        "import/no-default-export": "off",
+        "max-lines-per-function": "off",
+      },
+    },
     // ─────────────────────────────────────────────────────────────
     // TESTS: file type, not an architectural layer.
     // All strictness lifted for ergonomics.
@@ -359,7 +370,7 @@
       "files": [
         "**/*.spec.ts",
         "**/*.test.ts",
-        "src/test/**/*.ts",
+        "**/src/test/**/*.ts"
       ],
       "rules": {
         "max-params": "off",

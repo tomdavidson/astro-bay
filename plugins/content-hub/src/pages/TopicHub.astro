@@ -1,19 +1,19 @@
 ---
-import { getCollection } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
+import { getCollection } from 'astro:content'
+import { toBrowseData } from '../browse.ts'
+import type { ResolvedConfig } from '../config.ts'
 import { getHubData } from '../infra/hub-data.ts'
 import { loadTaxonomyGraph } from '../transform/ancestors.ts'
-import { toBrowseData } from '../browse.ts'
 import { buildTopicHubRoutes } from './static-paths.ts'
-import type { ResolvedConfig } from '../config.ts'
 // @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
-import PageShell from '../components/PageShell.astro'
 import Breadcrumb from '../components/Breadcrumb.astro'
-import TopicList from '../components/TopicList.astro'
-import TopicBadge from '../components/TopicBadge.astro'
 import BrowseTable from '../components/BrowseTable.astro'
+import PageShell from '../components/PageShell.astro'
+import TopicBadge from '../components/TopicBadge.astro'
+import TopicList from '../components/TopicList.astro'
 
 export const prerender = true
 
@@ -47,7 +47,12 @@ const breadcrumbItems = [
 
 <PageShell title={label} lang={config.locale.lang} pagefindIgnore>
   <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
-  <script is:inline type="application/json" id="browse-data" set:html={JSON.stringify(toBrowseData(entries))} />
+  <script
+    is:inline
+    type="application/json"
+    id="browse-data"
+    set:html={JSON.stringify(toBrowseData(entries))}
+  />
   <main class="ch-topic-hub">
     <Breadcrumb items={breadcrumbItems} />
 
@@ -56,16 +61,20 @@ const breadcrumbItems = [
       <p class="ch-topic-entry-count">{entries.length} articles</p>
     </header>
 
-    {children.length > 0 && (
-      <section class="ch-topic-section" aria-label="Sub-topics">
-        <h2>Sub-topics</h2>
-        <div class="ch-topic-chips">
-          {children.map((c: { slug: string; label: string }) => (
-            <TopicBadge topic={c.label} slug={c.slug} baseUrl={taxonomyRoute} />
-          ))}
-        </div>
-      </section>
-    )}
+    {
+      children.length > 0 && (
+        <section class="ch-topic-section" aria-label="Sub-topics">
+          <h2>Sub-topics</h2>
+          <div class="ch-topic-chips">
+            {
+              children.map((c: { slug: string; label: string }) => (
+                <TopicBadge topic={c.label} slug={c.slug} baseUrl={taxonomyRoute} />
+              ))
+            }
+          </div>
+        </section>
+      )
+    }
 
     <section aria-label={`Articles about ${label}`}>
       <BrowseTable rows={toBrowseData(entries)} />
@@ -76,63 +85,69 @@ const breadcrumbItems = [
       </noscript>
     </section>
 
-    {siblings.length > 0 && (
-      <section class="ch-topic-section" aria-label="Sibling topics">
-        <h2>See also</h2>
-        <div class="ch-topic-chips">
-          {siblings.map((s: { slug: string; label: string }) => (
-            <TopicBadge topic={s.label} slug={s.slug} baseUrl={taxonomyRoute} />
-          ))}
-        </div>
-      </section>
-    )}
+    {
+      siblings.length > 0 && (
+        <section class="ch-topic-section" aria-label="Sibling topics">
+          <h2>See also</h2>
+          <div class="ch-topic-chips">
+            {
+              siblings.map((s: { slug: string; label: string }) => (
+                <TopicBadge topic={s.label} slug={s.slug} baseUrl={taxonomyRoute} />
+              ))
+            }
+          </div>
+        </section>
+      )
+    }
 
-    {related.length > 0 && (
-      <section class="ch-topic-section" aria-label="Related topics">
-        <h2>Related topics</h2>
-        <TopicList topics={related} baseUrl={taxonomyRoute} />
-      </section>
-    )}
+    {
+      related.length > 0 && (
+        <section class="ch-topic-section" aria-label="Related topics">
+          <h2>Related topics</h2>
+          <TopicList topics={related} baseUrl={taxonomyRoute} />
+        </section>
+      )
+    }
   </main>
 </PageShell>
 
 <style>
-  .ch-topic-hub {
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-  }
-  h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin: 0.5rem 0 0.25rem;
-  }
-  h2 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-  }
-  .ch-topic-entry-count {
-    font-size: 0.875em;
-    color: var(--ch-text-muted, #6b7280);
-    margin-bottom: 1.5rem;
-  }
-  .ch-topic-section {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--ch-border, #e5e7eb);
-  }
-  .ch-topic-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-  }
-  .ch-noscript-note {
-    font-size: 0.875em;
-    color: var(--ch-text-muted, #6b7280);
-    margin-top: 1.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--ch-surface, #f3f4f6);
-    border-radius: var(--ch-radius, 0.375rem);
-  }
+.ch-topic-hub {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.25rem;
+}
+h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.ch-topic-entry-count {
+  font-size: 0.875em;
+  color: var(--ch-text-muted, #6b7280);
+  margin-bottom: 1.5rem;
+}
+.ch-topic-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ch-border, #e5e7eb);
+}
+.ch-topic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.ch-noscript-note {
+  font-size: 0.875em;
+  color: var(--ch-text-muted, #6b7280);
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--ch-surface, #f3f4f6);
+  border-radius: var(--ch-radius, 0.375rem);
+}
 </style>

@@ -15,9 +15,9 @@ import { getTransforms } from './integration.ts'
 
 
 
-type GetCollection = (name: string) => Promise<ReadonlyArray<RawEntry>>
+export type GetCollection = (name: string) => Promise<ReadonlyArray<RawEntry>>
 type Logger = { readonly warn: (msg: string) => void; readonly info: (msg: string) => void }
-type RuntimeContext = { readonly logger: Logger; readonly command: string }
+export type RuntimeContext = { readonly logger: Logger; readonly command: string }
 type AggregatedEntry = { readonly entry: NormalizedEntry; readonly uidFallback: boolean }
 
 
@@ -28,7 +28,7 @@ const getCachedHubData = (name: string): HubData | undefined => hubCache.get(nam
 
 
 
-type HubConfig = Omit<ResolvedConfig, 'transforms'> & { readonly transforms?: ReadonlyArray<ResolvedConfig['transforms'][number]> }
+export type HubConfig = Omit<ResolvedConfig, 'transforms'> & { readonly transforms?: ReadonlyArray<ResolvedConfig['transforms'][number]> }
 
 const aggregateHubEntries = (
   config: HubConfig,

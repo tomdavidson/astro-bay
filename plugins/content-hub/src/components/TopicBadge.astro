@@ -1,11 +1,5 @@
 ---
-type Props = {
-
-  topic: string
-  slug: string
-  count?: number
-  baseUrl: string
-}
+type Props = { topic: string; slug: string; count?: number; baseUrl: string }
 
 const { topic, slug, count, baseUrl } = Astro.props
 const href = `/${baseUrl}/${slug}`
@@ -16,25 +10,25 @@ const href = `/${baseUrl}/${slug}`
 </a>
 
 <style>
-  .ch-topic-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    padding: 0.2em 0.65em;
-    font-size: 0.8125em;
-    font-family: var(--ch-font-body, inherit);
-    color: var(--ch-text, #111827);
-    background: var(--ch-accent, #e0f2fe);
-    border-radius: var(--ch-radius, 9999px);
-    text-decoration: none;
-    line-height: 1.6;
-    white-space: nowrap;
-  }
-  .ch-topic-badge:hover {
-    opacity: 0.85;
-  }
-  .ch-topic-count {
-    font-size: 0.85em;
-    color: var(--ch-text-muted, #6b7280);
-  }
+.ch-topic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.2em 0.65em;
+  font-size: 0.8125em;
+  font-family: var(--ch-font-body, inherit);
+  color: var(--ch-text, #111827);
+  background: var(--ch-accent, #e0f2fe);
+  border-radius: var(--ch-radius, 9999px);
+  text-decoration: none;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.ch-topic-badge:hover {
+  opacity: 0.85;
+}
+.ch-topic-count {
+  font-size: 0.85em;
+  color: var(--ch-text-muted, #6b7280);
+}
 </style>

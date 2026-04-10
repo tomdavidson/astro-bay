@@ -106,6 +106,34 @@ describe('getChildTopics', () => {
   test('returns empty when graph is undefined', () => {
     expect(getChildTopics("anything", undefined)).toEqual([])
   })
+
+  test('filters to published topics when topicMap provided', () => {
+    const graph = {
+      edges: [{}],
+      ancestors: () => [],
+      children: (slug: string) =>
+        slug === 'housing'
+          ? [{ slug: 'rent-control', label: 'Rent Control' }, { slug: 'ghost-topic', label: 'Ghost' }]
+          : [],
+    }
+    const topicMap = new Map([['rent-control', 'Rent Control']])
+    const result = getChildTopics('housing', graph, topicMap)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.slug).toBe('rent-control')
+  })
+
+  test('returns all children when topicMap omitted', () => {
+    const graph = {
+      edges: [{}],
+      ancestors: () => [],
+      children: (slug: string) =>
+        slug === 'housing'
+          ? [{ slug: 'rent-control', label: 'Rent Control' }, { slug: 'ghost-topic', label: 'Ghost' }]
+          : [],
+    }
+    const result = getChildTopics('housing', graph)
+    expect(result).toHaveLength(2)
+  })
 })
 
 describe('getSiblingTopics', () => {
@@ -139,6 +167,26 @@ describe('getSiblingTopics', () => {
 
   test('returns empty when graph is undefined', () => {
     expect(getSiblingTopics("anything", undefined)).toEqual([])
+  })
+
+  test('filters to published topics when topicMap provided', () => {
+    const graph = {
+      edges: [{}],
+      ancestors: (slug: string) =>
+        slug === 'rent-control' ? [{ slug: 'housing', label: 'Housing' }] : [],
+      children: (slug: string) =>
+        slug === 'housing'
+          ? [
+              { slug: 'rent-control', label: 'Rent Control' },
+              { slug: 'zoning', label: 'Zoning' },
+              { slug: 'ghost-topic', label: 'Ghost' },
+            ]
+          : [],
+    }
+    const topicMap = new Map([['rent-control', 'Rent Control'], ['zoning', 'Zoning']])
+    const result = getSiblingTopics('rent-control', graph, topicMap)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.slug).toBe('zoning')
   })
 })
 

@@ -1,18 +1,18 @@
 ---
-import { getCollection } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
+import { getCollection } from 'astro:content'
+import type { ResolvedConfig } from '../config.ts'
 import { getHubData } from '../infra/hub-data.ts'
 import { slugifyTopic } from '../taxonomy.ts'
-import type { ResolvedConfig } from '../config.ts'
 // @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
-import PageShell from '../components/PageShell.astro'
 import Breadcrumb from '../components/Breadcrumb.astro'
 import DateDisplay from '../components/DateDisplay.astro'
-import TopicBadge from '../components/TopicBadge.astro'
-import SourceBadge from '../components/SourceBadge.astro'
 import DraftBanner from '../components/DraftBanner.astro'
+import PageShell from '../components/PageShell.astro'
+import SourceBadge from '../components/SourceBadge.astro'
+import TopicBadge from '../components/TopicBadge.astro'
 
 export const prerender = true
 
@@ -25,19 +25,15 @@ export const getStaticPaths = (async () => {
     command: config.astroCommand,
   })
 
-  const collectionEntries = (
-    await Promise.all(config.collections.map((c: string) => getCollection(c)))
-  ).flat()
+  const collectionEntries =
+    (await Promise.all(config.collections.map((c: string) => getCollection(c)))).flat()
 
-  const entryMap = new Map(
-    collectionEntries.map((e: unknown) => [(e as { id: string }).id, e])
-  )
+  const entryMap = new Map(collectionEntries.map((e: unknown) => [(e as { id: string }).id, e]))
 
   return [...data.uidMap.entries()].map(([uid, entry]) => {
-    // Map resolvedTopics slugs to display labels for Pagefind filter values
-    const pagefindTopics = [...new Set(
-      entry.resolvedTopics.map(slug => data.topicMap.get(slug) ?? slug)
-    )]
+    const pagefindTopics = [
+      ...new Set(entry.resolvedTopics.map(slug => data.topicMap.get(slug) ?? slug)),
+    ]
 
     return {
       params: { uid },
@@ -54,14 +50,13 @@ const Content = rendered?.Content
 const articleBase = config.permalinks.articleBase
 const taxonomyRoute = config.taxonomy.route
 const isDraft = entry.meta?.isDraftPreview === true
-const canonicalUrl = config.siteUrl
-  ? `${config.siteUrl.replace(/\/$/, '')}/${articleBase}/${entry.uid}`
-  : undefined
+const canonicalUrl = config.siteUrl ?
+  `${config.siteUrl.replace(/\/$/, '')}/${articleBase}/${entry.uid}` :
+  undefined
 
-const breadcrumbItems = [
-  { label: config.locale.indexTitle, href: `/${articleBase}` },
-  { label: entry.title },
-]
+const breadcrumbItems = [{ label: config.locale.indexTitle, href: `/${articleBase}` }, {
+  label: entry.title,
+}]
 ---
 
 <PageShell
@@ -81,92 +76,100 @@ const breadcrumbItems = [
         <h1 data-pagefind-weight="10">{entry.title}</h1>
         <div class="ch-article-meta">
           {entry.date && <DateDisplay date={entry.date} locale={config.locale.dateLocale} />}
-          {entry.source !== 'vault' && (
-            <SourceBadge
-              source={entry.source}
-              link={entry.source === 'feed' ? entry.link : undefined}
-            />
-          )}
+          {
+            entry.source !== 'vault' && (
+              <SourceBadge
+                source={entry.source}
+                link={entry.source === 'feed' ? entry.link : undefined}
+              />
+            )
+          }
         </div>
-        {entry.topics.length > 0 && (
-          <div class="ch-article-topics">
-            {entry.topics.map((topic: string) => (
-              <TopicBadge topic={topic} slug={slugifyTopic(topic)} baseUrl={taxonomyRoute} />
-            ))}
-          </div>
-        )}
+        {
+          entry.topics.length > 0 && (
+            <div class="ch-article-topics">
+              {
+                entry.topics.map((topic: string) => (
+                  <TopicBadge topic={topic} slug={slugifyTopic(topic)} baseUrl={taxonomyRoute} />
+                ))
+              }
+            </div>
+          )
+        }
       </header>
 
       <div class="ch-article-body">
-        {Content ? (
-          <Content />
-        ) : entry.excerpt ? (
-          <p>{entry.excerpt}</p>
-        ) : null}
+        {Content ? <Content /> : entry.excerpt !== undefined ? <p>{entry.excerpt}</p> : undefined}
+      </div>
 
-        {entry.source === 'feed' && entry.link && (
+      {
+        entry.source === 'feed' && entry.link && (
           <p class="ch-read-original">
             <a href={entry.link} target="_blank" rel="noopener noreferrer">
               Read the original &rarr;
             </a>
           </p>
-        )}
-      </div>
+        )
+      }
 
-      {/* Pagefind: emit resolvedTopics (authored + ancestors) as filter values */}
-      {pagefindTopics.map((label: string) => (
-        <meta data-pagefind-filter="topic[content]" content={label} />
-      ))}
+      {
+        pagefindTopics.map((label: string) => (
+          <meta data-pagefind-filter="topic[content]" content={label} />
+        ))
+      }
       <meta data-pagefind-filter="source[content]" content={entry.source} />
-      {entry.date && (
-        <meta data-pagefind-meta="date[content]" content={entry.date.toISOString().slice(0, 10)} />
-      )}
+      {
+        entry.date && (
+          <meta
+            data-pagefind-meta="date[content]"
+            content={entry.date.toISOString().slice(0, 10)}
+          />
+        )
+      }
       <meta data-pagefind-meta="uid[content]" content={entry.uid} />
-      {entry.excerpt && (
-        <meta data-pagefind-meta="excerpt[content]" content={entry.excerpt} />
-      )}
+      {entry.excerpt && <meta data-pagefind-meta="excerpt[content]" content={entry.excerpt} />}
     </article>
   </main>
 </PageShell>
 
 <style>
-  .ch-article {
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-  }
-  h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin: 0.5rem 0;
-    line-height: 1.2;
-  }
-  .ch-article-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
-  }
-  .ch-article-topics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin: 0.75rem 0 1.5rem;
-  }
-  .ch-article-body {
-    line-height: 1.7;
-    max-width: 65ch;
-  }
-  .ch-read-original {
-    margin-top: 1.5rem;
-    font-size: 0.9375em;
-  }
-  .ch-read-original a {
-    color: var(--ch-accent, #0369a1);
-    text-decoration: none;
-  }
-  .ch-read-original a:hover {
-    text-decoration: underline;
-  }
+.ch-article {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+  line-height: 1.2;
+}
+.ch-article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+.ch-article-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.75rem 0 1.5rem;
+}
+.ch-article-body {
+  line-height: 1.7;
+  max-width: 65ch;
+}
+.ch-read-original {
+  margin-top: 1.5rem;
+  font-size: 0.9375em;
+}
+.ch-read-original a {
+  color: var(--ch-accent, #0369a1);
+  text-decoration: none;
+}
+.ch-read-original a:hover {
+  text-decoration: underline;
+}
 </style>

@@ -63,8 +63,8 @@ export const buildTopicRoute = (ctx: {
     ...(graph !== undefined && { graph })
   } as const
   const related = getRelatedTopics(relatedArgs)
-  const children = getChildTopics(slug, graph)
-  const siblings = getSiblingTopics(slug, graph)
+  const children = getChildTopics(slug, graph, data.topicMap)
+  const siblings = getSiblingTopics(slug, graph, data.topicMap)
   const ancestorChain = graph ? graph.ancestors(slug) : []
 
   return [{

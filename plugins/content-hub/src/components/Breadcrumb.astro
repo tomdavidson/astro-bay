@@ -1,71 +1,64 @@
 ---
-type BreadcrumbItem = {
+type BreadcrumbItem = { label: string; href?: string }
 
-  label: string
-  href?: string
-}
-
-type Props = {
-
-  items: ReadonlyArray<BreadcrumbItem>
-}
+type Props = { items: ReadonlyArray<BreadcrumbItem> }
 
 const { items } = Astro.props
 ---
 
 <nav class="ch-breadcrumb" aria-label="Breadcrumb">
   <ol>
-    {items.map((item, i) => (
-      <li>
-        {item.href && i < items.length - 1 ? (
-          <a href={item.href}>{item.label}</a>
-        ) : (
-          <span aria-current={i === items.length - 1 ? 'page' : undefined}>
-            {item.label}
-          </span>
-        )}
-        {i < items.length - 1 && (
-          <span class="ch-breadcrumb-sep" aria-hidden="true">/</span>
-        )}
-      </li>
-    ))}
+    {
+      items.map((item, i) => (
+        <li>
+          {
+            item.href && i < items.length - 1 ? <a href={item.href}>{item.label}</a> : (
+              <span aria-current={i === items.length - 1 ? 'page' : undefined}>
+                {item.label}
+              </span>
+            )
+          }
+          {i < items.length - 1 && <span class="ch-breadcrumb-sep" aria-hidden="true">/</span>}
+        </li>
+      ))
+    }
   </ol>
 </nav>
 
 <style>
-  .ch-breadcrumb {
-    font-size: 0.875em;
-    font-family: var(--ch-font-body, inherit);
-    margin-bottom: 1rem;
-  }
-  ol {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  li {
-    display: flex;
-    align-items: center;
-  }
-  a {
-    color: var(--ch-text-muted, #6b7280);
-    text-decoration: none;
-  }
-  a:hover {
-    color: var(--ch-text, #111827);
-    text-decoration: underline;
-  }
-  span[aria-current] {
-    color: var(--ch-text, #111827);
-    font-weight: 500;
-  }
-  .ch-breadcrumb-sep {
-    margin: 0 0.4em;
-    color: var(--ch-text-muted, #6b7280);
-    opacity: 0.5;
-  }
+.ch-breadcrumb {
+  font-size: 0.875em;
+  font-family: var(--ch-font-body, inherit);
+  margin-bottom: 1rem;
+}
+ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+li {
+  display: flex;
+  align-items: center;
+}
+a {
+  color: var(--ch-text-muted, #6b7280);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--ch-text, #111827);
+  text-decoration: underline;
+}
+span[aria-current] {
+  color: var(--ch-text, #111827);
+  font-weight: 500;
+}
+.ch-breadcrumb-sep {
+  margin: 0 0.4em;
+  color: var(--ch-text-muted, #6b7280);
+  opacity: 0.5;
+}
 </style>

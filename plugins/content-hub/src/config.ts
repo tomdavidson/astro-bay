@@ -106,16 +106,18 @@ const capitalize = (s: string): string =>
 
 const getBrowsePageSize = (opts: PluginOptions): number => {
   if (opts.browse?.pageSize !== undefined) return opts.browse.pageSize
-  if (opts.pagination?.pageSize !== undefined) {
-    console.warn(
-      '[astro-content-hub] `pagination.pageSize` is deprecated. Use `browse.pageSize` instead.',
-    )
-    return opts.pagination.pageSize
-  }
+  if (opts.pagination?.pageSize !== undefined) return opts.pagination.pageSize
   return DEFAULTS.browse.pageSize
 }
 
 
+
+export const detectDeprecatedOptions = (
+  opts: PluginOptions,
+): ReadonlyArray<string> =>
+  opts.browse?.pageSize === undefined && opts.pagination?.pageSize !== undefined
+    ? ['`pagination.pageSize` is deprecated — use `browse.pageSize` instead.']
+    : []
 
 const getStaticFallbackCount = (opts: PluginOptions, browsePageSize: number): number => {
   if (opts.browse?.staticFallbackCount !== undefined) return opts.browse.staticFallbackCount

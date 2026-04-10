@@ -2,10 +2,10 @@ import { describe, expect, test } from 'vitest'
 import { buildArticleIndexRoutes, buildTopicHubRoutes, buildTopicRoute } from './static-paths.ts'
 import { buildEntry, buildEntryWithTopics } from '../../test/builders.ts'
 import type { HubData } from '../types.ts'
-import { buildTopicMap, groupByTopic } from '../taxonomy.ts'
+import { buildTopicMap, groupByTopic, getTopicHierarchy } from '../taxonomy.ts'
 import { filterPublished, sortByDate } from '../aggregate.ts'
 
-const makeHubData = (entries: ReturnType<typeof buildEntry>[]): HubData => {
+const makeHubData = (entries: readonly ReturnType<typeof buildEntry>[]): HubData => {
   const published = sortByDate(filterPublished(entries))
   return {
     raw: entries,
@@ -147,5 +147,63 @@ describe('buildTopicHubRoutes', () => {
     const routes = buildTopicHubRoutes(data, undefined, 10)
     const housingRoute = routes.find(r => r.params.topic === 'housing')
     expect(housingRoute!.props.entries).toHaveLength(2)
+  })
+})
+
+describe('hierarchy alignment: TopicIndex and TopicHub agree on children', () => {
+  const graph = {
+    edges: [{}],
+    ancestors: (slug: string) => {
+      if (slug === 'rent-control') return [{ slug: 'housing', label: 'Housing' }]
+      if (slug === 'ghost-child') return [{ slug: 'housing', label: 'Housing' }]
+      return []
+    },
+    children: (slug: string) =>
+      slug === 'housing'
+        ? [
+            { slug: 'rent-control', label: 'Rent Control' },
+            { slug: 'ghost-child', label: 'Ghost Child' },
+          ]
+        : [],
+  }
+
+  test('parent TopicIndex node and parent TopicHub route list the same children', () => {
+    // ghost-child has no entries, so it should be excluded from both
+    const entries = [
+      buildEntryWithTopics(['Housing'], { uid: 'a', draft: false, resolvedTopics: ['housing'] }),
+      buildEntryWithTopics(['Rent Control'], { uid: 'b', draft: false, resolvedTopics: ['rent-control', 'housing'] }),
+    ]
+    const data = makeHubData(entries)
+
+    // TopicIndex path: getTopicHierarchy
+    const hierarchy = getTopicHierarchy(data.published, graph)
+    const housingNode = hierarchy.find(n => n.slug === 'housing')
+    const indexChildren = housingNode?.children ?? []
+
+    // TopicHub path: buildTopicHubRoutes
+    const routes = buildTopicHubRoutes(data, graph, 10)
+    const housingRoute = routes.find(r => r.params.topic === 'housing')
+    const hubChildren = housingRoute?.props.children.map(c => c.slug) ?? []
+
+    // Both should list rent-control and exclude ghost-child
+    expect(indexChildren).toEqual(['rent-control'])
+    expect(hubChildren).toEqual(['rent-control'])
+    expect(indexChildren).toEqual(hubChildren)
+  })
+
+  test('flat hierarchy without graph: both return no children', () => {
+    const entries = [
+      buildEntryWithTopics(['Housing'], { uid: 'a', draft: false, resolvedTopics: ['housing'] }),
+      buildEntryWithTopics(['Rent Control'], { uid: 'b', draft: false, resolvedTopics: ['rent-control'] }),
+    ]
+    const data = makeHubData(entries)
+
+    const hierarchy = getTopicHierarchy(data.published)
+    const housingNode = hierarchy.find(n => n.slug === 'housing')
+    expect(housingNode?.children).toEqual([])
+
+    const routes = buildTopicHubRoutes(data, undefined, 10)
+    const housingRoute = routes.find(r => r.params.topic === 'housing')
+    expect(housingRoute?.props.children).toEqual([])
   })
 })

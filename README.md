@@ -15,11 +15,10 @@ A shared repo of [Astro](https://astro.build) plugins and integrations. Each plu
 
 ## Architecture
 
-All by the simiplest of plugins follow a layered layered architecture:
+All but the simiplest of plugins follow a layered layered architecture:
 
 - **Domain** (`.domain.ts`) — Pure functions, readonly types, `neverthrow` Result types. No IO, no classes, ect..
 - **Infrastructure** (`.infra.ts`) — Astro hooks, file system, network. Imperative shell around the functional core.
-- **Tests** (`.spec.ts`) — Co-located with source. Vitest with fast-check property tests.
 
 ## Toolchain
 
@@ -32,7 +31,9 @@ All by the simiplest of plugins follow a layered layered architecture:
 | [oxlint](https://oxc.rs) | Fast linter (correctness, complexity, type safety) |
 | [ESLint](https://eslint.org) | Functional programming rules, boundary enforcement |
 | [Vitest](https://vitest.dev) | Test runner with in-source testing support |
-| [Bun](https://bun.sh) | Test execution runtime |
+
+[instrcution: add fast-check as a tool ]
+
 
 ## Getting Started
 
@@ -61,8 +62,6 @@ moon run :lint          # Lint all projects
 moon run :test          # Test all projects
 moon run :check-type    # Typecheck all projects
 moon run :fmt           # Format everything
-moon run :fmt-check     # Verify formatting (CI)
-moon run :audit         # Security audit (OSV, Cargo, Gitleaks)
 ```
 
 Run tasks for a specific plugin:
@@ -97,30 +96,55 @@ and automated npm publishing with OIDC provenance.
 | `pr.yml` | Pull request | CI gate (Moon CI, audit, CodeQL) |
 | `main.yml` | Push to main | CI, then release-please, then publish |
 | `publish.yml` | Called by main | Publish to npm with provenance |
-| `pr-fuzz.yml` | `fuzz` label or dispatch | Fuzz saturation on PR branches |
-| `main-fuzz.yml` | Weekly schedule or dispatch | Long-running fuzz on main, auto-PR for regressions |
+
+[instruction: add disscpters of RAA workflow ]
 
 ## Project Structure
 
+[instuction: simplify and note where benificial for the README.md context]
+
 ```
-astro-bay/
-├── .github/
-│   ├── actions/         # Reusable composite actions (setup, moon-ci, etc.)
-│   └── workflows/       # CI/CD workflows
-├── .moon/
-│   ├── tasks/           # Shared task definitions (typescript.yml, astro.yml)
-│   ├── templates/       # Code generation templates
-│   ├── toolchains.yml   # Node, pnpm, Bun, Proto versions
-│   └── workspace.yml    # Project discovery and VCS config
-├── plugins/
-│   ├── astro-content-hub/
-│   ├── astro-jsonld/
-│   └── astro-taxonomy/
-├── dprint.json           # Formatter config
-├── eslint.config.mjs     # FP rules + boundary enforcement
-├── oxlintrc.json         # Fast linter config with layer overrides
-└── moon.yml              # Root tasks (fmt, fmt-check)
+.
+├── adrs.toml
+├── docs
+├── dprint.json
+├── .editorconfig
+├── eslint.config.mjs
+├── .gitignore
+├── .moon
+│   ├── scripts
+│   ├── tasks
+│   │   ├── astro-plugin.yml
+│   │   ├── astro-website.yml
+│   │   └── typescript.yml
+│   ├── templates
+│   │   └── astro-plugin
+│   ├── toolchains.yml
+│   └── workspace.yml
+├── moon.yml
+├── oxlintrc.json
+├── package.json
+├── packages
+│   ├── eslint-config
+│   ├── eslint-config-astro
+│   └── test-utils
+├── plugins
+│   ├── content-hub
+│   ├── jsonld
+│   ├── pagefind-resolve
+│   └── taxonomy
+├── pnpm-workspace.yaml
+├── .prototools
+├── README.md
+├── release-please-config.json
+├── .release-please-manifest.json
+├── renovate.json
+├── scripts
+└── tsconfig.options.json
+
 ```
+
+[instruction: add a section on the dep managment, the use of catalog: and adding to devdeps to the //paakge.json if they need hoisted]
 
 ## License
 

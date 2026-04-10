@@ -74,17 +74,26 @@ export const getRelatedTopics = (opts: {
     }))
 }
 
+const filterByTopicMap = (
+  items: ReadonlyArray<{ readonly slug: string; readonly label: string }>,
+  topicMap: ReadonlyMap<string, string> | undefined,
+): ReadonlyArray<{ readonly slug: string; readonly label: string }> =>
+  topicMap === undefined ? items : items.filter(c => topicMap.has(c.slug))
+
 export const getChildTopics = (
   slug: string,
   graph: GraphLike | undefined,
+  topicMap?: ReadonlyMap<string, string>,
 ): ReadonlyArray<{ readonly slug: string; readonly label: string }> => {
   if (graph?.children === undefined) return []
-  return graph.children(slug).map(c => ({ slug: c.slug, label: c.label }))
+  const children = graph.children(slug).map(c => ({ slug: c.slug, label: c.label }))
+  return filterByTopicMap(children, topicMap)
 }
 
 export const getSiblingTopics = (
   slug: string,
   graph: GraphLike | undefined,
+  topicMap?: ReadonlyMap<string, string>,
 ): ReadonlyArray<{ readonly slug: string; readonly label: string }> => {
   if (graph === undefined) return []
   const parentChain = graph.ancestors(slug)
@@ -93,9 +102,10 @@ export const getSiblingTopics = (
   const parent = parentChain[0]
   if (parent === undefined || graph.children === undefined) return []
 
-  return graph.children(parent.slug)
+  const siblings = graph.children(parent.slug)
     .filter(c => c.slug !== slug)
     .map(c => ({ slug: c.slug, label: c.label }))
+  return filterByTopicMap(siblings, topicMap)
 }
 
 const buildFlatNode = (

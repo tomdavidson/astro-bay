@@ -1,10 +1,7 @@
 import type { ResolvedConfig } from '../config.ts';
 import type { HubData, NormalizedEntry } from '../types.ts';
 import { createContentHubProvider, createTopicsProvider } from '../jsonld-provider.ts';
-import { getHubData as getHubDataInternal } from './hub-data.ts';
-
-type GetCollection = Parameters<typeof getHubDataInternal>[1];
-type RuntimeContext = Parameters<typeof getHubDataInternal>[2];
+import { getHubData as getHubDataInternal, type GetCollection, type RuntimeContext } from './hub-data.ts';
 
 export type RouteJsonLd = {
   readonly route: string;

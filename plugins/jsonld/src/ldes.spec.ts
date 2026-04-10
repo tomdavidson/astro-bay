@@ -1,8 +1,10 @@
 import { describe, test, expect } from 'vitest'
 import type * as FastCheck from 'fast-check'
+import type { RouteJsonLd } from './types.ts'
 import { buildState, diffState, parseState, serializeState } from './ldes.domain.ts'
 import { buildRouteJsonLd } from './test/builders.ts'
-import { expectOk } from './test/helpers.ts'
+import { expectOk, expectErr } from './test/helpers.ts'
+import { routeJsonLdArbitrary } from './test/arbitraries.ts'
 
 const tdd = Boolean(process.env['TDD'])
 
@@ -77,18 +79,18 @@ describe('serializeState / parseState', () => {
 
   test('parseState|invalidJson|returnsLdesStateCorruptError', () => {
     const result = parseState('not valid json {{{')
-    expect(result.isErr()).toBe(true)
-    expect(result._unsafeUnwrapErr().type).toBe('LdesStateCorrupt')
+    const error = expectErr(result)
+    expect(error.type).toBe('LdesStateCorrupt')
   })
 })
 
 test.skipIf(tdd)('diffState|roundtrip|serializeParseIdentity', async () => {
   const fc: typeof FastCheck = await import('fast-check')
+  const routeArb = await routeJsonLdArbitrary()
   fc.assert(
     fc.property(
-      fc.array(fc.string({ minLength: 1, maxLength: 20 }), { minLength: 0, maxLength: 10 }),
-      (routeNames: ReadonlyArray<string>) => {
-        const routes = routeNames.map(name => buildRouteJsonLd({ route: `/${name}/` }))
+      fc.array(routeArb, { minLength: 0, maxLength: 10 }),
+      (routes: ReadonlyArray<RouteJsonLd>) => {
         const state = buildState(routes)
         const serialized = serializeState(state)
         const parsed = expectOk(parseState(serialized))

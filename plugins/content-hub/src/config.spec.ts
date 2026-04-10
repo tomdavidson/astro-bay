@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { resolveConfig } from './config.ts'
+import { resolveConfig, detectDeprecatedOptions } from './config.ts'
 import { expectOk } from '../test/helpers.ts'
 
 
@@ -212,5 +212,42 @@ describe('resolveConfig', () => {
     const config = expectOk(resolveConfig({ collections: ['vault'] }))
 
     expect(config).not.toHaveProperty('pagination')
+  })
+})
+
+
+
+describe('detectDeprecatedOptions', () => {
+  test('detectDeprecatedOptions_paginationWithoutBrowse_returnsWarning', () => {
+    const warnings = detectDeprecatedOptions({
+      collections: ['vault'],
+      pagination: { pageSize: 15 },
+    })
+
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain('pagination.pageSize')
+    expect(warnings[0]).toContain('deprecated')
+  })
+
+
+
+  test('detectDeprecatedOptions_browseSet_returnsEmpty', () => {
+    const warnings = detectDeprecatedOptions({
+      collections: ['vault'],
+      browse: { pageSize: 30 },
+      pagination: { pageSize: 10 },
+    })
+
+    expect(warnings).toEqual([])
+  })
+
+
+
+  test('detectDeprecatedOptions_neitherSet_returnsEmpty', () => {
+    const warnings = detectDeprecatedOptions({
+      collections: ['vault'],
+    })
+
+    expect(warnings).toEqual([])
   })
 })

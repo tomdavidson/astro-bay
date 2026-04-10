@@ -1,6 +1,9 @@
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { AstroIntegration, InjectedRoute } from 'astro'
 import type { EntryTransform, NormalizedEntry } from '../types.ts'
-import { resolveConfig, type PluginOptions, type ResolvedConfig } from '../config.ts'
+import { resolveConfig, detectDeprecatedOptions, type PluginOptions, type ResolvedConfig } from '../config.ts'
 import { claimHubName, claimRoutePrefix, resetRegistry } from './registry.ts'
 import { buildVirtualModulePlugin, buildVirtualModuleTypes } from '../virtual/module.ts'
 import { createContentHubProvider, createTopicsProvider } from '../jsonld-provider.ts'
@@ -115,6 +118,11 @@ type SetupContext = {
   readonly logger: { readonly info: (msg: string) => void }
 }
 
+type BuildDoneContext = {
+  readonly dir: URL
+  readonly logger: { readonly info: (msg: string) => void }
+}
+
 
 
 const handleSetup = async (
@@ -174,13 +182,34 @@ const resolveOrThrow = (options: PluginOptions): Omit<ResolvedConfig, 'siteUrl'>
   if (result.isErr()) {
     const e = result.error
     throw new Error(
-      `astro-content-hub: invalid configuration — ${e.type === 'ConfigInvalid' ? e.message : e.type}`,
+      `astro-content-hub config error: ${e.type === 'ConfigInvalid' ? e.message : e.type}`,
     )
   }
   return result.value
 }
 
+const addSchemaContext = (node: Record<string, unknown>): Record<string, unknown> =>
+  ('@context' in node ? node : { '@context': 'https://schema.org', ...node })
 
+const JSONLD_INDENT = 2
+
+const writeJsonLdRoutes = async (
+  outDir: URL,
+  routes: ReadonlyArray<{ readonly route: string; readonly node: Record<string, unknown> }>,
+): Promise<number> => {
+  const baseDir = fileURLToPath(outDir)
+
+  await Promise.all(
+    routes.map(async ({ route, node }) => {
+      const targetDir = join(baseDir, route)
+      const targetFile = join(targetDir, 'index.jsonld')
+      await mkdir(targetDir, { recursive: true })
+      await writeFile(targetFile, `${JSON.stringify(addSchemaContext(node), undefined, JSONLD_INDENT)}\n`, 'utf8')
+    }),
+  )
+
+  return routes.length
+}
 
 export type ContentHubIntegration = AstroIntegration & {
   readonly getJsonLdProviders: () => ReadonlyArray<{
@@ -221,12 +250,17 @@ const buildLazyTopics = (state: HubState, resolveHubData: ReturnType<typeof buil
   provide: async () => {
     const data = await resolveHubData()
     const { siteUrl: site, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
-    return createTopicsProvider({ site, taxonomyRoute, topicMap: data.topicMap, groupedEntries: data.grouped }).provide()
+    const { getTopicHierarchy } = await import('../taxonomy.ts')
+    const { loadTaxonomyGraph } = await import('../transform/ancestors.ts')
+    const graph = await loadTaxonomyGraph()
+    const hierarchy = getTopicHierarchy(data.published, graph)
+    return createTopicsProvider({ site, taxonomyRoute, topicMap: data.topicMap, groupedEntries: data.grouped, hierarchy }).provide()
   },
 })
 
 export const contentHub = (options: PluginOptions): ContentHubIntegration => {
   const partial = resolveOrThrow(options)
+  const deprecationWarnings = detectDeprecatedOptions(options)
   const state: HubState = { resolvedFullConfig: { ...partial, siteUrl: '' } satisfies ResolvedConfig }
   const resolveHubData = buildResolveHubData(state)
 
@@ -241,13 +275,24 @@ export const contentHub = (options: PluginOptions): ContentHubIntegration => {
     hooks: {
       'astro:config:setup': async (ctx) => {
         await handleSetup(ctx, partial, state.resolvedFullConfig)
+        deprecationWarnings.forEach((warning) => {
+          ctx.logger.info(warning)
+        })
       },
       'astro:config:done': ({ config, injectTypes }) => {
-         
         state.resolvedFullConfig = handleConfigDone(config.site, injectTypes, partial)
       },
-      'astro:build:done': ({ logger }) => {
-        logger.info(`astro-content-hub [${partial.name}]: build complete.`)
+      'astro:build:done': async ({ dir, logger }: BuildDoneContext) => {
+        if (!state.resolvedFullConfig.jsonld.enabled) {
+          logger.info(`astro-content-hub [${partial.name}]: build complete.`)
+          return
+        }
+
+        const providers = getJsonLdProviders()
+        const routeSets = await Promise.all(providers.map(async (provider) => provider.provide()))
+        const written = await writeJsonLdRoutes(dir, routeSets.flat())
+
+        logger.info(`astro-content-hub [${partial.name}]: emitted ${String(written)} JSON-LD files and build complete.`)
       },
     },
   }

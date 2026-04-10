@@ -3,7 +3,7 @@ import { buildState, diffState } from '../ldes.domain.ts'
 import { serializeAll } from '../serializer.domain.ts'
 import { buildTypeIndex } from '../type-index.domain.ts'
 import { buildRouteJsonLd, buildTypeRegistration } from './builders.ts'
-import { expectOk } from './helpers.ts'
+import { expectOk, expectErr } from './helpers.ts'
 import { validateAll } from '../validation.domain.ts'
 
 describe('jsonld pipeline', () => {
@@ -62,13 +62,10 @@ describe('jsonld pipeline', () => {
 
   test('pipeline|invalidNodes|validationReturnsAllErrors', () => {
     const routes = [
-      { route: '/a/', node: { '@type': 'BlogPosting', '@id': '' } },
-      { route: '/b/', node: { '@type': 'BlogPosting', '@id': '' } },
+      buildRouteJsonLd({ route: '/a/', node: { '@type': 'BlogPosting', '@id': '' } }),
+      buildRouteJsonLd({ route: '/b/', node: { '@type': 'BlogPosting', '@id': '' } }),
     ]
-    const result = validateAll(routes)
-    expect(result.isErr()).toBe(true)
-    if (result.isErr()) {
-      expect(result.error.length).toBe(2)
-    }
+    const errors = expectErr(validateAll(routes))
+    expect(errors.length).toBe(2)
   })
 })

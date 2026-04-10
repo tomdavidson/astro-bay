@@ -252,6 +252,7 @@ describe('contentHub', () => {
         const integration = contentHub({
             name: 'writing',
             collections: ['vault'],
+            jsonld: { enabled: false },
         })
 
         const hooks = getHooks(integration)
@@ -263,12 +264,56 @@ describe('contentHub', () => {
         expect(String(info.mock.calls[0]?.[0])).toContain('build complete')
     })
 
-    test('contentHub_invalidConfig_throwsImmediately', () => {
+    test('contentHub_invalidConfig_throwsWithFieldSpecificMessage', () => {
         expect(() =>
             contentHub({
                 name: 'broken',
                 collections: [],
             }),
-        ).toThrow('invalid configuration')
+        ).toThrow('config error')
+
+        expect(() =>
+            contentHub({
+                name: 'broken',
+                collections: [],
+            }),
+        ).toThrow('collections')
+    })
+
+    test('astro:config:setup_deprecatedPagination_logsWarning', async () => {
+        const integration = contentHub({
+            name: 'legacy',
+            collections: ['vault'],
+            pagination: { pageSize: 15 },
+        })
+
+        const hooks = getHooks(integration)
+        const { params, info } = makeConfigSetupContext()
+
+        await hooks['astro:config:setup']?.(params)
+
+        const infoCalls = info.mock.calls.map((c: readonly unknown[]) => String(c[0]))
+        const deprecationCall = infoCalls.find((msg: string) => msg.includes('deprecated'))
+
+        expect(deprecationCall).toBeDefined()
+        expect(deprecationCall).toContain('pagination.pageSize')
+    })
+
+    test('astro:config:setup_browseSet_noDeprecationWarning', async () => {
+        const integration = contentHub({
+            name: 'modern',
+            collections: ['vault'],
+            browse: { pageSize: 30 },
+        })
+
+        const hooks = getHooks(integration)
+        const { params, info } = makeConfigSetupContext()
+
+        await hooks['astro:config:setup']?.(params)
+
+        const infoCalls = info.mock.calls.map((c: readonly unknown[]) => String(c[0]))
+        const deprecationCall = infoCalls.find((msg: string) => msg.includes('deprecated'))
+
+        expect(deprecationCall).toBeUndefined()
     })
 })

@@ -21,7 +21,10 @@ while getopts "bo:" opt; do
   case $opt in
     b) BUNDLE=true ;;
     o) OUTFILE="$OPTARG" ;;
-    *) echo "Usage: $0 [-b] [-o manifest.txt]" >&2; exit 1 ;;
+    *)
+      echo "Usage: $0 [-b] [-o manifest.txt]" >&2
+      exit 1
+      ;;
   esac
 done
 
@@ -30,10 +33,10 @@ BUNDLE_FILE="${PROJ}-bundle.txt"
 
 # Collect tracked + untracked source files, excluding noise.
 file_list() {
-  git ls-files --cached --others --exclude-standard \
-    | grep -E '\.(ts|astro|json|md|mjs|yml|yaml)$' \
-    | grep -v -E '(node_modules/|dist/|\.astro/|\.turbo/)' \
-    | sort
+  git ls-files --cached --others --exclude-standard |
+    grep -E '\.(ts|astro|json|md|mjs|yml|yaml)$' |
+    grep -v -E '(node_modules/|dist/|\.astro/|\.turbo/)' |
+    sort
 }
 
 # --- Manifest ---
@@ -43,22 +46,22 @@ file_list() {
   echo ""
   echo "## Tree"
   echo ""
-  if command -v tree &>/dev/null; then
-    tree --gitignore -I 'node_modules|dist|.astro|.turbo' 2>/dev/null || true
+  if command -v tree &> /dev/null; then
+    tree --gitignore -I 'node_modules|dist|.astro|.turbo' 2> /dev/null || true
   else
     find . -not -path '*/node_modules/*' \
-           -not -path '*/dist/*' \
-           -not -path '*/.astro/*' \
-           -not -name '*.lock' \
-           -type f | sort | sed 's|^\./||'
+      -not -path '*/dist/*' \
+      -not -path '*/.astro/*' \
+      -not -name '*.lock' \
+      -type f | sort | sed 's|^\./||'
   fi
   echo ""
   echo "## File previews (first 4 lines each)"
   echo ""
   file_list | while IFS= read -r f; do
-    lines=$(wc -l < "$f" 2>/dev/null || echo "?")
+    lines=$(wc -l < "$f" 2> /dev/null || echo "?")
     printf '########## %s (%s lines) ##########\n' "$f" "$lines"
-    head -4 "$f" 2>/dev/null || true
+    head -4 "$f" 2> /dev/null || true
     echo "..."
     echo ""
   done
@@ -86,8 +89,4 @@ if [ "$BUNDLE" = true ]; then
   echo "" >&2
   echo "Bundle created: $BUNDLE_FILE ($(du -h "$BUNDLE_FILE" | cut -f1))" >&2
   echo "" >&2
-  echo "Attach to Perplexity (max 10 files):" >&2
-  echo "  1. $OUTFILE (or paste tree output)" >&2
-  echo "  2. $BUNDLE_FILE" >&2
-  echo "  3-10. Individual files you want high-fidelity reads on" >&2
 fi

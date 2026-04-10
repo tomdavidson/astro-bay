@@ -1,17 +1,17 @@
 ---
-import { getCollection } from 'astro:content'
 import type { GetStaticPaths } from 'astro'
+import { getCollection } from 'astro:content'
+import { toBrowseData } from '../browse.ts'
+import type { ResolvedConfig } from '../config.ts'
 import { getHubData } from '../infra/hub-data.ts'
 import { topicsWithCounts } from '../taxonomy.ts'
-import { toBrowseData } from '../browse.ts'
 import { buildArticleIndexRoutes } from './static-paths.ts'
-import type { ResolvedConfig } from '../config.ts'
 // @ts-ignore virtual module resolved by Vite plugin
 import config from 'astro-content-hub:config'
 
+import BrowseTable from '../components/BrowseTable.astro'
 import PageShell from '../components/PageShell.astro'
 import TopicList from '../components/TopicList.astro'
-import BrowseTable from '../components/BrowseTable.astro'
 
 export const prerender = true
 
@@ -44,18 +44,25 @@ const pageTitle = config.locale.indexTitle
 
 <PageShell title={pageTitle} lang={config.locale.lang} pagefindIgnore>
   <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
-  <script is:inline type="application/json" id="browse-data" set:html={JSON.stringify(toBrowseData(entries))} />
+  <script
+    is:inline
+    type="application/json"
+    id="browse-data"
+    set:html={JSON.stringify(toBrowseData(entries))}
+  />
   <main class="ch-index">
     <h1>{pageTitle}</h1>
 
-    {topics.length > 0 && (
-      <section class="ch-index-topics" aria-label="Topics">
-        <TopicList topics={topics} baseUrl={taxonomyRoute} limit={12} />
-        <a class="ch-all-topics-link" href={`/${taxonomyRoute}`}>
-          All {config.locale.topicIndexTitle} &rarr;
-        </a>
-      </section>
-    )}
+    {
+      topics.length > 0 && (
+        <section class="ch-index-topics" aria-label="Topics">
+          <TopicList topics={topics} baseUrl={taxonomyRoute} limit={12} />
+          <a class="ch-all-topics-link" href={`/${taxonomyRoute}`}>
+            All {config.locale.topicIndexTitle} &rarr;
+          </a>
+        </section>
+      )
+    }
 
     <section aria-label="Articles">
       <BrowseTable rows={toBrowseData(entries)} />
@@ -69,38 +76,38 @@ const pageTitle = config.locale.indexTitle
 </PageShell>
 
 <style>
-  .ch-index {
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-  }
-  h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-  }
-  .ch-index-topics {
-    margin-bottom: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .ch-all-topics-link {
-    font-size: 0.8125em;
-    color: var(--ch-text-muted, #6b7280);
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .ch-all-topics-link:hover {
-    text-decoration: underline;
-  }
-  .ch-noscript-note {
-    font-size: 0.875em;
-    color: var(--ch-text-muted, #6b7280);
-    margin-top: 1.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--ch-surface, #f3f4f6);
-    border-radius: var(--ch-radius, 0.375rem);
-  }
+.ch-index {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+.ch-index-topics {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ch-all-topics-link {
+  font-size: 0.8125em;
+  color: var(--ch-text-muted, #6b7280);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ch-all-topics-link:hover {
+  text-decoration: underline;
+}
+.ch-noscript-note {
+  font-size: 0.875em;
+  color: var(--ch-text-muted, #6b7280);
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--ch-surface, #f3f4f6);
+  border-radius: var(--ch-radius, 0.375rem);
+}
 </style>
