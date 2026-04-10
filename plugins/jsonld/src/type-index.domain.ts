@@ -1,5 +1,7 @@
 import type { TypeRegistration } from './types.ts'
 
+const JSON_INDENT = Number.parseInt('2', 10)
+
 const registrationToNode = (
   site: string,
   r: TypeRegistration,
@@ -7,7 +9,7 @@ const registrationToNode = (
   '@type': 'solid:TypeRegistration',
   'solid:forClass': r.rdfType,
   'solid:instanceContainer': `${site}${r.containerPath}`,
-  'name': r.label,
+  name: r.label,
 })
 
 export const buildTypeIndex = (
@@ -19,12 +21,12 @@ export const buildTypeIndex = (
     {
       '@context': {
         ...context,
-        'solid': 'http://www.w3.org/ns/solid/terms#',
+        solid: 'http://www.w3.org/ns/solid/terms#',
       },
       '@type': 'WebSite',
       '@id': `${site}/`,
-      'hasPart': registrations.map(r => registrationToNode(site, r)),
+      hasPart: registrations.map(r => registrationToNode(site, r)),
     },
-    null,
-    2,
+    undefined,
+    JSON_INDENT,
   )

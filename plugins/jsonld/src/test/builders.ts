@@ -3,17 +3,21 @@ import type { JsonLdNode, RouteJsonLd, TypeRegistration } from '../types.ts'
 const buildNode = (overrides?: Partial<JsonLdNode>): JsonLdNode => ({
   '@type': 'BlogPosting',
   '@id': 'https://example.com/articles/test/',
-  'headline': 'Test Article',
+  headline: 'Test Article',
   ...overrides,
 })
 
 export const buildRouteJsonLd = (
   overrides?: Partial<RouteJsonLd>,
-): RouteJsonLd => ({
-  route: '/articles/test/',
-  node: buildNode(overrides?.node !== undefined ? (overrides.node as Partial<JsonLdNode>) : undefined),
-  ...overrides,
-})
+): RouteJsonLd => {
+  const nodeOverrides = overrides?.node as Partial<JsonLdNode> | undefined
+
+  return {
+    route: '/articles/test/',
+    node: buildNode(nodeOverrides),
+    ...overrides,
+  }
+}
 
 export const buildTypeRegistration = (
   overrides?: Partial<TypeRegistration>,

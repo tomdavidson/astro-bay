@@ -1,9 +1,10 @@
 import { describe, test, expect } from 'vitest'
+import type * as FastCheck from 'fast-check'
 import { buildState, diffState, parseState, serializeState } from './ldes.domain.ts'
 import { buildRouteJsonLd } from './test/builders.ts'
 import { expectOk } from './test/helpers.ts'
 
-const tdd = Boolean(import.meta.env?.['TDD'])
+const tdd = Boolean(process.env['TDD'])
 
 describe('buildState', () => {
   test('buildState|sameInput|deterministicHash', () => {
@@ -14,8 +15,8 @@ describe('buildState', () => {
   })
 
   test('buildState|differentContent|differentHash', () => {
-    const r1 = buildRouteJsonLd({ route: '/a/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', 'headline': 'One' } })
-    const r2 = buildRouteJsonLd({ route: '/a/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', 'headline': 'Two' } })
+    const r1 = buildRouteJsonLd({ route: '/a/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', headline: 'One' } })
+    const r2 = buildRouteJsonLd({ route: '/a/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', headline: 'Two' } })
     const s1 = buildState([r1])
     const s2 = buildState([r2])
     expect(s1.get('/a/')).not.toBe(s2.get('/a/'))
@@ -50,11 +51,11 @@ describe('diffState', () => {
   test('diffState|modifiedRoute|emitsUpdate', () => {
     const prev = buildState([buildRouteJsonLd({
       route: '/a/',
-      node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', 'headline': 'Old' },
+      node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', headline: 'Old' },
     })])
     const curr = buildState([buildRouteJsonLd({
       route: '/a/',
-      node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', 'headline': 'New' },
+      node: { '@type': 'BlogPosting', '@id': 'https://example.com/a/', headline: 'New' },
     })])
     const result = diffState(prev, curr, '2026-01-01T00:00:00Z')
     expect(result).toHaveLength(1)
@@ -82,7 +83,7 @@ describe('serializeState / parseState', () => {
 })
 
 test.skipIf(tdd)('diffState|roundtrip|serializeParseIdentity', async () => {
-  const fc = await import('fast-check')
+  const fc: typeof FastCheck = await import('fast-check')
   fc.assert(
     fc.property(
       fc.array(fc.string({ minLength: 1, maxLength: 20 }), { minLength: 0, maxLength: 10 }),

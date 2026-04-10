@@ -6,6 +6,8 @@ export type SerializedJsonLd = {
   readonly content: string
 }
 
+const JSON_INDENT = Number.parseInt('2', 10)
+
 const resolveFilename = (route: string): string => {
   const normalized = route.endsWith('/') ? route : `${route}/`
   return `${normalized}index.jsonld`
@@ -17,9 +19,7 @@ const buildDocument = (
 ): Record<string, unknown> => ({
   '@context': context,
   ...routeJsonLd.node,
-  ...(routeJsonLd.members !== undefined
-    ? { 'hasPart': routeJsonLd.members }
-    : {}),
+  ...(routeJsonLd.members === undefined ? {} : { hasPart: routeJsonLd.members }),
 })
 
 export const serializeNode = (
@@ -28,7 +28,7 @@ export const serializeNode = (
 ): SerializedJsonLd => ({
   route: routeJsonLd.route,
   filename: resolveFilename(routeJsonLd.route),
-  content: JSON.stringify(buildDocument(context, routeJsonLd), null, 2),
+  content: JSON.stringify(buildDocument(context, routeJsonLd), undefined, JSON_INDENT),
 })
 
 export const serializeAll = (

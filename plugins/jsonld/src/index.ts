@@ -23,4 +23,3 @@ export {
   serializeState,
 } from './ldes.domain.ts'
 export type { LdesState } from './ldes.domain.ts'
-export { createNegotiationMiddleware } from './negotiate.infra.ts'

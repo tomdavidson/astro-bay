@@ -1,21 +1,26 @@
+import type { Arbitrary } from 'fast-check'
+import type * as FastCheck from 'fast-check'
 import type { RouteJsonLd, TypeRegistration } from '../types.ts'
 
-export const routeJsonLdArbitrary = async () => {
-  const fc = await import('fast-check')
+export const routeJsonLdArbitrary = async (): Promise<Arbitrary<RouteJsonLd>> => {
+  const fc: typeof FastCheck = await import('fast-check')
+
   return fc.record({
-    route: fc.string({ minLength: 1, maxLength: 30 }).map(s => `/${s}/`),
+    route: fc.string({ minLength: 1, maxLength: 20 }).map(value => `/${value}/`),
     node: fc.record({
-      '@type': fc.constantFrom('BlogPosting', 'Article', 'DefinedTerm', 'CollectionPage'),
+      '@type': fc.string({ minLength: 1, maxLength: 20 }),
       '@id': fc.webUrl(),
-    }),
-  }) as unknown as fc.Arbitrary<RouteJsonLd>
+      headline: fc.string({ minLength: 1, maxLength: 50 }),
+    }) as unknown as Arbitrary<RouteJsonLd['node']>,
+  }) as unknown as Arbitrary<RouteJsonLd>
 }
 
-export const typeRegistrationArbitrary = async () => {
-  const fc = await import('fast-check')
+export const typeRegistrationArbitrary = async (): Promise<Arbitrary<TypeRegistration>> => {
+  const fc: typeof FastCheck = await import('fast-check')
+
   return fc.record({
     rdfType: fc.webUrl(),
-    containerPath: fc.string({ minLength: 1, maxLength: 20 }).map(s => `/${s}/`),
+    containerPath: fc.string({ minLength: 1, maxLength: 20 }).map(value => `/${value}/`),
     label: fc.string({ minLength: 1, maxLength: 30 }),
-  }) as unknown as fc.Arbitrary<TypeRegistration>
+  }) as unknown as Arbitrary<TypeRegistration>
 }

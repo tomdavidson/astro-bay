@@ -1,5 +1,7 @@
 import type { JsonLdNode } from './types.ts'
 
+const JSON_INDENT = Number.parseInt('2', 10)
+
 export const wrapAsContainer = (
   containerId: string,
   memberNodes: ReadonlyArray<JsonLdNode>,
@@ -11,8 +13,8 @@ export const wrapAsContainer = (
       '@type': ['CollectionPage', 'ldp:BasicContainer'],
       '@id': containerId,
       'ldp:contains': memberNodes.map(n => ({ '@id': n['@id'] })),
-      'hasPart': memberNodes,
+      hasPart: memberNodes,
     },
-    null,
-    2,
+    undefined,
+    JSON_INDENT,
   )

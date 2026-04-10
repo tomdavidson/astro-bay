@@ -1,3 +1,4 @@
+ 
 import { defineConfig } from 'astro/config'
 import { jsonLd } from '../../../src/integration.ts'
 

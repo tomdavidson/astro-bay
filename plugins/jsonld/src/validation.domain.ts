@@ -21,6 +21,7 @@ const detectDuplicateRoutes = (
       .map(r => r.route)
       .filter((route, index, all) => all.indexOf(route) !== index),
   )
+
   return [...seen].map(route => ({
     type: 'DuplicateRoute' as const,
     route,
@@ -28,16 +29,19 @@ const detectDuplicateRoutes = (
   }))
 }
 
+const collectNodeErrors = (
+  routes: ReadonlyArray<RouteJsonLd>,
+): ReadonlyArray<JsonLdError> =>
+  routes
+    .map(validateNode)
+    .flatMap(result => (result.isErr() ? [result.error] : []))
+
 export const validateAll = (
   routes: ReadonlyArray<RouteJsonLd>,
 ): Result<ReadonlyArray<RouteJsonLd>, ReadonlyArray<JsonLdError>> => {
-  const nodeErrors = routes
-    .map(validateNode)
-    .filter((r): r is ReturnType<typeof err<JsonLdError, RouteJsonLd>> => r.isErr())
-    .map(r => r.error)
-
+  const nodeErrors = collectNodeErrors(routes)
   const duplicateErrors = detectDuplicateRoutes(routes)
-  const allErrors = [...nodeErrors, ...duplicateErrors]
+  const allErrors: ReadonlyArray<JsonLdError> = [...nodeErrors, ...duplicateErrors]
 
   return allErrors.length > 0
     ? err(allErrors)

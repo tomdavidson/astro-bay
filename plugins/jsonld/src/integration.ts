@@ -1,14 +1,16 @@
-/* eslint-disable functional/no-return-void, functional/no-expression-statements, functional/no-throw-statements */
+/* eslint-disable functional/no-return-void, functional/no-expression-statements, functional/no-throw-statements, functional/no-loop-statements */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
 import type { AstroIntegration } from 'astro'
 import { match } from 'ts-pattern'
-import { type JsonLdOptions, mergeConfig } from './config.ts'
+
+import { type JsonLdOptions, mergeConfig, type ResolvedConfig } from './config.ts'
 import { buildState, diffState, parseState, serializeChangeFeed, serializeState } from './ldes.domain.ts'
 import { serializeAll } from './serializer.domain.ts'
 import { buildTypeIndex } from './type-index.domain.ts'
-import type { RouteJsonLd } from './types.ts'
+import type { JsonLdError, RouteJsonLd } from './types.ts'
 import { validateAll } from './validation.domain.ts'
 
 type Logger = {
@@ -18,8 +20,9 @@ type Logger = {
   readonly error: (msg: string) => void
 }
 
-const logError = (logger: Logger) =>
-  (e: { readonly type: string; readonly route?: string; readonly path?: string }): void =>
+const logError =
+  (logger: Logger) =>
+    (e: JsonLdError): void =>
     match(e)
       .with({ type: 'DuplicateRoute' }, v => logger.error(`Duplicate route: ${v.route}`))
       .with({ type: 'InvalidNode' }, v => logger.error(`Invalid node at ${v.route}`))
@@ -54,12 +57,14 @@ const loadPreviousState = async (
   logger: Logger,
 ): Promise<ReadonlyMap<string, string>> => {
   const raw = await readFile(stateFilePath, 'utf-8').catch(() => {})
+
   if (raw === undefined) {
     logger.info('No previous LDES state, treating as first build')
     return new Map()
   }
 
   const parsed = parseState(raw)
+
   if (parsed.isErr()) {
     logger.warn('LDES state file corrupt, treating as first build')
     return new Map()
@@ -68,22 +73,17 @@ const loadPreviousState = async (
   return parsed.value
 }
 
-type LdesOptions = {
-  readonly site: string
-  readonly context: Record<string, string>
-  readonly ldes: { readonly path: string; readonly stateFile: string }
+type LdesFeedOptions = {
+  readonly dir: string
+  readonly resolved: { readonly site: string; readonly context: Record<string, string>; readonly ldes: { readonly path: string; readonly stateFile: string } }
+  readonly allRoutes: ReadonlyArray<RouteJsonLd>
+  readonly logger: Logger
 }
 
-const writeLdesFeed = async (
-  dir: string,
-  resolved: LdesOptions,
-  allRoutes: ReadonlyArray<RouteJsonLd>,
-  logger: Logger,
-): Promise<void> => {
+const writeLdesFeed = async ({ dir, resolved, allRoutes, logger }: LdesFeedOptions): Promise<void> => {
   const currentState = buildState(allRoutes)
   const stateFilePath = join(dir, '..', resolved.ldes.stateFile)
   const previousState = await loadPreviousState(stateFilePath, logger)
-
   const timestamp = new Date().toISOString()
   const members = diffState(previousState, currentState, timestamp)
 
@@ -98,45 +98,59 @@ const writeLdesFeed = async (
   await writeFile(stateFilePath, serializeState(currentState), 'utf-8')
 }
 
+const validateRoutes = (allRoutes: ReadonlyArray<RouteJsonLd>, logger: Logger): void => {
+  const result = validateAll(allRoutes)
+
+  if (result.isErr()) {
+    for (const e of result.error) {
+      logError(logger)(e)
+    }
+    throw new Error('astro-jsonld: validation failed')
+  }
+}
+
+const writeTypeIndex = async (outDir: string, resolved: ResolvedConfig, logger: Logger): Promise<void> => {
+  const typeIndex = buildTypeIndex(resolved.site, resolved.context, resolved.typeRegistrations)
+  await writeFile(join(outDir, 'index.jsonld'), typeIndex, 'utf-8')
+  logger.info('wrote /index.jsonld (Type Index)')
+}
+
+const handleBuildDone = async (
+  dir: URL,
+  logger: Logger,
+  resolved: ResolvedConfig,
+): Promise<void> => {
+  if (!resolved.site) {
+    logger.warn('astro-jsonld: no site URL configured. @id values will be relative.')
+  }
+
+  const allRoutes = await collectRoutes(resolved.providers)
+
+  if (resolved.validate) {
+    validateRoutes(allRoutes, logger)
+  }
+
+  const serialized = serializeAll(resolved.context, allRoutes)
+  const outDir = fileURLToPath(dir)
+  await writeJsonLdFiles(outDir, serialized, logger)
+
+  if (resolved.typeRegistrations.length > 0) {
+    await writeTypeIndex(outDir, resolved, logger)
+  }
+
+  if (resolved.ldes.enabled) {
+    await writeLdesFeed({ dir: outDir, resolved, allRoutes, logger })
+  }
+
+  logger.info(`emitted ${serialized.length} .jsonld files`)
+}
+
 export const jsonLd = (options?: JsonLdOptions): AstroIntegration => ({
   name: 'astro-jsonld',
   hooks: {
     'astro:build:done': async ({ dir, logger }) => {
       const resolved = mergeConfig(options?.site ?? '', options)
-
-      if (!resolved.site) {
-        logger.warn('astro-jsonld: no site URL configured. @id values will be relative.')
-      }
-
-      const allRoutes = await collectRoutes(resolved.providers)
-
-      if (resolved.validate) {
-        const result = validateAll(allRoutes)
-        if (result.isErr()) {
-          result.error.forEach(logError(logger))
-          throw new Error('astro-jsonld: validation failed')
-        }
-      }
-
-      const serialized = serializeAll(resolved.context, allRoutes)
-      const outDir = fileURLToPath(dir)
-      await writeJsonLdFiles(outDir, serialized, logger)
-
-      if (resolved.typeRegistrations.length > 0) {
-        const typeIndex = buildTypeIndex(
-          resolved.site,
-          resolved.context,
-          resolved.typeRegistrations,
-        )
-        await writeFile(join(outDir, 'index.jsonld'), typeIndex, 'utf-8')
-        logger.info('wrote /index.jsonld (Type Index)')
-      }
-
-      if (resolved.ldes.enabled) {
-        await writeLdesFeed(outDir, resolved, allRoutes, logger)
-      }
-
-      logger.info(`emitted ${serialized.length} .jsonld files`)
+      await handleBuildDone(dir, logger, resolved)
     },
   },
 })
