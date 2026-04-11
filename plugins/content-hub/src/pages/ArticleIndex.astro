@@ -42,8 +42,7 @@ const taxonomyRoute = config.taxonomy.route
 const pageTitle = config.locale.indexTitle
 ---
 
-<PageShell title={pageTitle} lang={config.locale.lang} pagefindIgnore>
-  <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
+<PageShell title={pageTitle} lang={config.locale.lang} pagefindIgnore jsonldHref="./index.jsonld">
   <script
     is:inline
     type="application/json"

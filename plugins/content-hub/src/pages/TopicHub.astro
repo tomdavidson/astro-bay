@@ -45,8 +45,7 @@ const breadcrumbItems = [
 ]
 ---
 
-<PageShell title={label} lang={config.locale.lang} pagefindIgnore>
-  <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
+<PageShell title={label} lang={config.locale.lang} pagefindIgnore jsonldHref="./index.jsonld">
   <script
     is:inline
     type="application/json"

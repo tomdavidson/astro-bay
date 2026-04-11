@@ -7,9 +7,10 @@ type Props = {
   lang?: string | undefined
   canonicalUrl?: string | undefined
   pagefindIgnore?: boolean | undefined
+  jsonldHref?: string | undefined
 }
 
-const { title, description, lang = 'en', canonicalUrl, pagefindIgnore = false } = Astro.props
+const { title, description, lang = 'en', canonicalUrl, pagefindIgnore = false, jsonldHref } = Astro.props
 ---
 
 {
@@ -25,6 +26,7 @@ const { title, description, lang = 'en', canonicalUrl, pagefindIgnore = false } 
         <title>{title}</title>
         {description && <meta name="description" content={description} />}
         {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+        {jsonldHref && <link rel="alternate" type="application/ld+json" href={jsonldHref} />}
       </head>
       <body {...(pagefindIgnore ? { 'data-pagefind-ignore': '' } : {})}>
         <slot />

@@ -43,8 +43,7 @@ const showHierarchy = !showEmpty && hasHierarchy
 const showFlatList = !showEmpty && !showHierarchy
 ---
 
-<PageShell title={pageTitle} lang={config.locale.lang} pagefindIgnore>
-  <link slot="head" rel="alternate" type="application/ld+json" href="./index.jsonld" />
+<PageShell title={pageTitle} lang={config.locale.lang} pagefindIgnore jsonldHref="./index.jsonld">
   <main class="ch-topic-index">
     <Breadcrumb items={breadcrumbItems} />
     <h1>{pageTitle}</h1>
