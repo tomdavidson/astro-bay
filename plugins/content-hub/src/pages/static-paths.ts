@@ -1,10 +1,6 @@
-import type { NormalizedEntry, HubData } from '../types.ts'
 import { filterPublished, sortByDate } from '../aggregate.ts'
-import {
-  getRelatedTopics,
-  getChildTopics,
-  getSiblingTopics,
-} from '../taxonomy.ts'
+import { getChildTopics, getRelatedTopics, getSiblingTopics } from '../taxonomy.ts'
+import type { HubData, NormalizedEntry } from '../types.ts'
 
 type TaxonomyGraph = {
   readonly ancestors: (slug: string) => ReadonlyArray<{ readonly slug: string; readonly label: string }>
@@ -25,13 +21,7 @@ export const buildArticleIndexRoutes = (
   fallbackCount: number,
 ): ReadonlyArray<ArticleIndexRoute> => {
   const published = sortByDate(filterPublished([...data.uidMap.values()]))
-  return [{
-    params: {},
-    props: {
-      entries: published,
-      fallbackEntries: published.slice(0, fallbackCount),
-    },
-  }]
+  return [{ params: {}, props: { entries: published, fallbackEntries: published.slice(0, fallbackCount) } }]
 }
 
 export type TopicHubRoute = {
@@ -48,20 +38,18 @@ export type TopicHubRoute = {
   }
 }
 
-export const buildTopicRoute = (ctx: {
+export type BuildTopicRouteContext = {
   readonly slug: string
   readonly entries: ReadonlyArray<NormalizedEntry>
   readonly data: HubData
   readonly graph: TaxonomyGraph | undefined
   readonly fallbackCount: number
-}): ReadonlyArray<TopicHubRoute> => {
+}
+
+export const buildTopicRoute = (ctx: BuildTopicRouteContext): ReadonlyArray<TopicHubRoute> => {
   const { slug, entries, data, graph, fallbackCount } = ctx
   const label = data.topicMap.get(slug) ?? slug
-  const relatedArgs = {
-    slug,
-    entries: data.published,
-    ...(graph !== undefined && { graph })
-  } as const
+  const relatedArgs = { slug, entries: data.published, ...(graph !== undefined && { graph }) } as const
   const related = getRelatedTopics(relatedArgs)
   const children = getChildTopics(slug, graph, data.topicMap)
   const siblings = getSiblingTopics(slug, graph, data.topicMap)
@@ -69,7 +57,16 @@ export const buildTopicRoute = (ctx: {
 
   return [{
     params: { topic: slug },
-    props: { slug, label, related, children, siblings, ancestorChain, entries: [...entries], fallbackEntries: [...entries].slice(0, fallbackCount) },
+    props: {
+      slug,
+      label,
+      related,
+      children,
+      siblings,
+      ancestorChain,
+      entries: [...entries],
+      fallbackEntries: [...entries].slice(0, fallbackCount),
+    },
   }]
 }
 

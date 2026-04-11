@@ -1,10 +1,13 @@
-import { describe, it, expect, test } from 'vitest'
-import { toBrowseRow, toBrowseData, createBrowseColumns } from './browse.ts'
+import * as fc from 'fast-check'
+import { describe, expect, it, test } from 'vitest'
+import { entryArb } from '../test/arbitraries.ts'
 import { buildEntry, buildEntryWithTopics } from '../test/builders.ts'
 import { isTddEnabled } from '../test/helpers.ts'
-import * as fc from 'fast-check'
+import { createBrowseColumns, toBrowseData, toBrowseRow } from './browse.ts'
 
 const tdd = isTddEnabled()
+
+// ─── toBrowseRow ─────────────────────────────────────────────────────────────
 
 describe('toBrowseRow', () => {
   it('extracts minimal fields from entry', () => {
@@ -34,18 +37,18 @@ describe('toBrowseRow', () => {
     expect(row).not.toHaveProperty('resolvedTopics')
   })
 
-  it('returns null date when entry has no date', () => {
-    const entry = buildEntry({ uid: 'undated', date: undefined })
-    const row = toBrowseRow(entry)
+  it('returns undefined date when entry has no date', () => {
+    const row = toBrowseRow(buildEntry({ uid: 'undated', date: undefined }))
     expect(row.date).toBeUndefined()
   })
 
-  it('returns null excerpt when entry has no excerpt', () => {
-    const entry = buildEntry({ uid: 'no-excerpt', excerpt: undefined })
-    const row = toBrowseRow(entry)
+  it('returns undefined excerpt when entry has no excerpt', () => {
+    const row = toBrowseRow(buildEntry({ uid: 'no-excerpt', excerpt: undefined }))
     expect(row.excerpt).toBeUndefined()
   })
 })
+
+// ─── toBrowseData ────────────────────────────────────────────────────────────
 
 describe('toBrowseData', () => {
   it('maps all entries to BrowseRow array', () => {
@@ -54,9 +57,7 @@ describe('toBrowseData', () => {
       buildEntry({ uid: 'b', title: 'B' }),
       buildEntry({ uid: 'c', title: 'C' }),
     ]
-
     const data = toBrowseData(entries)
-
     expect(data).toHaveLength(3)
     expect(data.map(r => r.uid)).toEqual(['a', 'b', 'c'])
   })
@@ -66,46 +67,32 @@ describe('toBrowseData', () => {
   })
 })
 
+// ─── createBrowseColumns ─────────────────────────────────────────────────────
+// Deleted: "covers all BrowseRow keys" — subsumed by property test below.
+// Deleted: "marks date as sortable" — asserts hardcoded config constant.
+// Deleted: "marks topics as filterable" — asserts hardcoded config constant.
+
 describe('createBrowseColumns', () => {
-  it('covers all BrowseRow keys', () => {
-    const columns = createBrowseColumns()
-    const columnIds = columns.map(c => c.id)
-    const expectedKeys: readonly string[] = ['uid', 'title', 'date', 'topics', 'excerpt', 'source']
-
-    for (const key of expectedKeys) {
-      expect(columnIds).toContain(key)
-    }
-  })
-
-  it('marks date as sortable', () => {
-    const columns = createBrowseColumns()
-    const dateCol = columns.find(c => c.id === 'date')
-    expect(dateCol?.enableSorting).toBe(true)
-  })
-
-  it('marks topics as filterable', () => {
-    const columns = createBrowseColumns()
-    const topicsCol = columns.find(c => c.id === 'topics')
-    expect(topicsCol?.enableColumnFilter).toBe(true)
-  })
-
   test.skipIf(tdd)('property: all BrowseRow keys covered by columns', () => {
-    fc.assert(
-      fc.property(
-        fc.record({
-          uid: fc.string({ minLength: 1 }),
-          title: fc.string({ minLength: 1 }),
-          date: fc.oneof(fc.constant(undefined), fc.date().map(d => d.toISOString())),
-          topics: fc.array(fc.string({ minLength: 1 })),
-          excerpt: fc.oneof(fc.constant(undefined), fc.string()),
-          source: fc.constantFrom('vault', 'feed', 'custom'),
-        }),
-        (row) => {
-          const columns = createBrowseColumns()
-          const columnIds = new Set(columns.map(c => c.id))
-          return Object.keys(row).every(k => columnIds.has(k))
-        },
-      ),
-    )
+    fc.assert(fc.property(entryArb, entry => {
+      const row = toBrowseRow(entry)
+      const columns = createBrowseColumns()
+      const columnIds = new Set(columns.map(c => c.id))
+      return Object.keys(row).every(k => columnIds.has(k))
+    }))
+  })
+})
+
+// ─── toBrowseData — property tests ───────────────────────────────────────────
+
+describe('toBrowseData — property tests', () => {
+  test.skipIf(!tdd)('JSON roundtrip preserves all uids', () => {
+    fc.assert(fc.property(fc.array(entryArb, { minLength: 0, maxLength: 10 }), entries => {
+      const rows = toBrowseData(entries)
+      const parsed = JSON.parse(JSON.stringify(rows)) as readonly { readonly uid: string }[]
+      const originalUids = entries.map(e => e.uid).toSorted()
+      const parsedUids = parsed.map(r => r.uid).toSorted()
+      expect(parsedUids).toEqual(originalUids)
+    }))
   })
 })

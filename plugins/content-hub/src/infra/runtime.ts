@@ -1,11 +1,13 @@
 // Consumer-facing convenience wrapper. Runs inside Astro pages/endpoints only.
 import rawConfig from 'astro-content-hub:config'
 import { getCollection as rawGetCollection } from 'astro:content'
-import { getHubData as getHubDataInternal } from './hub-data.ts'
-import type { HubData } from '../types.ts'
 import type { ResolvedConfig } from '../config.ts'
+import type { HubData } from '../types.ts'
+import { getHubData as getHubDataInternal } from './hub-data.ts'
 
-const isResolvedConfigWithCommand = (value: unknown): value is ResolvedConfig & { readonly astroCommand: string } => {
+const isResolvedConfigWithCommand = (
+  value: unknown,
+): value is ResolvedConfig & { readonly astroCommand: string } => {
   if (typeof value !== 'object' || value === null) return false
   if (!('astroCommand' in value)) return false
   const v = value as { readonly astroCommand?: unknown }
@@ -14,8 +16,7 @@ const isResolvedConfigWithCommand = (value: unknown): value is ResolvedConfig & 
 
 type GetCollectionArg = Parameters<typeof getHubDataInternal>[1]
 
-const isGetCollection = (fn: unknown): fn is GetCollectionArg =>
-  typeof fn === 'function'
+const isGetCollection = (fn: unknown): fn is GetCollectionArg => typeof fn === 'function'
 
 if (!isResolvedConfigWithCommand(rawConfig)) {
   throw new Error('astro-content-hub runtime: invalid config injected')
@@ -32,12 +33,8 @@ const logger = {
   info: (msg: string): void => console.warn(`INFO: ${msg}`),
 }
 
-const runtime = {
-  logger,
-  command: config.astroCommand,
-}
+const runtime = { logger, command: config.astroCommand }
 
-export const getHubData = (): Promise<HubData> =>
-  getHubDataInternal(config, getCollection, runtime)
+export const getHubData = (): Promise<HubData> => getHubDataInternal(config, getCollection, runtime)
 
 export { config }

@@ -1,12 +1,9 @@
-import type { ResolvedConfig } from '../config.ts';
-import type { HubData, NormalizedEntry } from '../types.ts';
-import { createContentHubProvider, createTopicsProvider } from '../jsonld-provider.ts';
-import { getHubData as getHubDataInternal, type GetCollection, type RuntimeContext } from './hub-data.ts';
+import type { ResolvedConfig } from '../config.ts'
+import { createContentHubProvider, createTopicsProvider } from '../jsonld-provider.ts'
+import type { HubData, NormalizedEntry } from '../types.ts'
+import { type GetCollection, getHubData as getHubDataInternal, type RuntimeContext } from './hub-data.ts'
 
-export type RouteJsonLd = {
-  readonly route: string;
-  readonly node: Record<string, unknown>;
-};
+export type RouteJsonLd = { readonly route: string; readonly node: Record<string, unknown> }
 
 const buildRuntime = (command: string): RuntimeContext => ({
   logger: {
@@ -14,13 +11,13 @@ const buildRuntime = (command: string): RuntimeContext => ({
     info: (msg: string): void => console.warn(`INFO: ${msg}`),
   },
   command,
-});
+})
 
 const resolveHubData = async (
   config: ResolvedConfig,
   getCollection: GetCollection,
   command = 'build',
-): Promise<HubData> => getHubDataInternal(config, getCollection, buildRuntime(command));
+): Promise<HubData> => getHubDataInternal(config, getCollection, buildRuntime(command))
 
 /**
  * Return JSON-LD route descriptors for all articles. This is the same data
@@ -32,18 +29,18 @@ export const getArticleJsonLdRoutes = async (
   getCollection: GetCollection,
   command?: string,
 ): Promise<ReadonlyArray<RouteJsonLd>> => {
-  const data = await resolveHubData(config, getCollection, command);
-  const entries: ReadonlyArray<NormalizedEntry> = [...data.uidMap.values()];
+  const data = await resolveHubData(config, getCollection, command)
+  const entries: ReadonlyArray<NormalizedEntry> = [...data.uidMap.values()]
 
   const provider = createContentHubProvider({
     site: config.siteUrl,
     articleBase: config.permalinks.articleBase,
     taxonomyRoute: config.taxonomy.route,
     entries,
-  });
+  })
 
-  return provider.provide() as Promise<ReadonlyArray<RouteJsonLd>>;
-};
+  return provider.provide() as Promise<ReadonlyArray<RouteJsonLd>>
+}
 
 /**
  * Return JSON-LD route descriptors for all topics, including the topic index
@@ -54,14 +51,14 @@ export const getTopicJsonLdRoutes = async (
   getCollection: GetCollection,
   command?: string,
 ): Promise<ReadonlyArray<RouteJsonLd>> => {
-  const data = await resolveHubData(config, getCollection, command);
+  const data = await resolveHubData(config, getCollection, command)
 
   const provider = createTopicsProvider({
     site: config.siteUrl,
     taxonomyRoute: config.taxonomy.route,
     topicMap: data.topicMap,
     groupedEntries: data.grouped,
-  });
+  })
 
-  return provider.provide() as Promise<ReadonlyArray<RouteJsonLd>>;
-};
+  return provider.provide() as Promise<ReadonlyArray<RouteJsonLd>>
+}

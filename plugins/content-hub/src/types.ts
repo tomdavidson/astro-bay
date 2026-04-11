@@ -29,10 +29,7 @@ export type EntryTransform = (
   ctx: TransformContext,
 ) => NormalizedEntry | Promise<NormalizedEntry>
 
-export type TransformWarning = {
-  readonly uid: string
-  readonly cause: unknown
-}
+export type TransformWarning = { readonly uid: string; readonly cause: unknown }
 
 export type TransformResult = {
   readonly entry: NormalizedEntry
@@ -53,20 +50,11 @@ export type HubData = {
   readonly uidMap: ReadonlyMap<string, NormalizedEntry>
 }
 
-export type DraftConfig = {
-  readonly showInDev?: boolean
-}
+export type DraftConfig = { readonly showInDev?: boolean }
 
-export type AliasRoute = {
-  readonly alias: string
-  readonly uid: string
-}
+export type AliasRoute = { readonly alias: string; readonly uid: string }
 
-export type TopicWithCount = {
-  readonly slug: string
-  readonly label: string
-  readonly count: number
-}
+export type TopicWithCount = { readonly slug: string; readonly label: string; readonly count: number }
 
 export type PageSlice<T> = {
   readonly entries: ReadonlyArray<T>
@@ -82,34 +70,18 @@ export type PageSlice<T> = {
 export type ContentHubError =
   | {
     readonly type: 'UidCollision'
-    readonly collisions: ReadonlyArray<{
-      readonly uid: string
-      readonly sources: ReadonlyArray<string>
-    }>
+    readonly collisions: ReadonlyArray<{ readonly uid: string; readonly sources: ReadonlyArray<string> }>
   }
   | {
     readonly type: 'AliasCollision'
-    readonly collisions: ReadonlyArray<{
-      readonly alias: string
-      readonly owners: ReadonlyArray<string>
-    }>
+    readonly collisions: ReadonlyArray<{ readonly alias: string; readonly owners: ReadonlyArray<string> }>
   }
-  | {
-    readonly type: 'RouteConflict'
-    readonly route: string
-    readonly hubs: ReadonlyArray<string>
-  }
-  | {
-    readonly type: 'MissingSite'
-    readonly context: string
-  }
+  | { readonly type: 'RouteConflict'; readonly route: string; readonly hubs: ReadonlyArray<string> }
+  | { readonly type: 'MissingSite'; readonly context: string }
   | {
     readonly type: 'TransformError'
     readonly transform: string
     readonly uid: string
     readonly cause: unknown
   }
-  | {
-    readonly type: 'ConfigInvalid'
-    readonly message: string
-  }
+  | { readonly type: 'ConfigInvalid'; readonly message: string }

@@ -10,11 +10,7 @@ export type TopicHierarchyNode = {
   readonly count: number
 }
 
-type AncestorNode = {
-  readonly slug: string
-  readonly label: string
-}
-
+type AncestorNode = { readonly slug: string; readonly label: string }
 
 type GraphLike = {
   readonly ancestors: (slug: string) => ReadonlyArray<AncestorNode>
@@ -25,12 +21,8 @@ type GraphLike = {
 const incrementCount = (acc: ReadonlyMap<string, number>, slug: string): ReadonlyMap<string, number> =>
   new Map([...acc, [slug, (acc.get(slug) ?? 0) + 1]])
 
-const countByResolvedTopic = (
-  entries: ReadonlyArray<NormalizedEntry>,
-): ReadonlyMap<string, number> =>
-  entries
-    .flatMap(entry => entry.resolvedTopics)
-    .reduce(incrementCount, new Map<string, number>())
+const countByResolvedTopic = (entries: ReadonlyArray<NormalizedEntry>): ReadonlyMap<string, number> =>
+  entries.flatMap(entry => entry.resolvedTopics).reduce(incrementCount, new Map<string, number>())
 
 const DEFAULT_RELATED_LIMIT = 8
 
@@ -47,31 +39,28 @@ const countCoOccurrences = (
   matching: ReadonlyArray<NormalizedEntry>,
   excluded: ReadonlySet<string>,
 ): ReadonlyMap<string, number> =>
-  matching
-    .flatMap(entry => entry.resolvedTopics)
-    .filter(topic => !excluded.has(topic))
-    .reduce(incrementCount, new Map<string, number>())
+  matching.flatMap(entry => entry.resolvedTopics).filter(topic => !excluded.has(topic)).reduce(
+    incrementCount,
+    new Map<string, number>(),
+  )
 
-export const getRelatedTopics = (opts: {
-  readonly slug: string
-  readonly entries: ReadonlyArray<NormalizedEntry>
-  readonly graph?: GraphLike
-  readonly limit?: number
-}): ReadonlyArray<RelatedTopicResult> => {
+export const getRelatedTopics = (
+  opts: {
+    readonly slug: string
+    readonly entries: ReadonlyArray<NormalizedEntry>
+    readonly graph?: GraphLike
+    readonly limit?: number
+  },
+): ReadonlyArray<RelatedTopicResult> => {
   const { slug, entries, graph, limit = DEFAULT_RELATED_LIMIT } = opts
   const matching = entries.filter(e => e.resolvedTopics.includes(slug))
   const excluded = buildExcludedSet(slug, graph)
   const coOccurrences = countCoOccurrences(matching, excluded)
   const topicMap = buildTopicMap(entries)
 
-  return [...coOccurrences.entries()]
-    .toSorted(([, a], [, b]) => b - a)
-    .slice(0, limit)
-    .map(([topicSlug, count]) => ({
-      slug: topicSlug,
-      label: topicMap.get(topicSlug) ?? topicSlug,
-      count,
-    }))
+  return [...coOccurrences.entries()].toSorted(([, a], [, b]) => b - a).slice(0, limit).map((
+    [topicSlug, count],
+  ) => ({ slug: topicSlug, label: topicMap.get(topicSlug) ?? topicSlug, count }))
 }
 
 const filterByTopicMap = (
@@ -102,9 +91,10 @@ export const getSiblingTopics = (
   const parent = parentChain[0]
   if (parent === undefined || graph.children === undefined) return []
 
-  const siblings = graph.children(parent.slug)
-    .filter(c => c.slug !== slug)
-    .map(c => ({ slug: c.slug, label: c.label }))
+  const siblings = graph.children(parent.slug).filter(c => c.slug !== slug).map(c => ({
+    slug: c.slug,
+    label: c.label,
+  }))
   return filterByTopicMap(siblings, topicMap)
 }
 
@@ -127,8 +117,7 @@ const resolveChildren = (
   graph: GraphLike,
   slug: string,
   topicMap: ReadonlyMap<string, string>,
-): ReadonlyArray<string> =>
-  (graph.children?.(slug) ?? []).map(c => c.slug).filter(c => topicMap.has(c))
+): ReadonlyArray<string> => (graph.children?.(slug) ?? []).map(c => c.slug).filter(c => topicMap.has(c))
 
 type GraphNodeContext = {
   readonly slug: string
@@ -152,22 +141,15 @@ export const getTopicHierarchy = (
   const topicMap = buildTopicMap(entries)
   const counts = countByResolvedTopic(entries)
   const slugs = [...topicMap.keys()]
-  const mapper = graph === undefined
-    ? (slug: string) => buildFlatNode(slug, topicMap, counts)
-    : (slug: string) => buildGraphNode({ slug, graph, topicMap, counts })
+  const mapper = graph === undefined ?
+    (slug: string) => buildFlatNode(slug, topicMap, counts) :
+    (slug: string) => buildGraphNode({ slug, graph, topicMap, counts })
   return slugs.map(mapper).toSorted((a, b) => b.count - a.count)
 }
 
 export const slugifyTopic = (raw: string): string =>
-  raw
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-
+  raw.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-').replace(/^-|-$/g, '')
 
 type TopicSource = { readonly label: string; readonly fromVault: boolean }
 
@@ -180,40 +162,30 @@ const shouldExistingWin = (existing: TopicSource, candidate: TopicSource): boole
   (existing.fromVault && !candidate.fromVault) ||
   (existing.fromVault === candidate.fromVault && existing.label <= candidate.label)
 
-const upsertTopicFrom = (
-  origin: TopicOrigin,
-) => (
-  map: ReadonlyMap<string, TopicSource>,
-  topic: string,
-): ReadonlyMap<string, TopicSource> => {
-  const slug = slugifyTopic(topic)
-  if (!slug) return map
-  const candidate: TopicSource = { label: topic, fromVault: isVaultOrigin(origin) }
-  const existing = map.get(slug)
-  if (existing !== undefined && shouldExistingWin(existing, candidate)) return map
-  return new Map([...map, [slug, candidate]])
-}
+const upsertTopicFrom =
+  (origin: TopicOrigin) =>
+  (map: ReadonlyMap<string, TopicSource>, topic: string): ReadonlyMap<string, TopicSource> => {
+    const slug = slugifyTopic(topic)
+    if (!slug) return map
+    const candidate: TopicSource = { label: topic, fromVault: isVaultOrigin(origin) }
+    const existing = map.get(slug)
+    if (existing !== undefined && shouldExistingWin(existing, candidate)) return map
+    return new Map([...map, [slug, candidate]])
+  }
 
 const upsertVaultTopic = upsertTopicFrom({ kind: 'vault' })
 const upsertFeedTopic = upsertTopicFrom({ kind: 'feed' })
 
-
 // Label resolution priority:
 // 1. Vault/local entries (no sourceLink) beat feed entries.
 // 2. Within same source type, alphabetically-first original string wins.
-export const buildTopicMap = (
-  entries: ReadonlyArray<NormalizedEntry>,
-): ReadonlyMap<string, string> => {
-  const map = entries.reduce(
-    (acc, entry) => {
-      const upsert = entry.link === undefined ? upsertVaultTopic : upsertFeedTopic
-      return entry.topics.reduce(upsert, acc)
-    },
-    new Map<string, TopicSource>() as ReadonlyMap<string, TopicSource>,
-  )
+export const buildTopicMap = (entries: ReadonlyArray<NormalizedEntry>): ReadonlyMap<string, string> => {
+  const map = entries.reduce((acc, entry) => {
+    const upsert = entry.link === undefined ? upsertVaultTopic : upsertFeedTopic
+    return entry.topics.reduce(upsert, acc)
+  }, new Map<string, TopicSource>() as ReadonlyMap<string, TopicSource>)
   return new Map([...map.entries()].map(([slug, { label }]) => [slug, label]))
 }
-
 
 const compareByDateDesc = (a: NormalizedEntry, b: NormalizedEntry): number => {
   if (!a.date && !b.date) return 0
@@ -221,7 +193,6 @@ const compareByDateDesc = (a: NormalizedEntry, b: NormalizedEntry): number => {
   if (!b.date) return -1
   return b.date.getTime() - a.date.getTime()
 }
-
 
 const addToBucket = (
   buckets: ReadonlyMap<string, ReadonlyArray<NormalizedEntry>>,
@@ -231,12 +202,8 @@ const addToBucket = (
   const slug = slugifyTopic(topic)
   if (!slug) return buckets
   const existing = buckets.get(slug)
-  return new Map([
-    ...buckets,
-    [slug, existing === undefined ? [entry] : [...existing, entry]],
-  ])
+  return new Map([...buckets, [slug, existing === undefined ? [entry] : [...existing, entry]]])
 }
-
 
 // Groups published entries by topic slug. An entry with N topics appears in N groups.
 // Within each group, entries sort by date descending (undated entries sort last).
@@ -244,11 +211,7 @@ export const groupByTopic = (
   entries: ReadonlyArray<NormalizedEntry>,
 ): ReadonlyMap<string, ReadonlyArray<NormalizedEntry>> => {
   const buckets = entries.reduce(
-    (acc, entry) =>
-      entry.resolvedTopics.reduce(
-        (inner, topic) => addToBucket(inner, entry, topic),
-        acc,
-      ),
+    (acc, entry) => entry.resolvedTopics.reduce((inner, topic) => addToBucket(inner, entry, topic), acc),
     new Map<string, ReadonlyArray<NormalizedEntry>>() as ReadonlyMap<string, ReadonlyArray<NormalizedEntry>>,
   )
   return new Map(
@@ -256,15 +219,12 @@ export const groupByTopic = (
   )
 }
 
-
 export const topicsWithCounts = (
   topicMap: ReadonlyMap<string, string>,
   grouped: ReadonlyMap<string, ReadonlyArray<NormalizedEntry>>,
 ): ReadonlyArray<TopicWithCount> =>
-  [...topicMap.entries()]
-    .map(([slug, label]) => ({ slug, label, count: grouped.get(slug)?.length ?? 0 }))
+  [...topicMap.entries()].map(([slug, label]) => ({ slug, label, count: grouped.get(slug)?.length ?? 0 }))
     .toSorted((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-
 
 export const entriesForTopic = (
   slug: string,

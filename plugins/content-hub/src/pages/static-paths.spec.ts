@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { buildArticleIndexRoutes, buildTopicHubRoutes, buildTopicRoute } from './static-paths.ts'
 import { buildEntry, buildEntryWithTopics } from '../../test/builders.ts'
-import type { HubData } from '../types.ts'
-import { buildTopicMap, groupByTopic, getTopicHierarchy } from '../taxonomy.ts'
 import { filterPublished, sortByDate } from '../aggregate.ts'
+import { buildTopicMap, getTopicHierarchy, groupByTopic } from '../taxonomy.ts'
+import type { HubData } from '../types.ts'
+import { buildArticleIndexRoutes, buildTopicHubRoutes, buildTopicRoute } from './static-paths.ts'
 
 const makeHubData = (entries: readonly ReturnType<typeof buildEntry>[]): HubData => {
   const published = sortByDate(filterPublished(entries))
@@ -38,9 +38,7 @@ describe('buildArticleIndexRoutes', () => {
   })
 
   test('props.fallbackEntries is sliced to staticFallbackCount', () => {
-    const entries = Array.from({ length: 5 }, (_, i) =>
-      buildEntry({ uid: `e${i}`, draft: false })
-    )
+    const entries = Array.from({ length: 5 }, (_, i) => buildEntry({ uid: `e${i}`, draft: false }))
     const data = makeHubData(entries)
     const [route] = buildArticleIndexRoutes(data, 3)
     expect(route!.props.fallbackEntries).toHaveLength(3)
@@ -69,7 +67,13 @@ describe('buildTopicRoute', () => {
   test('returns a route with params.topic = slug', () => {
     const e = buildEntryWithTopics(['housing'], { uid: 'a', draft: false })
     const data = makeHubData([e])
-    const [route] = buildTopicRoute({ slug: 'housing', entries: [e], data, graph: undefined, fallbackCount: 10 })
+    const [route] = buildTopicRoute({
+      slug: 'housing',
+      entries: [e],
+      data,
+      graph: undefined,
+      fallbackCount: 10,
+    })
     expect(route!.params.topic).toBe('housing')
   })
 
@@ -84,9 +88,7 @@ describe('buildTopicRoute', () => {
   })
 
   test('props.fallbackEntries sliced to fallbackCount', () => {
-    const entries = Array.from({ length: 6 }, (_, i) =>
-      buildEntryWithTopics(['housing'], { uid: `e${i}` })
-    )
+    const entries = Array.from({ length: 6 }, (_, i) => buildEntryWithTopics(['housing'], { uid: `e${i}` }))
     const data = makeHubData(entries)
     const [route] = buildTopicRoute({ slug: 'housing', entries, data, graph: undefined, fallbackCount: 4 })
     expect(route!.props.fallbackEntries).toHaveLength(4)
@@ -94,20 +96,38 @@ describe('buildTopicRoute', () => {
 
   test('props.label falls back to slug when not in topicMap', () => {
     const data = makeHubData([])
-    const [route] = buildTopicRoute({ slug: 'unknown-slug', entries: [], data, graph: undefined, fallbackCount: 5 })
+    const [route] = buildTopicRoute({
+      slug: 'unknown-slug',
+      entries: [],
+      data,
+      graph: undefined,
+      fallbackCount: 5,
+    })
     expect(route!.props.label).toBe('unknown-slug')
   })
 
   test('props.label uses topicMap display label when available', () => {
     const e = buildEntryWithTopics(['Urban Housing'], { uid: 'a' })
     const data = makeHubData([e])
-    const [route] = buildTopicRoute({ slug: 'urban-housing', entries: [e], data, graph: undefined, fallbackCount: 5 })
+    const [route] = buildTopicRoute({
+      slug: 'urban-housing',
+      entries: [e],
+      data,
+      graph: undefined,
+      fallbackCount: 5,
+    })
     expect(route!.props.label).toBe('Urban Housing')
   })
 
   test('props.ancestorChain is empty without graph', () => {
     const data = makeHubData([])
-    const [route] = buildTopicRoute({ slug: 'housing', entries: [], data, graph: undefined, fallbackCount: 5 })
+    const [route] = buildTopicRoute({
+      slug: 'housing',
+      entries: [],
+      data,
+      graph: undefined,
+      fallbackCount: 5,
+    })
     expect(route!.props.ancestorChain).toEqual([])
   })
 
@@ -159,19 +179,20 @@ describe('hierarchy alignment: TopicIndex and TopicHub agree on children', () =>
       return []
     },
     children: (slug: string) =>
-      slug === 'housing'
-        ? [
-            { slug: 'rent-control', label: 'Rent Control' },
-            { slug: 'ghost-child', label: 'Ghost Child' },
-          ]
-        : [],
+      slug === 'housing' ?
+        [{ slug: 'rent-control', label: 'Rent Control' }, { slug: 'ghost-child', label: 'Ghost Child' }] :
+        [],
   }
 
   test('parent TopicIndex node and parent TopicHub route list the same children', () => {
     // ghost-child has no entries, so it should be excluded from both
     const entries = [
       buildEntryWithTopics(['Housing'], { uid: 'a', draft: false, resolvedTopics: ['housing'] }),
-      buildEntryWithTopics(['Rent Control'], { uid: 'b', draft: false, resolvedTopics: ['rent-control', 'housing'] }),
+      buildEntryWithTopics(['Rent Control'], {
+        uid: 'b',
+        draft: false,
+        resolvedTopics: ['rent-control', 'housing'],
+      }),
     ]
     const data = makeHubData(entries)
 

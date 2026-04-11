@@ -1,23 +1,16 @@
 // src/transform/ancestors.ts
-import type { EntryTransform, NormalizedEntry } from '../types.ts'
 import { slugifyTopic } from '../taxonomy.ts'
+import type { EntryTransform, NormalizedEntry } from '../types.ts'
 
 // --- Type guards for the optional astro-taxonomy peer ---
 
-type AncestorNode = {
-  readonly slug: string
-  readonly label: string
-}
+type AncestorNode = { readonly slug: string; readonly label: string }
 
 type AncestorFn = (slug: string) => ReadonlyArray<AncestorNode>
 
-export type TaxonomyGraphModule = {
-  readonly edges: ReadonlyArray<unknown>
-  readonly ancestors: AncestorFn
-}
+export type TaxonomyGraphModule = { readonly edges: ReadonlyArray<unknown>; readonly ancestors: AncestorFn }
 
-const isAncestorFn = (value: unknown): value is AncestorFn =>
-  typeof value === 'function'
+const isAncestorFn = (value: unknown): value is AncestorFn => typeof value === 'function'
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -33,13 +26,13 @@ const expandWithAncestors = (
   topics: ReadonlyArray<string>,
   ancestors: AncestorFn,
 ): ReadonlyArray<string> => [
-    ...new Set([
-      ...topics,
-      ...topics.flatMap(topic =>
-        ancestors(slugifyTopic(topic)).map(ancestor => ancestor.slug)
-      ),
-    ]),
-  ]
+  ...new Set([
+    ...topics,
+    ...topics.flatMap(topic =>
+      ancestors(slugifyTopic(topic)).map(ancestor => ancestor.slug)
+    ),
+  ]),
+]
 
 // --- Public API ---
 

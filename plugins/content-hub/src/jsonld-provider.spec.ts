@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { createContentHubProvider, createTopicsProvider } from './jsonld-provider.ts'
+import { describe, expect, it } from 'vitest'
 import { buildEntry, buildEntryWithTopics } from '../test/builders.ts'
+import { createContentHubProvider, createTopicsProvider } from './jsonld-provider.ts'
 
 const site = 'https://example.com'
 const articleBase = 'articles'
@@ -26,11 +26,7 @@ describe('createContentHubProvider', () => {
   })
 
   it('collectionPage has correct member count', async () => {
-    const entries = [
-      buildEntry({ uid: 'a' }),
-      buildEntry({ uid: 'b' }),
-      buildEntry({ uid: 'c' }),
-    ]
+    const entries = [buildEntry({ uid: 'a' }), buildEntry({ uid: 'b' }), buildEntry({ uid: 'c' })]
     const provider = createContentHubProvider({ site, articleBase, taxonomyRoute, entries })
     const routes = await provider.provide()
     const collection = routes.find(r => (r.node as Record<string, unknown>)['@type'] === 'CollectionPage')
@@ -42,9 +38,7 @@ describe('createContentHubProvider', () => {
   })
 
   it('maps aliases to sameAs', async () => {
-    const entries = [
-      buildEntry({ uid: 'post-1', aliases: ['old-slug', 'another-slug'] }),
-    ]
+    const entries = [buildEntry({ uid: 'post-1', aliases: ['old-slug', 'another-slug'] })]
     const provider = createContentHubProvider({ site, articleBase, taxonomyRoute, entries })
     const routes = await provider.provide()
     const article = routes.find(r => r.route === '/articles/post-1/')
@@ -89,14 +83,11 @@ describe('createContentHubProvider', () => {
 
 describe('createTopicsProvider', () => {
   it('returns DefinedTerm per topic', async () => {
-    const topicMap = new Map([
-      ['typescript', 'TypeScript'],
-      ['astro', 'Astro'],
-    ])
-    const groupedEntries = new Map([
-      ['typescript', [buildEntry({ uid: 'a' }), buildEntry({ uid: 'b' })]],
-      ['astro', [buildEntry({ uid: 'c' })]],
-    ])
+    const topicMap = new Map([['typescript', 'TypeScript'], ['astro', 'Astro']])
+    const groupedEntries = new Map([['typescript', [buildEntry({ uid: 'a' }), buildEntry({ uid: 'b' })]], [
+      'astro',
+      [buildEntry({ uid: 'c' })],
+    ]])
     const provider = createTopicsProvider({ site, taxonomyRoute, topicMap, groupedEntries })
 
     expect(provider.name).toBe('content-hub-topics')
@@ -111,11 +102,7 @@ describe('createTopicsProvider', () => {
   })
 
   it('collectionPage lists all topics', async () => {
-    const topicMap = new Map([
-      ['a', 'A'],
-      ['b', 'B'],
-      ['c', 'C'],
-    ])
+    const topicMap = new Map([['a', 'A'], ['b', 'B'], ['c', 'C']])
     const groupedEntries = new Map<string, ReadonlyArray<ReturnType<typeof buildEntry>>>()
     const provider = createTopicsProvider({ site, taxonomyRoute, topicMap, groupedEntries })
     const routes = await provider.provide()

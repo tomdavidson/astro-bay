@@ -3,20 +3,14 @@ import type { ResolvedConfig } from '../config.ts'
 const VIRTUAL_BASE = 'astro-content-hub'
 
 export const virtualModuleId = (hubName: string): string =>
-  hubName === 'default'
-    ? `${VIRTUAL_BASE}:config`
-    : `${VIRTUAL_BASE}/${hubName}:config`
+  hubName === 'default' ? `${VIRTUAL_BASE}:config` : `${VIRTUAL_BASE}/${hubName}:config`
 
 export const virtualLayoutId = (hubName: string): string =>
-  hubName === 'default'
-    ? `${VIRTUAL_BASE}:layout`
-    : `${VIRTUAL_BASE}/${hubName}:layout`
+  hubName === 'default' ? `${VIRTUAL_BASE}:layout` : `${VIRTUAL_BASE}/${hubName}:layout`
 
-export const resolvedVirtualId = (hubName: string): string =>
-  `\0${virtualModuleId(hubName)}`
+export const resolvedVirtualId = (hubName: string): string => `\0${virtualModuleId(hubName)}`
 
-export const resolvedLayoutId = (hubName: string): string =>
-  `\0${virtualLayoutId(hubName)}`
+export const resolvedLayoutId = (hubName: string): string => `\0${virtualLayoutId(hubName)}`
 
 const createPayload = (config: ResolvedConfig, command: string) => ({
   name: config.name,
@@ -39,8 +33,7 @@ type ResolverIds = {
 }
 
 const createResolver =
-  ({ id, rid, layoutId, rLayoutId }: ResolverIds) =>
-  (moduleId: string): string | undefined => {
+  ({ id, rid, layoutId, rLayoutId }: ResolverIds) => (moduleId: string): string | undefined => {
     if (moduleId === id) return rid
     if (moduleId === layoutId) return rLayoutId
     return undefined
@@ -54,8 +47,7 @@ type LoaderConfig = {
 }
 
 const createLoader =
-  ({ rid, rLayoutId, payload, layout }: LoaderConfig) =>
-  (moduleId: string): string | undefined => {
+  ({ rid, rLayoutId, payload, layout }: LoaderConfig) => (moduleId: string): string | undefined => {
     if (moduleId === rid) {
       return `export default ${JSON.stringify(payload)}`
     }

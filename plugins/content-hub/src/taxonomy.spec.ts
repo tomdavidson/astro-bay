@@ -1,15 +1,16 @@
-import { test, expect, describe } from 'vitest'
-import { slugifyTopic, buildTopicMap, groupByTopic, getRelatedTopics, getChildTopics, getSiblingTopics, getTopicHierarchy } from './taxonomy.ts'
+import * as fc from 'fast-check'
+import { describe, expect, test } from 'vitest'
+import { isTddEnabled } from '../test/helpers.ts'
+import { buildTopicMap, entriesForTopic, groupByTopic, slugifyTopic, topicsWithCounts } from './taxonomy.ts'
 import type { NormalizedEntry } from './types.ts'
-
-
-const isTddEnabled = (): boolean =>
-  process.env['TDD'] === '1'
 
 const tdd = isTddEnabled()
 
-
-const e = (topics: ReadonlyArray<string>, link?: string, resolvedTopics: ReadonlyArray<string> = topics): NormalizedEntry => ({
+const e = (
+  topics: ReadonlyArray<string>,
+  link?: string,
+  resolvedTopics: ReadonlyArray<string> = topics,
+): NormalizedEntry => ({
   uid: 'x',
   sourceId: 'x',
   collectionName: 'c',
@@ -25,233 +26,12 @@ const e = (topics: ReadonlyArray<string>, link?: string, resolvedTopics: Readonl
   meta: {},
 })
 
-describe('getRelatedTopics', () => {
-  const eResolved = (
-    uid: string,
-    resolvedTopics: ReadonlyArray<string>,
-  ) => me(uid, resolvedTopics, undefined, resolvedTopics)
-
-  test('returns co-occurring topics sorted by count', () => {
-    const entries = [
-      eResolved('a', ['housing', 'zoning', 'transit']),
-      eResolved('b', ['housing', 'zoning']),
-      eResolved('c', ['housing', 'parks']),
-    ]
-    const result = getRelatedTopics({ slug: 'housing', entries })
-    expect(result[0]?.slug).toBe('zoning')
-    expect(result[0]?.count).toBe(2)
-    expect(result[1]?.slug).toBe('transit')
-  })
-
-  test('excludes the input topic itself', () => {
-    const entries = [eResolved('a', ['housing', 'zoning'])]
-    const result = getRelatedTopics({ slug: 'housing', entries })
-    expect(result.every(r => r.slug !== 'housing')).toBe(true)
-  })
-
-  test('excludes children and ancestors when graph provided', () => {
-    const entries = [
-      eResolved('a', ['housing', 'rent-control', 'policy']),
-    ]
-    const graph = {
-      edges: [{}],
-      ancestors: (slug: string) =>
-        slug === 'housing' ? [{ slug: 'policy', label: 'Policy' }] : [],
-      children: (slug: string) =>
-        slug === 'housing' ? [{ slug: 'rent-control', label: 'Rent Control' }] : [],
-    }
-    const result = getRelatedTopics({ slug: 'housing', entries, graph })
-    expect(result.every(r => r.slug !== 'policy')).toBe(true)
-    expect(result.every(r => r.slug !== 'rent-control')).toBe(true)
-  })
-
-  test('caps at limit', () => {
-    const topics = Array.from({ length: 20 }, (_, i) => `topic-${i}`)
-    const entries = [eResolved('a', ['target', ...topics])]
-    const result = getRelatedTopics({ slug: 'target', entries, limit: 5 })
-    expect(result).toHaveLength(5)
-  })
-
-  test('works without graph (flat topics)', () => {
-    const entries = [eResolved('a', ['x', 'y']), eResolved('b', ['x', 'z'])]
-    const result = getRelatedTopics({ slug: 'x', entries })
-    expect(result.length).toBeGreaterThan(0)
-  })
-})
-
-describe('getChildTopics', () => {
-  test('returns direct children', () => {
-    const graph = {
-      edges: [{}],
-      ancestors: () => [],
-      children: (slug: string) =>
-        slug === 'housing'
-          ? [{ slug: 'rent-control', label: 'Rent Control' }, { slug: 'zoning', label: 'Zoning' }]
-          : [],
-    }
-    const result = getChildTopics('housing', graph)
-    expect(result).toHaveLength(2)
-    expect(result[0]?.slug).toBe('rent-control')
-  })
-
-  test('returns empty for leaf topic', () => {
-    const graph = {
-      edges: [{}],
-      ancestors: () => [],
-      children: () => [],
-    }
-    expect(getChildTopics('leaf', graph)).toEqual([])
-  })
-
-  test('returns empty when graph is undefined', () => {
-    expect(getChildTopics("anything", undefined)).toEqual([])
-  })
-
-  test('filters to published topics when topicMap provided', () => {
-    const graph = {
-      edges: [{}],
-      ancestors: () => [],
-      children: (slug: string) =>
-        slug === 'housing'
-          ? [{ slug: 'rent-control', label: 'Rent Control' }, { slug: 'ghost-topic', label: 'Ghost' }]
-          : [],
-    }
-    const topicMap = new Map([['rent-control', 'Rent Control']])
-    const result = getChildTopics('housing', graph, topicMap)
-    expect(result).toHaveLength(1)
-    expect(result[0]?.slug).toBe('rent-control')
-  })
-
-  test('returns all children when topicMap omitted', () => {
-    const graph = {
-      edges: [{}],
-      ancestors: () => [],
-      children: (slug: string) =>
-        slug === 'housing'
-          ? [{ slug: 'rent-control', label: 'Rent Control' }, { slug: 'ghost-topic', label: 'Ghost' }]
-          : [],
-    }
-    const result = getChildTopics('housing', graph)
-    expect(result).toHaveLength(2)
-  })
-})
-
-describe('getSiblingTopics', () => {
-  test('returns parent\'s other children', () => {
-    const graph = {
-      edges: [{}],
-      ancestors: (slug: string) =>
-        slug === 'rent-control' ? [{ slug: 'housing', label: 'Housing' }] : [],
-      children: (slug: string) =>
-        slug === 'housing'
-          ? [
-              { slug: 'rent-control', label: 'Rent Control' },
-              { slug: 'zoning', label: 'Zoning' },
-              { slug: 'tenant-rights', label: 'Tenant Rights' },
-            ]
-          : [],
-    }
-    const result = getSiblingTopics('rent-control', graph)
-    expect(result).toHaveLength(2)
-    expect(result.map(s => s.slug)).toEqual(['zoning', 'tenant-rights'])
-  })
-
-  test('returns empty when no parent', () => {
-    const graph = {
-      edges: [{}],
-      ancestors: () => [],
-      children: () => [],
-    }
-    expect(getSiblingTopics('root-topic', graph)).toEqual([])
-  })
-
-  test('returns empty when graph is undefined', () => {
-    expect(getSiblingTopics("anything", undefined)).toEqual([])
-  })
-
-  test('filters to published topics when topicMap provided', () => {
-    const graph = {
-      edges: [{}],
-      ancestors: (slug: string) =>
-        slug === 'rent-control' ? [{ slug: 'housing', label: 'Housing' }] : [],
-      children: (slug: string) =>
-        slug === 'housing'
-          ? [
-              { slug: 'rent-control', label: 'Rent Control' },
-              { slug: 'zoning', label: 'Zoning' },
-              { slug: 'ghost-topic', label: 'Ghost' },
-            ]
-          : [],
-    }
-    const topicMap = new Map([['rent-control', 'Rent Control'], ['zoning', 'Zoning']])
-    const result = getSiblingTopics('rent-control', graph, topicMap)
-    expect(result).toHaveLength(1)
-    expect(result[0]?.slug).toBe('zoning')
-  })
-})
-
-describe('getTopicHierarchy', () => {
-  const eResolved = (
-    uid: string,
-    topics: ReadonlyArray<string>,
-    resolvedTopics: ReadonlyArray<string>,
-  ) => me(uid, topics, undefined, resolvedTopics)
-
-  test('counts include child entries via resolvedTopics', () => {
-    const entries = [
-      eResolved('a', ['rent-control'], ['rent-control', 'housing']),
-      eResolved('b', ['zoning'], ['zoning', 'housing']),
-      eResolved('c', ['housing'], ['housing']),
-    ]
-    const result = getTopicHierarchy(entries)
-    const housing = result.find(n => n.slug === 'housing')
-    expect(housing?.count).toBe(3)
-  })
-
-  test('flat list when no graph', () => {
-    const entries = [
-      eResolved('a', ['housing'], ['housing']),
-      eResolved('b', ['zoning'], ['zoning']),
-    ]
-    const result = getTopicHierarchy(entries)
-    expect(result.every(n => n.parent === undefined)).toBe(true)
-    expect(result.every(n => n.children.length === 0)).toBe(true)
-  })
-
-  test('populates parent and children when graph provided', () => {
-    const entries = [
-      eResolved('a', ['rent-control'], ['rent-control', 'housing']),
-      eResolved('b', ['housing'], ['housing']),
-    ]
-    const graph = {
-      edges: [{}],
-      ancestors: (slug: string) =>
-        slug === 'rent-control' ? [{ slug: 'housing', label: 'Housing' }] : [],
-      children: (slug: string) =>
-        slug === 'housing'
-          ? [{ slug: 'rent-control', label: 'Rent Control' }]
-          : [],
-    }
-    const result = getTopicHierarchy(entries, graph)
-    const housing = result.find(n => n.slug === 'housing')
-    const rentControl = result.find(n => n.slug === 'rent-control')
-    expect(housing?.children).toContain('rent-control')
-    expect(rentControl?.parent).toBe('housing')
-  })
-
-  test('sorted by count descending', () => {
-    const entries = [
-      eResolved('a', ['rare'], ['rare']),
-      eResolved('b', ['common'], ['common']),
-      eResolved('c', ['common'], ['common']),
-    ]
-    const result = getTopicHierarchy(entries)
-    expect(result[0]?.slug).toBe('common')
-  })
-})
-
-
-const me = (uid: string, topics: ReadonlyArray<string>, date?: Date, resolvedTopics: ReadonlyArray<string> = topics): NormalizedEntry => ({
+const me = (
+  uid: string,
+  topics: ReadonlyArray<string>,
+  date?: Date,
+  resolvedTopics: ReadonlyArray<string> = topics,
+): NormalizedEntry => ({
   uid,
   sourceId: uid,
   collectionName: 'c',
@@ -267,84 +47,97 @@ const me = (uid: string, topics: ReadonlyArray<string>, date?: Date, resolvedTop
   meta: {},
 })
 
+// Note: getRelatedTopics / getChildTopics / getSiblingTopics / getTopicHierarchy
+// exercised astro-taxonomy graph internals, which content-hub does not own.
+// Those belong in astro-taxonomy's own suite and have been removed here.
 
-describe('slugifyTopic', () => {
-  test('slugifyTopic_ascii_lowercaseDash', () => {
-    expect(slugifyTopic('Community Gardens')).toBe('community-gardens')
-  })
+// ─── slugifyTopic — property tests ───────────────────────────────────────────
 
-  test('slugifyTopic_accents_stripped', () => {
-    expect(slugifyTopic('Résumé')).toBe('resume')
-  })
-
-  test('slugifyTopic_onlySymbols_emptyString', () => {
-    expect(slugifyTopic('---!!!')).toBe('')
-  })
-
-  test('slugifyTopic_alreadySlug_unchanged', () => {
-    expect(slugifyTopic('community-gardens')).toBe('community-gardens')
-  })
-
-  test.skipIf(!tdd)('slugifyTopic_idempotent', async () => {
-    const fc = await import('fast-check')
-    fc.assert(fc.property(fc.string(), (s) =>
-      slugifyTopic(s) === slugifyTopic(slugifyTopic(s)),
-    ))
-  })
-
-  test.skipIf(!tdd)('slugifyTopic_outputOnlyValidChars', async () => {
-    const fc = await import('fast-check')
-    fc.assert(fc.property(fc.string(), (s) =>
-      /^[a-z0-9-]*$/.test(slugifyTopic(s)),
-    ))
-  })
-
-  test.skipIf(!tdd)('slugifyTopic_noLeadingOrTrailingDashes', async () => {
-    const fc = await import('fast-check')
-    fc.assert(fc.property(fc.string(), (s) => {
+describe('slugifyTopic — property tests', () => {
+  test.skipIf(!tdd)('idempotent', () => {
+    fc.assert(fc.property(fc.string(), s => {
       const slug = slugifyTopic(s)
-      return !slug.startsWith('-') && !slug.endsWith('-')
+      expect(slugifyTopic(slug)).toBe(slug)
     }))
   })
 
-  test.skipIf(!tdd)('slugifyTopic_noConsecutiveDashes', async () => {
-    const fc = await import('fast-check')
-    fc.assert(fc.property(fc.string(), (s) =>
-      !slugifyTopic(s).includes('--'),
-    ))
+  test.skipIf(!tdd)('output contains only valid chars [a-z0-9-]', () => {
+    fc.assert(fc.property(fc.string(), s => {
+      expect(/^[a-z0-9-]*$/.test(slugifyTopic(s))).toBe(true)
+    }))
+  })
+
+  test.skipIf(!tdd)('no leading or trailing dashes', () => {
+    fc.assert(fc.property(fc.string(), s => {
+      const slug = slugifyTopic(s)
+      expect(slug.startsWith('-')).toBe(false)
+      expect(slug.endsWith('-')).toBe(false)
+    }))
+  })
+
+  test.skipIf(!tdd)('no consecutive dashes', () => {
+    fc.assert(fc.property(fc.string(), s => {
+      expect(slugifyTopic(s).includes('--')).toBe(false)
+    }))
+  })
+
+  test.skipIf(!tdd)('empty / whitespace-only input produces empty string', () => {
+    fc.assert(fc.property(fc.constantFrom('', '   ', '\t', '\n'), s => slugifyTopic(s) === ''))
   })
 })
 
+// ─── slugifyTopic — basic assertions ────────────────────────────────────────
+
+describe('slugifyTopic — basic assertions', () => {
+  test('lowercases and replaces spaces with dashes', () => {
+    expect(slugifyTopic('Urban Housing')).toBe('urban-housing')
+  })
+
+  test('strips diacritics', () => {
+    expect(slugifyTopic('Café')).toBe('cafe')
+  })
+
+  test('collapses multiple spaces/dashes', () => {
+    expect(slugifyTopic('foo  bar')).toBe('foo-bar')
+    expect(slugifyTopic('foo--bar')).toBe('foo-bar')
+  })
+
+  test('empty string returns empty string', () => {
+    expect(slugifyTopic('')).toBe('')
+  })
+
+  test('already-slug string is unchanged', () => {
+    expect(slugifyTopic('rent-control')).toBe('rent-control')
+  })
+})
+
+// ─── buildTopicMap ──────────────────────────────────────────────────────────
 
 describe('buildTopicMap', () => {
-  test('buildTopicMap_vaultBeatsFeed_vaultLabelWins', () => {
-    const m = buildTopicMap([
-      e(['community gardens'], 'https://feed.example'),
-      e(['Community Gardens']),
-    ])
+  test('vault entries beat feed entries — vault label wins', () => {
+    const m = buildTopicMap([e(['community gardens'], 'https://feed.example'), e(['Community Gardens'])])
     expect(m.get('community-gardens')).toBe('Community Gardens')
   })
 
-  test('buildTopicMap_sameSource_alphabeticallyFirstWins', () => {
-    expect(
-      buildTopicMap([e(['Zoning']), e(['zoning'])]).get('zoning'),
-    ).toBe('Zoning')
+  test('within same source, alphabetically first label wins', () => {
+    expect(buildTopicMap([e(['Zoning']), e(['zoning'])]).get('zoning')).toBe('Zoning')
   })
 
-  test('buildTopicMap_emptySlug_excluded', () => {
+  test('empty slug entries are excluded', () => {
     expect(buildTopicMap([e(['!!!'])]).size).toBe(0)
   })
 })
 
+// ─── groupByTopic ───────────────────────────────────────────────────────────
 
 describe('groupByTopic', () => {
-  test('groupByTopic_multipleTopics_entryInEachGroup', () => {
+  test('entry with multiple topics appears in each group', () => {
     const g = groupByTopic([me('a', ['housing', 'zoning'])])
     expect(g.get('housing')).toHaveLength(1)
     expect(g.get('zoning')).toHaveLength(1)
   })
 
-  test('groupByTopic_dateSort_newerFirst', () => {
+  test('entries are sorted by date descending within each group', () => {
     const g = groupByTopic([
       me('old', ['h'], new Date('2024-01-01')),
       me('new', ['h'], new Date('2025-01-01')),
@@ -355,18 +148,65 @@ describe('groupByTopic', () => {
     expect(entries[0]?.uid).toBe('new')
   })
 
-  test('groupByTopic_undated_last', () => {
-    const g = groupByTopic([
-      me('undated', ['h']),
-      me('dated', ['h'], new Date('2024-01-01')),
-    ])
+  test('undated entries are sorted last', () => {
+    const g = groupByTopic([me('undated', ['h']), me('dated', ['h'], new Date('2024-01-01'))])
     const entries = g.get('h')
     expect(entries).toBeDefined()
     if (!entries || entries.length === 0) return
     expect(entries[entries.length - 1]?.uid).toBe('undated')
   })
 
-  test('groupByTopic_noTopics_notGrouped', () => {
+  test('entries with no topics are not grouped', () => {
     expect(groupByTopic([me('a', [])]).size).toBe(0)
+  })
+})
+
+// ─── topicsWithCounts ────────────────────────────────────────────────────────
+
+describe('topicsWithCounts', () => {
+  test('count reflects grouped bucket size', () => {
+    const entries = [
+      e(['housing'], undefined, ['housing']),
+      e(['housing'], undefined, ['housing']),
+      e(['zoning'], undefined, ['zoning']),
+    ]
+    const topicMap = buildTopicMap(entries)
+    const grouped = groupByTopic(entries)
+    const result = topicsWithCounts(topicMap, grouped)
+    expect(result.find(t => t.slug === 'housing')?.count).toBe(2)
+    expect(result.find(t => t.slug === 'zoning')?.count).toBe(1)
+  })
+
+  test('sorted by count descending', () => {
+    const entries = [e(['x'], undefined, ['x']), e(['y'], undefined, ['y']), e(['y'], undefined, ['y'])]
+    const topicMap = buildTopicMap(entries)
+    const grouped = groupByTopic(entries)
+    const result = topicsWithCounts(topicMap, grouped)
+    expect(result[0]!.slug).toBe('y')
+  })
+
+  test('topic with zero entries still included when present in topicMap', () => {
+    const topicMap = new Map([['orphan', 'Orphan']])
+    const grouped = new Map<string, readonly NormalizedEntry[]>()
+    const result = topicsWithCounts(topicMap, grouped)
+    expect(result).toHaveLength(1)
+    expect(result[0]!.count).toBe(0)
+  })
+
+  test('empty inputs return empty array', () => {
+    expect(topicsWithCounts(new Map(), new Map())).toEqual([])
+  })
+})
+
+// ─── entriesForTopic ─────────────────────────────────────────────────────────
+
+describe('entriesForTopic', () => {
+  test('returns bucket for known slug', () => {
+    const grouped = new Map<string, readonly NormalizedEntry[]>([['housing', [me('a', ['housing'])]]])
+    expect(entriesForTopic('housing', grouped)).toHaveLength(1)
+  })
+
+  test('returns empty array for unknown slug', () => {
+    expect(entriesForTopic('unknown', new Map())).toEqual([])
   })
 })

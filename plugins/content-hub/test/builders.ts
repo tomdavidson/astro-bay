@@ -3,12 +3,7 @@ import type { NormalizedEntry } from '../src/types.ts'
 export const buildEntryWithTopics = (
   topics: ReadonlyArray<string>,
   overrides?: Partial<NormalizedEntry>,
-): NormalizedEntry =>
-  buildEntry({
-    topics,
-    resolvedTopics: topics,
-    ...overrides,
-  })
+): NormalizedEntry => buildEntry({ topics, resolvedTopics: topics, ...overrides })
 
 export const buildEntry = (overrides: Partial<NormalizedEntry> = {}): NormalizedEntry => ({
   uid: 'test-entry',

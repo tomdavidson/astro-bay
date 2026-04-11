@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ResolvedConfig } from '../config.ts'
-import { getHubData, clearHubCache } from './hub-data.ts'
+import { clearHubCache, getHubData } from './hub-data.ts'
 import { registerTransforms, resetTransformRegistry } from './integration.ts'
 
 const warn = vi.fn<(msg: string) => void>()
@@ -15,17 +15,8 @@ const baseConfig: ResolvedConfig = {
   collections: ['vault'],
   layout: undefined,
   drafts: { showInDev: true },
-  taxonomy: {
-    field: 'topics',
-    feedCategoryField: 'categories',
-    route: 'topics',
-    indexPage: true,
-  },
-  permalinks: {
-    field: 'uid',
-    aliasField: 'aliases',
-    articleBase: 'articles',
-  },
+  taxonomy: { field: 'topics', feedCategoryField: 'categories', route: 'topics', indexPage: true },
+  permalinks: { field: 'uid', aliasField: 'aliases', articleBase: 'articles' },
   browse: { pageSize: 20, staticFallbackCount: 20 },
   jsonld: { enabled: true },
   locale: { lang: 'en', dateLocale: 'en-US', indexTitle: 'Articles', topicIndexTitle: 'Topics' },
@@ -33,14 +24,10 @@ const baseConfig: ResolvedConfig = {
   siteUrl: 'https://example.com',
 }
 
-const makeGetCollection = (
-  entries: ReadonlyArray<{ readonly id: string; readonly data: Record<string, unknown> }>,
-) => async (_name: string) =>
-    Promise.resolve(entries.map(e => ({
-      id: e.id,
-      data: e.data,
-      rendered: undefined,
-    })))
+const makeGetCollection =
+  (entries: ReadonlyArray<{ readonly id: string; readonly data: Record<string, unknown> }>) =>
+  async (_name: string) =>
+    Promise.resolve(entries.map(e => ({ id: e.id, data: e.data, rendered: undefined })))
 
 beforeEach(() => {
   clearHubCache()
@@ -51,10 +38,10 @@ beforeEach(() => {
 
 describe('getHubData', () => {
   test('getHubData_singleCollection_returnsHubData', async () => {
-    const gc = makeGetCollection([
-      { id: 'p1', data: { uid: 'p1', title: 'Post 1', topics: ['housing'] } },
-      { id: 'p2', data: { uid: 'p2', title: 'Post 2', topics: ['zoning'] } },
-    ])
+    const gc = makeGetCollection([{ id: 'p1', data: { uid: 'p1', title: 'Post 1', topics: ['housing'] } }, {
+      id: 'p2',
+      data: { uid: 'p2', title: 'Post 2', topics: ['zoning'] },
+    }])
 
     const data = await getHubData(baseConfig, gc, runtime('build'))
 
@@ -64,10 +51,10 @@ describe('getHubData', () => {
   })
 
   test('getHubData_draftEntries_excludedFromPublished', async () => {
-    const gc = makeGetCollection([
-      { id: 'pub', data: { uid: 'pub', title: 'Pub', draft: false } },
-      { id: 'draft', data: { uid: 'draft', title: 'Draft', draft: true } },
-    ])
+    const gc = makeGetCollection([{ id: 'pub', data: { uid: 'pub', title: 'Pub', draft: false } }, {
+      id: 'draft',
+      data: { uid: 'draft', title: 'Draft', draft: true },
+    }])
 
     const data = await getHubData(baseConfig, gc, runtime('build'))
 
@@ -77,9 +64,7 @@ describe('getHubData', () => {
   })
 
   test('getHubData_topicMap_containsSluggedTopics', async () => {
-    const gc = makeGetCollection([
-      { id: 'a', data: { uid: 'a', title: 'A', topics: ['Urban Housing'] } },
-    ])
+    const gc = makeGetCollection([{ id: 'a', data: { uid: 'a', title: 'A', topics: ['Urban Housing'] } }])
 
     const data = await getHubData(baseConfig, gc, runtime('build'))
 
@@ -108,14 +93,12 @@ describe('getHubData', () => {
   })
 
   test('getHubData_uidCollision_throws', async () => {
-    const gc = makeGetCollection([
-      { id: 'a', data: { uid: 'same', title: 'A' } },
-      { id: 'b', data: { uid: 'same', title: 'B' } },
-    ])
+    const gc = makeGetCollection([{ id: 'a', data: { uid: 'same', title: 'A' } }, {
+      id: 'b',
+      data: { uid: 'same', title: 'B' },
+    }])
 
-    await expect(
-      getHubData(baseConfig, gc, runtime('build')),
-    ).rejects.toThrow('UID collision')
+    await expect(getHubData(baseConfig, gc, runtime('build'))).rejects.toThrow('UID collision')
   })
 
   test('getHubData_userTransform_applied', async () => {
@@ -124,7 +107,7 @@ describe('getHubData', () => {
     const config: ResolvedConfig = {
       ...baseConfig,
       name: 'transform-test',
-      transforms: [async (entry) => ({ ...entry, title: 'transformed' })],
+      transforms: [async entry => ({ ...entry, title: 'transformed' })],
     }
 
     const data = await getHubData(config, gc, runtime('build'))
@@ -137,8 +120,10 @@ describe('getHubData', () => {
     const config: ResolvedConfig = {
       ...baseConfig,
       name: 'safe-transform-test',
-    transforms: [() => { throw new Error('boom') }],
-  }
+      transforms: [() => {
+        throw new Error('boom')
+      }],
+    }
 
     const data = await getHubData(config, gc, runtime('build'))
 
@@ -150,17 +135,10 @@ describe('getHubData', () => {
   })
 
   test('getHubData_feedEntry_categoriesMappedToTopics', async () => {
-    const gc = makeGetCollection([
-      {
-        id: 'f1',
-        data: {
-          uid: 'f1',
-          title: 'Post',
-          categories: ['policy', 'housing'],
-          link: 'https://example.com',
-        },
-      },
-    ])
+    const gc = makeGetCollection([{
+      id: 'f1',
+      data: { uid: 'f1', title: 'Post', categories: ['policy', 'housing'], link: 'https://example.com' },
+    }])
 
     const data = await getHubData(baseConfig, gc, runtime('build'))
 
@@ -169,22 +147,13 @@ describe('getHubData', () => {
   })
 
   test('getHubData_transformsFromRegistry_runWhenConfigTransformsEmpty', async () => {
-    const addEnriched = (entry: any) => ({
-      ...entry,
-      meta: { ...entry.meta, enriched: true },
-    })
+    const addEnriched = (entry: any) => ({ ...entry, meta: { ...entry.meta, enriched: true } })
 
     registerTransforms('registry-test', [addEnriched])
 
-    const config: ResolvedConfig = {
-      ...baseConfig,
-      name: 'registry-test',
-      transforms: [],
-    }
+    const config: ResolvedConfig = { ...baseConfig, name: 'registry-test', transforms: [] }
 
-    const gc = makeGetCollection([
-      { id: 'a', data: { uid: 'a', title: 'A', topics: ['housing'] } },
-    ])
+    const gc = makeGetCollection([{ id: 'a', data: { uid: 'a', title: 'A', topics: ['housing'] } }])
 
     const data = await getHubData(config, gc, runtime('build'))
 
@@ -192,11 +161,7 @@ describe('getHubData', () => {
   })
 
   test('getHubData_noRegisteredTransforms_noConfigTransforms_stillBuilds', async () => {
-    const config: ResolvedConfig = {
-      ...baseConfig,
-      name: 'no-transforms',
-      transforms: [],
-    }
+    const config: ResolvedConfig = { ...baseConfig, name: 'no-transforms', transforms: [] }
 
     const gc = makeGetCollection([{ id: 'a', data: { uid: 'a', title: 'A' } }])
 
@@ -206,10 +171,10 @@ describe('getHubData', () => {
   })
 
   test('getHubData_devMode_includesDraftsInPublished', async () => {
-    const gc = makeGetCollection([
-      { id: 'pub', data: { uid: 'pub', title: 'Pub', draft: false } },
-      { id: 'draft', data: { uid: 'draft', title: 'Draft', draft: true } },
-    ])
+    const gc = makeGetCollection([{ id: 'pub', data: { uid: 'pub', title: 'Pub', draft: false } }, {
+      id: 'draft',
+      data: { uid: 'draft', title: 'Draft', draft: true },
+    }])
 
     const data = await getHubData(baseConfig, gc, runtime('dev'))
 
@@ -219,15 +184,12 @@ describe('getHubData', () => {
   })
 
   test('getHubData_devModeShowInDevFalse_excludesDrafts', async () => {
-    const config: ResolvedConfig = {
-      ...baseConfig,
-      drafts: { showInDev: false },
-    }
+    const config: ResolvedConfig = { ...baseConfig, drafts: { showInDev: false } }
 
-    const gc = makeGetCollection([
-      { id: 'pub', data: { uid: 'pub', title: 'Pub', draft: false } },
-      { id: 'draft', data: { uid: 'draft', title: 'Draft', draft: true } },
-    ])
+    const gc = makeGetCollection([{ id: 'pub', data: { uid: 'pub', title: 'Pub', draft: false } }, {
+      id: 'draft',
+      data: { uid: 'draft', title: 'Draft', draft: true },
+    }])
 
     const data = await getHubData(config, gc, runtime('dev'))
 

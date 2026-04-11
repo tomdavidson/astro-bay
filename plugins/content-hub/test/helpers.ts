@@ -1,5 +1,5 @@
-import { expect } from 'vitest'
 import type { Result } from 'neverthrow'
+import { expect } from 'vitest'
 
 export const expectOk = <T, E>(result: Result<T, E>): T => {
   expect(result.isOk()).toBe(true)
@@ -12,9 +12,7 @@ export const expectErr = <T, E>(result: Result<T, E>): E => {
 }
 
 const getProp = (value: unknown, key: string): unknown =>
-  typeof value === 'object' && value !== null && key in value
-    ? Reflect.get(value, key)
-    : undefined
+  typeof value === 'object' && value !== null && key in value ? Reflect.get(value, key) : undefined
 
 export const isTddEnabled = (): boolean => {
   const maybeEnv = getProp(getProp(globalThis, 'process'), 'env')

@@ -2,7 +2,9 @@
 
 declare module 'astro-content-hub:config' {
   import type { ResolvedConfig } from './config.ts'
-  const config: Omit<ResolvedConfig, 'transforms'> & { readonly transforms?: ReadonlyArray<ResolvedConfig['transforms'][number]> } & { readonly astroCommand: string }
+  const config: Omit<ResolvedConfig, 'transforms'> & {
+    readonly transforms?: ReadonlyArray<ResolvedConfig['transforms'][number]>
+  } & { readonly astroCommand: string }
   export default config
 }
 

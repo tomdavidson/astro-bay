@@ -20,6 +20,6 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "src/**/*.astro",
-    "src/**/*.d.ts",
+    "src/**/*.d.ts"
   ]
 }

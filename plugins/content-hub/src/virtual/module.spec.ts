@@ -1,132 +1,123 @@
 import { describe, expect, test } from 'vitest'
 import type { ResolvedConfig } from '../config.ts'
 import {
-    buildVirtualModulePlugin,
-    buildVirtualModuleTypes,
-    virtualModuleId,
-    virtualLayoutId,
+  buildVirtualModulePlugin,
+  buildVirtualModuleTypes,
+  virtualLayoutId,
+  virtualModuleId,
 } from './module.ts'
 
 const cfg: ResolvedConfig = {
-    name: 'default',
-    collections: ['vault'],
-    layout: '../Layout.astro',
-    drafts: { showInDev: true },
-    taxonomy: {
-        field: 'topics',
-        feedCategoryField: 'categories',
-        route: 'topics',
-        indexPage: true,
-    },
-    permalinks: {
-        field: 'uid',
-        aliasField: 'aliases',
-        articleBase: 'articles',
-    },
-    browse: { pageSize: 20, staticFallbackCount: 20 },
-    jsonld: { enabled: true },
-    locale: { lang: 'en', dateLocale: 'en-US', indexTitle: 'Articles', topicIndexTitle: 'Topics' },
-    transforms: [],
-    siteUrl: 'https://example.com',
+  name: 'default',
+  collections: ['vault'],
+  layout: '../Layout.astro',
+  drafts: { showInDev: true },
+  taxonomy: { field: 'topics', feedCategoryField: 'categories', route: 'topics', indexPage: true },
+  permalinks: { field: 'uid', aliasField: 'aliases', articleBase: 'articles' },
+  browse: { pageSize: 20, staticFallbackCount: 20 },
+  jsonld: { enabled: true },
+  locale: { lang: 'en', dateLocale: 'en-US', indexTitle: 'Articles', topicIndexTitle: 'Topics' },
+  transforms: [],
+  siteUrl: 'https://example.com',
 }
 
 describe('virtualModuleId', () => {
-    test('virtualModuleId_default_baseColon', () => {
-        expect(virtualModuleId('default')).toBe('astro-content-hub:config')
-    })
+  test('virtualModuleId_default_baseColon', () => {
+    expect(virtualModuleId('default')).toBe('astro-content-hub:config')
+  })
 
-    test('virtualModuleId_named_slashVariant', () => {
-        expect(virtualModuleId('writing')).toBe('astro-content-hub/writing:config')
-    })
+  test('virtualModuleId_named_slashVariant', () => {
+    expect(virtualModuleId('writing')).toBe('astro-content-hub/writing:config')
+  })
 })
 
 describe('virtualLayoutId', () => {
-    test('virtualLayoutId_default_baseColon', () => {
-        expect(virtualLayoutId('default')).toBe('astro-content-hub:layout')
-    })
+  test('virtualLayoutId_default_baseColon', () => {
+    expect(virtualLayoutId('default')).toBe('astro-content-hub:layout')
+  })
 
-    test('virtualLayoutId_named_slashVariant', () => {
-        expect(virtualLayoutId('writing')).toBe('astro-content-hub/writing:layout')
-    })
+  test('virtualLayoutId_named_slashVariant', () => {
+    expect(virtualLayoutId('writing')).toBe('astro-content-hub/writing:layout')
+  })
 })
 
 describe('buildVirtualModulePlugin resolveId', () => {
-    const plugin = buildVirtualModulePlugin(cfg, 'build')
+  const plugin = buildVirtualModulePlugin(cfg, 'build')
 
-    test('plugin_matchesOwnId_resolves', () => {
-        expect(plugin.resolveId?.('astro-content-hub:config')).toBe('\0astro-content-hub:config')
-    })
+  test('plugin_matchesOwnId_resolves', () => {
+    expect(plugin.resolveId?.('astro-content-hub:config')).toBe('\0astro-content-hub:config')
+  })
 
-    test('plugin_resolvesLayoutId', () => {
-        expect(plugin.resolveId?.('astro-content-hub:layout')).toBe('\0astro-content-hub:layout')
-    })
+  test('plugin_resolvesLayoutId', () => {
+    expect(plugin.resolveId?.('astro-content-hub:layout')).toBe('\0astro-content-hub:layout')
+  })
 
-    test('plugin_foreignId_returnsUndefined', () => {
-        expect(plugin.resolveId?.('astro:content')).toBeUndefined()
-    })
+  test('plugin_foreignId_returnsUndefined', () => {
+    expect(plugin.resolveId?.('astro:content')).toBeUndefined()
+  })
 })
 
 describe('buildVirtualModulePlugin load', () => {
-    const plugin = buildVirtualModulePlugin(cfg, 'build')
+  const plugin = buildVirtualModulePlugin(cfg, 'build')
 
-    test('plugin_load_returnsJsonConfig', () => {
-        const src = plugin.load?.('\0astro-content-hub:config')
-        expect(typeof src).toBe('string')
-        if (typeof src !== 'string') return
-        expect(src).toContain('export default')
-        expect(src).toContain('vault')
-    })
+  test('plugin_load_returnsJsonConfig', () => {
+    const src = plugin.load?.('\0astro-content-hub:config')
+    expect(typeof src).toBe('string')
+    if (typeof src !== 'string') return
+    expect(src).toContain('export default')
+    expect(src).toContain('vault')
+  })
 
-    test('plugin_load_withLayout_exportsUserLayoutAsDefault', () => {
-        const layoutPlugin = buildVirtualModulePlugin({ ...cfg, layout: '../Layout.astro' }, 'build')
+  test('plugin_load_withLayout_exportsUserLayoutAsDefault', () => {
+    const layoutPlugin = buildVirtualModulePlugin({ ...cfg, layout: '../Layout.astro' }, 'build')
 
-        expect(layoutPlugin.resolveId?.('astro-content-hub:layout')).toBe('\0astro-content-hub:layout')
-        expect(layoutPlugin.load?.('\0astro-content-hub:layout')).toBe(
-            "export { default } from '../Layout.astro'",
-        )
-    })
+    expect(layoutPlugin.resolveId?.('astro-content-hub:layout')).toBe('\0astro-content-hub:layout')
+    expect(layoutPlugin.load?.('\0astro-content-hub:layout')).toBe(
+      "export { default } from '../Layout.astro'",
+    )
+  })
 
-    test('plugin_load_noLayout_exportsNull', () => {
-        const layoutPlugin = buildVirtualModulePlugin({ ...cfg, layout: undefined }, 'build')
+  test('plugin_load_noLayout_exportsNull', () => {
+    const layoutPlugin = buildVirtualModulePlugin({ ...cfg, layout: undefined }, 'build')
 
-        expect(layoutPlugin.resolveId?.('astro-content-hub:layout')).toBe('\0astro-content-hub:layout')
-        expect(layoutPlugin.load?.('\0astro-content-hub:layout')).toBe('export default null')
-    })
+    expect(layoutPlugin.resolveId?.('astro-content-hub:layout')).toBe('\0astro-content-hub:layout')
+    expect(layoutPlugin.load?.('\0astro-content-hub:layout')).toBe('export default null')
+  })
 
-    test('plugin_load_noTransformsKey', () => {
-        const src = plugin.load?.('\0astro-content-hub:config') ?? ''
-        expect(src).not.toContain('transforms')
-    })
+  test('plugin_load_noTransformsKey', () => {
+    const src = plugin.load?.('\0astro-content-hub:config') ?? ''
+    expect(src).not.toContain('transforms')
+  })
 
-    test('plugin_load_noPaginationInPayload', () => {
-        const src = plugin.load?.('\0astro-content-hub:config') ?? ''
-        expect(src).not.toContain('pagination')
-    })
+  test('plugin_load_noPaginationInPayload', () => {
+    const src = plugin.load?.('\0astro-content-hub:config') ?? ''
+    expect(src).not.toContain('pagination')
+  })
 
-    test('plugin_load_containsBrowseConfig', () => {
-        const src = plugin.load?.('\0astro-content-hub:config') ?? ''
-        expect(src).toContain('browse')
-        expect(src).toContain('staticFallbackCount')
-    })
+  test('plugin_load_containsBrowseConfig', () => {
+    const src = plugin.load?.('\0astro-content-hub:config') ?? ''
+    expect(src).toContain('browse')
+    expect(src).toContain('staticFallbackCount')
+  })
 })
 
 describe('buildVirtualModuleTypes', () => {
-    test('buildVirtualModuleTypes_default_declaresConfigAndLayoutModules', () => {
-        const src = buildVirtualModuleTypes('default')
+  test('buildVirtualModuleTypes_default_declaresConfigAndLayoutModules', () => {
+    const src = buildVirtualModuleTypes('default')
 
-        expect(src).toContain("declare module 'astro-content-hub:config'")
-        expect(src).toContain("declare module 'astro-content-hub:layout'")
-        expect(src).toContain("import type { ResolvedConfig } from '@astro-bay/content-hub/config'")
-        expect(src).toContain(
-            "const config: Omit<ResolvedConfig, 'transforms'> & { readonly astroCommand: string }",
-        )
-        expect(src).toContain('const Layout: any')
-    })
+    expect(src).toContain("declare module 'astro-content-hub:config'")
+    expect(src).toContain("declare module 'astro-content-hub:layout'")
+    expect(src).toContain("import type { ResolvedConfig } from '@astro-bay/content-hub/config'")
+    expect(src).toContain(
+      "const config: Omit<ResolvedConfig, 'transforms'> & { readonly astroCommand: string }",
+    )
+    expect(src).toContain('const Layout: any')
+  })
 
-    test('buildVirtualModuleTypes_named_declaresConfigAndLayoutModules', () => {
-        const src = buildVirtualModuleTypes('writing')
+  test('buildVirtualModuleTypes_named_declaresConfigAndLayoutModules', () => {
+    const src = buildVirtualModuleTypes('writing')
 
-        expect(src).toContain("declare module 'astro-content-hub/writing:config'")
-        expect(src).toContain("declare module 'astro-content-hub/writing:layout'")
-    })
+    expect(src).toContain("declare module 'astro-content-hub/writing:config'")
+    expect(src).toContain("declare module 'astro-content-hub/writing:layout'")
+  })
 })

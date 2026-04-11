@@ -2,7 +2,6 @@
 
 An Astro integration that aggregates entries from multiple content collections (Obsidian vaults, incoming RSS/Atom feeds, or any Astro content-loader source), normalizes them into a unified entry shape, applies a user-defined transform pipeline, builds emergent taxonomy pages, generates UID-based permalinks with Astro-native redirects, and exposes paginated hub and article pages at build time.
 
-
 ## Use Case
 
 A personal knowledge site pulls content from two sources: an Obsidian vault of long-form articles and an external RSS feed of shorter commentary. Both collections define `topics` in their frontmatter. The site needs:
@@ -16,20 +15,18 @@ A personal knowledge site pulls content from two sources: an Obsidian vault of l
 
 `@astro-bay/content-hub` handles all of this with a single integration call. The user defines their collections, optionally wires up transforms, and the plugin generates every route, redirect, and Pagefind attribute automatically.
 
-
 ## Install
 
 ```sh
 pnpm install @astro-bay/content-hub
 ```
 
-
 ## Quick Start
 
 ```ts
 // astro.config.ts
-import { defineConfig } from 'astro/config'
 import contentHub from '@astro-bay/content-hub'
+import { defineConfig } from 'astro/config'
 
 export default defineConfig({
   site: 'https://example.com',
@@ -37,14 +34,13 @@ export default defineConfig({
     contentHub({
       collections: ['vault', 'feed'],
       permalinks: { articleBase: 'articles' },
-      taxonomy:   { route: 'topics' },
-      browse:     { pageSize: 20 },
-      locale:     { lang: 'en', dateLocale: 'en-US' },
+      taxonomy: { route: 'topics' },
+      browse: { pageSize: 20 },
+      locale: { lang: 'en', dateLocale: 'en-US' },
     }),
   ],
 })
 ```
-
 
 ## How It Works
 
@@ -58,7 +54,6 @@ On every build, the integration runs a six-step pipeline:
 6. **Emit search attributes.** Writes `data-pagefind-*` attributes on every article page so downstream search tools can index and filter content.
 
 All of this happens exactly once per build via a module-level cache (`getHubData`), regardless of how many injected pages consume the data.
-
 
 ## Full Implementation Guide
 
@@ -79,8 +74,8 @@ Both schemas are standard Zod objects, so you extend them with `.extend()` to ad
 
 ```ts
 // src/content.config.ts
-import { defineCollection } from 'astro:content'
 import { contentHubSchema, feedEntrySchema } from '@astro-bay/content-hub/schema'
+import { defineCollection } from 'astro:content'
 import { z } from 'astro:content'
 
 // Obsidian vault (via astro-loader-obsidian)
@@ -95,7 +90,7 @@ const vault = defineCollection({
   // Extend contentHubSchema with any project-specific fields your layouts need.
   schema: ({ image }) =>
     contentHubSchema.extend({
-      image: image().optional(),            // Optimized hero image via Astro's image pipeline
+      image: image().optional(), // Optimized hero image via Astro's image pipeline
       featured: z.boolean().default(false), // Custom flag for homepage featured slots
     }),
 })
@@ -123,18 +118,17 @@ const vault = defineCollection({
     // ... other fields
   }).transform(data => ({
     ...data,
-    topics: data.tags,  // Remap tags -> topics so the integration can find them
+    topics: data.tags, // Remap tags -> topics so the integration can find them
   })),
 })
 ```
-
 
 ### 2. Configure the Integration
 
 ```ts
 // astro.config.ts
-import { defineConfig } from 'astro/config'
 import contentHub from '@astro-bay/content-hub'
+import { defineConfig } from 'astro/config'
 import { inferReadingTime, tagWithOpenCalais } from './src/transforms'
 
 export default defineConfig({
@@ -148,24 +142,16 @@ export default defineConfig({
         route: 'topics',
         indexPage: true,
       },
-      permalinks: {
-        field: 'uid',
-        aliasField: 'aliases',
-        articleBase: 'articles',
-      },
+      permalinks: { field: 'uid', aliasField: 'aliases', articleBase: 'articles' },
       browse: { pageSize: 20 },
       locale: { lang: 'en', dateLocale: 'en-US' },
-      transforms: [
-        tagWithOpenCalais({ apiKey: process.env.OPENCALAIS_KEY! }),
-        inferReadingTime,
-      ],
+      transforms: [tagWithOpenCalais({ apiKey: process.env.OPENCALAIS_KEY! }), inferReadingTime],
     }),
   ],
 })
 ```
 
 Every option except `collections` has a sensible default. A minimal config is just `contentHub({ collections: ['blog'] })`.
-
 
 ### 3. Wire Up astro-taxonomy (Optional)
 
@@ -185,26 +171,24 @@ This means:
 - Children and siblings that have zero published entries are excluded from both views.
 - Without `astro-taxonomy`, all hubs behave as flat lists with no parent/child/sibling relationships.
 
-
 ### 4. Search and Smart 404s (astro-pagefind, astro-pagefind-resolve)
 
 Every article page emits `data-pagefind-*` attributes as a stable contract for downstream search integrations:
 
-| Attribute | Element | Purpose |
-|-----------|---------|---------|
-| `data-pagefind-body` | `<article>` | Marks the indexable content region |
-| `data-pagefind-weight="10"` | `<h1>` | Weights title heavily in search ranking |
-| `data-pagefind-filter="topic[content]"` | `<meta>` per topic | Faceted topic filtering (uses display label) |
-| `data-pagefind-filter="source[content]"` | `<meta>` | Faceted source filtering (vault, feed, etc.) |
-| `data-pagefind-meta="date[content]"` | `<meta>` | ISO date exposed in search result display |
-| `data-pagefind-meta="uid[content]"` | `<meta>` | UID exposed for smart 404 path matching |
-| `data-pagefind-meta="excerpt[content]"` | `<meta>` | Excerpt for search result snippets |
-| `data-pagefind-ignore` | Topic listing pages | Prevents listing pages from polluting search |
+| Attribute                                | Element             | Purpose                                      |
+| ---------------------------------------- | ------------------- | -------------------------------------------- |
+| `data-pagefind-body`                     | `<article>`         | Marks the indexable content region           |
+| `data-pagefind-weight="10"`              | `<h1>`              | Weights title heavily in search ranking      |
+| `data-pagefind-filter="topic[content]"`  | `<meta>` per topic  | Faceted topic filtering (uses display label) |
+| `data-pagefind-filter="source[content]"` | `<meta>`            | Faceted source filtering (vault, feed, etc.) |
+| `data-pagefind-meta="date[content]"`     | `<meta>`            | ISO date exposed in search result display    |
+| `data-pagefind-meta="uid[content]"`      | `<meta>`            | UID exposed for smart 404 path matching      |
+| `data-pagefind-meta="excerpt[content]"`  | `<meta>`            | Excerpt for search result snippets           |
+| `data-pagefind-ignore`                   | Topic listing pages | Prevents listing pages from polluting search |
 
 `astro-pagefind` indexes the built HTML and reads these attributes. `astro-pagefind-resolve` consumes the same Pagefind index (including the `uid` meta attribute) to power a smart 404 page that suggests the closest matching article when a user navigates to a broken or mistyped URL.
 
 Topics added by transforms (semantic tags, entity names) are automatically included as additional `data-pagefind-filter="topic[content]"` values because transforms run before attribute emission. This gives you semantic faceting through flat Pagefind filters with no changes to the search setup.
-
 
 ### 5. Outgoing RSS Feed
 
@@ -212,11 +196,11 @@ The plugin does not own feed generation. Use `@astrojs/rss` with the exported `t
 
 ```ts
 // src/pages/feed.xml.ts
+import { aggregateEntries, sortByDate, toFeedItems } from '@astro-bay/content-hub/utils'
 import rss from '@astrojs/rss'
 import { getCollection } from 'astro:content'
-import { aggregateEntries, sortByDate, toFeedItems } from '@astro-bay/content-hub/utils'
 
-export const GET = async (context) => {
+export const GET = async context => {
   const all = await aggregateEntries(['vault', 'feed'], getCollection)
   const sorted = sortByDate(all)
 
@@ -234,12 +218,10 @@ export const GET = async (context) => {
 ```ts
 import { filterPublished, toRssItem } from '@astro-bay/content-hub/utils'
 
-const items = filterPublished(sorted)
-  .filter(e => e.source !== 'feed')
-  .slice(0, 20)
-  .map(e => toRssItem(e, 'articles'))
+const items = filterPublished(sorted).filter(e => e.source !== 'feed').slice(0, 20).map(e =>
+  toRssItem(e, 'articles')
+)
 ```
-
 
 ### 6. JSON-LD Structured Data
 
@@ -247,27 +229,21 @@ When `@astro-bay/jsonld` is installed as a peer dependency, the integration expo
 
 ```ts
 // astro.config.ts
-import { defineConfig } from 'astro/config'
 import contentHub from '@astro-bay/content-hub'
 import jsonLd from '@astro-bay/jsonld'
+import { defineConfig } from 'astro/config'
 
-const hub = contentHub({
-  collections: ['vault', 'feed'],
-})
+const hub = contentHub({ collections: ['vault', 'feed'] })
 
 export default defineConfig({
   site: 'https://example.com',
-  integrations: [
-    hub,
-    jsonLd({ providers: hub.getJsonLdProviders() }),
-  ],
+  integrations: [hub, jsonLd({ providers: hub.getJsonLdProviders() })],
 })
 ```
 
 The article provider emits `BlogPosting` nodes with `headline`, `datePublished`, `about` (topic references), and `sameAs` (alias URLs). The topics provider emits `DefinedTerm` nodes with `skos:inScheme` linking back to the topic index. Both providers also emit `CollectionPage` nodes for their respective index pages.
 
 Disable JSON-LD generation by setting `jsonld: { enabled: false }` in the integration options. Every injected page includes a `<link rel="alternate" type="application/ld+json">` pointing to its corresponding `.jsonld` file.
-
 
 ### 7. Browse Data for Client-Side Tables
 
@@ -292,7 +268,7 @@ You can also import it from the direct entrypoint: `@astro-bay/content-hub/compo
 If you need full control over the table UI, you can still hydrate the embed yourself:
 
 ```ts
-import { toBrowseData, createBrowseColumns } from '@astro-bay/content-hub/browse'
+import { createBrowseColumns, toBrowseData } from '@astro-bay/content-hub/browse'
 import type { BrowseRow } from '@astro-bay/content-hub/browse'
 ```
 
@@ -305,7 +281,6 @@ Client-side hydration:
 const el = document.getElementById('browse-data')
 const rows: BrowseRow[] = JSON.parse(el?.textContent ?? '[]')
 ```
-
 
 ### 8. WebSub Notification
 
@@ -320,7 +295,6 @@ curl -X POST https://websub.example/hub \
 
 The feed itself advertises the hub via a `<link rel="hub">` element, which you add in your `feed.xml.ts` endpoint or as a header in your hosting config.
 
-
 ## UID and Permalinks
 
 The `uid` field is the entry's permanent URL path segment. Every article's canonical URL is `/{articleBase}/{uid}`, for example `/articles/community-gardens`. Despite the name, `uid` is not a UUID or random identifier. It is a human-readable, author-chosen slug that serves as the entry's stable permalink.
@@ -330,7 +304,6 @@ The `uid` field is the entry's permanent URL path segment. Every article's canon
 - The uid must be unique across all collections in a hub instance. If two entries share a uid, the build fails with a `UidCollision` error naming both entries and their source collections.
 
 Because the uid is the permalink, changing it breaks existing links. The `aliases` field exists for this purpose.
-
 
 ## Aliases and Redirects
 
@@ -342,7 +315,7 @@ updateConfig({
   redirects: {
     '/articles/old-slug': '/articles/current-uid',
     '/articles/another-old-slug': '/articles/current-uid',
-  }
+  },
 })
 ```
 
@@ -350,40 +323,38 @@ Astro handles everything from there. In SSG mode with no adapter, Astro generate
 
 If two entries claim the same alias, the build fails with an `AliasCollision` error naming the alias and both claimants. All collisions are reported in a single error, not just the first.
 
-
 ## Frontmatter Fields
 
-| Field | Type | Required | Default | Notes |
-|-------|------|----------|---------|-------|
-| `uid` | `string` | no | entry id | Permanent permalink slug. See "UID and Permalinks" above. |
-| `title` | `string` | yes | — | Article title |
-| `topics` | `string[]` | no | `[]` | Taxonomy topics. For feed entries, RSS `<category>` elements fill this when empty. |
-| `aliases` | `string[]` | no | `[]` | Old URL slugs. See "Aliases and Redirects" above. |
-| `date` | `Date` | no | — | Publication date. Entries sort by date descending; undated entries sort last. |
-| `draft` | `boolean` | no | `false` | Excluded from published output. Present in `raw` and `transformed` for debug use. |
-| `excerpt` | `string` | no | — | Short description for cards, meta tags, and search result snippets |
-
+| Field     | Type       | Required | Default  | Notes                                                                              |
+| --------- | ---------- | -------- | -------- | ---------------------------------------------------------------------------------- |
+| `uid`     | `string`   | no       | entry id | Permanent permalink slug. See "UID and Permalinks" above.                          |
+| `title`   | `string`   | yes      | —        | Article title                                                                      |
+| `topics`  | `string[]` | no       | `[]`     | Taxonomy topics. For feed entries, RSS `<category>` elements fill this when empty. |
+| `aliases` | `string[]` | no       | `[]`     | Old URL slugs. See "Aliases and Redirects" above.                                  |
+| `date`    | `Date`     | no       | —        | Publication date. Entries sort by date descending; undated entries sort last.      |
+| `draft`   | `boolean`  | no       | `false`  | Excluded from published output. Present in `raw` and `transformed` for debug use.  |
+| `excerpt` | `string`   | no       | —        | Short description for cards, meta tags, and search result snippets                 |
 
 ## Injected Routes
 
-| Pattern | Description |
-|---------|-------------|
-| `/articles` | Article index page (client-side browse) |
-| `/articles/[uid]` | Individual article page |
-| `/topics` | Topic index (cloud with counts) |
-| `/topics/[topic]` | Topic hub page (client-side browse) |
+| Pattern           | Description                             |
+| ----------------- | --------------------------------------- |
+| `/articles`       | Article index page (client-side browse) |
+| `/articles/[uid]` | Individual article page                 |
+| `/topics`         | Topic index (cloud with counts)         |
+| `/topics/[topic]` | Topic hub page (client-side browse)     |
 
 All routes are prerendered at build time (`prerender: true`). Alias redirects are injected into Astro's native `redirects` config, not as injected routes. The adapter generates platform-specific redirect rules automatically.
 
 Users override any injected route by creating a page at the same path. Astro gives user-defined pages priority.
-
 
 ## Multiple Hubs
 
 Two or more hub instances can coexist on one site. Each operates on its own collections and injects routes under its own prefixes. Route prefixes must not collide; the integration validates this at `astro:config:setup` and throws a descriptive `RouteConflict` error before any routes are injected.
 
 ```ts
-integrations: [
+integrations: ;
+;[
   contentHub({
     name: 'writing',
     collections: ['blog'],
@@ -406,10 +377,10 @@ To render a combined browse table spanning multiple hubs, create a custom Astro 
 ```astro
 ---
 // src/pages/everything.astro
-import { getCollection } from 'astro:content'
-import { aggregateEntries, filterPublished, sortByDate } from '@astro-bay/content-hub/utils'
 import { toBrowseData } from '@astro-bay/content-hub/browse'
 import { BrowseTable } from '@astro-bay/content-hub/components'
+import { aggregateEntries, filterPublished, sortByDate } from '@astro-bay/content-hub/utils'
+import { getCollection } from 'astro:content'
 import Layout from '../layouts/Base.astro'
 
 // Aggregate entries from both hubs' collections
@@ -433,7 +404,6 @@ const rows = toBrowseData(all)
 This page is independent of the injected hub routes. It uses the same public utilities (`aggregateEntries`, `filterPublished`, `sortByDate`, `toBrowseData`) and the same `BrowseTable` component, so sorting, filtering, and pagination work identically to the per-hub pages. The only difference is the input: entries from multiple collections merged into one array.
 
 If the two hubs share a collection name, each entry appears once because `aggregateEntries` deduplicates by `sourceId`. If they use different collections (as in the example above), there is no overlap to deduplicate.
-
 
 ## Custom Transforms
 
@@ -471,26 +441,23 @@ Transforms are the plugin's extensibility mechanism. Any per-entry enrichment th
 
 The `TransformContext` provides `ctx.cache` (a mutable `Map` scoped to the current build) so transforms that call external APIs can batch or deduplicate requests across entries.
 
-
 ## Draft Behaviour
 
 - `draft: true` entries are always excluded from `published`.
 - `raw` and `transformed` include all entries including drafts for debug use.
 
-
 ## Peer Integrations
 
-| Integration | Relationship |
-|-------------|-------------|
-| `astro-taxonomy` | Optional peer. Content hub consumes its virtual module for ancestor expansion. Falls back to flat topics when absent. |
-| `astro-loader-obsidian` | Optional peer. Provides the Obsidian vault content loader. |
-| `@ascorbic/feed-loader` | Optional peer. Provides the RSS/Atom feed content loader. |
-| `@astro-bay/jsonld` | Optional peer. Receives JSON-LD providers from `getJsonLdProviders()` for structured data generation. |
-| `astro-pagefind` | External. Indexes built HTML, reads `data-pagefind-*` attributes emitted by content hub. |
-| `astro-pagefind-resolve` | External. Consumes Pagefind's index (including uid/topic attributes) for smart 404 resolution. |
-| `@astrojs/rss` | External. Generates outgoing RSS/Atom/JSON feeds using the exported utility functions. |
-| `@astrojs/sitemap` | External. Discovers injected routes automatically. |
-
+| Integration              | Relationship                                                                                                          |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `astro-taxonomy`         | Optional peer. Content hub consumes its virtual module for ancestor expansion. Falls back to flat topics when absent. |
+| `astro-loader-obsidian`  | Optional peer. Provides the Obsidian vault content loader.                                                            |
+| `@ascorbic/feed-loader`  | Optional peer. Provides the RSS/Atom feed content loader.                                                             |
+| `@astro-bay/jsonld`      | Optional peer. Receives JSON-LD providers from `getJsonLdProviders()` for structured data generation.                 |
+| `astro-pagefind`         | External. Indexes built HTML, reads `data-pagefind-*` attributes emitted by content hub.                              |
+| `astro-pagefind-resolve` | External. Consumes Pagefind's index (including uid/topic attributes) for smart 404 resolution.                        |
+| `@astrojs/rss`           | External. Generates outgoing RSS/Atom/JSON feeds using the exported utility functions.                                |
+| `@astrojs/sitemap`       | External. Discovers injected routes automatically.                                                                    |
 
 ## Exported Utilities
 
@@ -498,48 +465,46 @@ Public helper functions for custom pages, feed generation, and sitemap logic:
 
 ```ts
 import {
-  aggregateEntries,    // (collections, getCollection) => Promise<NormalizedEntry[]>
-  filterPublished,     // (entries) => NormalizedEntry[]
-  sortByDate,          // (entries) => NormalizedEntry[]
-  buildTopicMap,       // (entries) => Map<slug, label>
-  groupByTopic,        // (entries) => Map<slug, NormalizedEntry[]>
-  topicsWithCounts,    // (topicMap, grouped) => TopicWithCount[]
-  entriesForTopic,     // (slug, grouped) => NormalizedEntry[]
-  slugifyTopic,        // (raw) => string
-  paginate,            // (entries, page, pageSize) => PageSlice
-  detectCollisions,    // (entries) => Result<Map, ContentHubError>
-  collectAliasRoutes,  // (entries) => Result<AliasRoute[], ContentHubError>
-  runTransforms,       // (entries, transforms, ctx) => Promise<NormalizedEntry[]>
-  toRssItem,           // (entry, articleBase) => RssItem
-  toFeedItems,         // (entries, articleBase) => RssItem[] (filters drafts + feed-origin)
+  aggregateEntries, // (collections, getCollection) => Promise<NormalizedEntry[]>
+  buildTopicMap, // (entries) => Map<slug, label>
+  collectAliasRoutes, // (entries) => Result<AliasRoute[], ContentHubError>
+  detectCollisions, // (entries) => Result<Map, ContentHubError>
+  entriesForTopic, // (slug, grouped) => NormalizedEntry[]
+  filterPublished, // (entries) => NormalizedEntry[]
+  groupByTopic, // (entries) => Map<slug, NormalizedEntry[]>
+  paginate, // (entries, page, pageSize) => PageSlice
+  runTransforms, // (entries, transforms, ctx) => Promise<NormalizedEntry[]>
+  slugifyTopic, // (raw) => string
+  sortByDate, // (entries) => NormalizedEntry[]
+  toFeedItems, // (entries, articleBase) => RssItem[] (filters drafts + feed-origin)
+  topicsWithCounts, // (topicMap, grouped) => TopicWithCount[]
+  toRssItem, // (entry, articleBase) => RssItem
 } from '@astro-bay/content-hub/utils'
 
 import {
-  toBrowseRow,         // (entry) => BrowseRow
-  toBrowseData,        // (entries) => BrowseRow[]
   createBrowseColumns, // () => ColumnDef<BrowseRow>[]
+  toBrowseData, // (entries) => BrowseRow[]
+  toBrowseRow, // (entry) => BrowseRow
 } from '@astro-bay/content-hub/browse'
 
 import {
   createContentHubProvider, // (opts) => JsonLdProvider (articles)
-  createTopicsProvider,     // (opts) => JsonLdProvider (topics)
+  createTopicsProvider, // (opts) => JsonLdProvider (topics)
 } from '@astro-bay/content-hub/jsonld'
 ```
 
-
 ## Error Handling
 
-| Error | Severity | Behavior |
-|-------|----------|----------|
-| UID collision | Fatal | Build fails. Message names both entries and their source collections. |
-| Alias collision | Fatal | Build fails. Message names the alias and both claimants. |
-| Route conflict (multi-hub) | Fatal | Build fails at `astro:config:setup` before any routes are injected. |
-| Missing `site` config | Warning | Logged once. Canonical URLs will be relative. |
-| Missing uid (fallback to entry.id) | Warning | Logged per entry. Advises adding explicit uid. |
-| Transform error | Warning | Logged per entry. Original entry used; build continues. |
-| Empty collection | Info | Logged. No pages generated for that collection. |
-| Entry with no topics | Silent | Entry has an article page but is excluded from topic hubs. |
-
+| Error                              | Severity | Behavior                                                              |
+| ---------------------------------- | -------- | --------------------------------------------------------------------- |
+| UID collision                      | Fatal    | Build fails. Message names both entries and their source collections. |
+| Alias collision                    | Fatal    | Build fails. Message names the alias and both claimants.              |
+| Route conflict (multi-hub)         | Fatal    | Build fails at `astro:config:setup` before any routes are injected.   |
+| Missing `site` config              | Warning  | Logged once. Canonical URLs will be relative.                         |
+| Missing uid (fallback to entry.id) | Warning  | Logged per entry. Advises adding explicit uid.                        |
+| Transform error                    | Warning  | Logged per entry. Original entry used; build continues.               |
+| Empty collection                   | Info     | Logged. No pages generated for that collection.                       |
+| Entry with no topics               | Silent   | Entry has an article page but is excluded from topic hubs.            |
 
 ## Code Organization
 
@@ -582,27 +547,24 @@ test/
 
 Tests are co-located with source using Vitest's `import.meta.vitest` for unit and property tests. Property tests (fast-check) verify invariants like slugification idempotency and pagination boundary correctness. They run behind `test.skipIf(tdd)` so the TDD loop stays fast. Integration tests in `test/hub-data.spec.ts` verify the full aggregation-through-grouping pipeline.
 
-
 ## API Stability
 
-| Surface | Stability |
-|---------|-----------|
-| Integration options shape | Stable (semver major for breaking changes) |
-| `contentHubSchema`, `feedEntrySchema` | Stable |
-| `NormalizedEntry` type | Stable |
-| `Transform`, `TransformContext` types | Stable |
-| `PageSlice` type | Stable |
-| Exported utilities (`/utils`, `/browse`, `/jsonld`) | Stable |
-| Pagefind data attributes | Stable (contract with search/resolve plugins) |
-| Browse data embed (`#browse-data`) | Stable |
-| JSON-LD provider shape | Stable |
-| Virtual module shape | Internal |
-| Injected route paths | Stable (user-configurable) |
-
+| Surface                                             | Stability                                     |
+| --------------------------------------------------- | --------------------------------------------- |
+| Integration options shape                           | Stable (semver major for breaking changes)    |
+| `contentHubSchema`, `feedEntrySchema`               | Stable                                        |
+| `NormalizedEntry` type                              | Stable                                        |
+| `Transform`, `TransformContext` types               | Stable                                        |
+| `PageSlice` type                                    | Stable                                        |
+| Exported utilities (`/utils`, `/browse`, `/jsonld`) | Stable                                        |
+| Pagefind data attributes                            | Stable (contract with search/resolve plugins) |
+| Browse data embed (`#browse-data`)                  | Stable                                        |
+| JSON-LD provider shape                              | Stable                                        |
+| Virtual module shape                                | Internal                                      |
+| Injected route paths                                | Stable (user-configurable)                    |
 
 ## Roadmap
 
 Features under consideration for future releases:
 
 - **Configurable search attribute markup.** The current Pagefind `data-pagefind-*` attributes are hardcoded. A future version will support a configurable attribute renderer so the integration can emit markup compatible with other search tools (Algolia, Meilisearch, Lunr, etc.) or disable search attributes entirely.
-

@@ -24,27 +24,18 @@ const resolveTopics = (
   return []
 }
 
-const getString = (
-  data: Record<string, unknown>,
-  key: string,
-): string | undefined =>
+const getString = (data: Record<string, unknown>, key: string): string | undefined =>
   typeof data[key] === 'string' ? data[key] : undefined
 
-const getNonEmptyString = (
-  data: Record<string, unknown>,
-  key: string,
-): string | undefined => {
+const getNonEmptyString = (data: Record<string, unknown>, key: string): string | undefined => {
   const value = getString(data, key)
   return value !== undefined && value.length > 0 ? value : undefined
 }
 
-const getStringArray = (
-  data: Record<string, unknown>,
-  key: string,
-): ReadonlyArray<string> =>
-  Array.isArray(data[key])
-    ? (data[key] as readonly unknown[]).filter((value): value is string => typeof value === 'string')
-    : []
+const getStringArray = (data: Record<string, unknown>, key: string): ReadonlyArray<string> =>
+  Array.isArray(data[key]) ?
+    (data[key] as readonly unknown[]).filter((value): value is string => typeof value === 'string') :
+    []
 
 const getSourceKind = (collectionName: string): NormalizedEntry['source'] =>
   collectionName === 'vault' || collectionName === 'feed' ? collectionName : 'custom'
@@ -82,28 +73,40 @@ export const normalizeEntry = (
   return { entry: buildEntry({ raw, collectionName, topics, rawUid }), uidFallback: rawUid === undefined }
 }
 
+/* eslint-disable functional/prefer-readonly-type, functional/immutable-data, functional/no-expression-statements */
+const dedupeBySourceId = (
+  items: ReadonlyArray<{ readonly entry: NormalizedEntry; readonly uidFallback: boolean }>,
+): ReadonlyArray<{ readonly entry: NormalizedEntry; readonly uidFallback: boolean }> =>
+  items.reduce((state, item) => {
+    const { out, seen } = state
+    if (!seen.has(item.entry.sourceId)) {
+      seen.add(item.entry.sourceId)
+      out.push(item)
+    }
+    return state
+  }, {
+    out: [] as Array<{ readonly entry: NormalizedEntry; readonly uidFallback: boolean }>,
+    seen: new Set<string>(),
+  }).out
+/* eslint-enable functional/prefer-readonly-type, functional/immutable-data, functional/no-expression-statements */
 
 export const aggregateEntries = async (
   collections: ReadonlyArray<string>,
   getCollection: GetCollection,
   fields = { topics: 'topics', feedCategory: 'categories' },
 ): Promise<ReadonlyArray<{ readonly entry: NormalizedEntry; readonly uidFallback: boolean }>> => {
-  const results = await Promise.all(
-    collections.map(async name => {
-      const raw = await getCollection(name)
-      return raw.map(r => normalizeEntry(r, name, fields))
-    }),
-  )
-  return results.flat()
+  const results = await Promise.all(collections.map(async name => {
+    const raw = await getCollection(name)
+    return raw.map(r => normalizeEntry(r, name, fields))
+  }))
+
+  return dedupeBySourceId(results.flat())
 }
 
-export const filterPublished = (
-  entries: ReadonlyArray<NormalizedEntry>,
-): ReadonlyArray<NormalizedEntry> => entries.filter(e => !e.draft)
+export const filterPublished = (entries: ReadonlyArray<NormalizedEntry>): ReadonlyArray<NormalizedEntry> =>
+  entries.filter(e => !e.draft)
 
-export const sortByDate = (
-  entries: ReadonlyArray<NormalizedEntry>,
-): ReadonlyArray<NormalizedEntry> =>
+export const sortByDate = (entries: ReadonlyArray<NormalizedEntry>): ReadonlyArray<NormalizedEntry> =>
   [...entries].toSorted((a, b) => {
     if (a.date === undefined && b.date === undefined) return 0
     if (a.date === undefined) return 1

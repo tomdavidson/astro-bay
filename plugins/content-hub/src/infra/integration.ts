@@ -1,39 +1,26 @@
+import type { AstroIntegration, InjectedRoute } from 'astro'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { AstroIntegration, InjectedRoute } from 'astro'
-import type { EntryTransform, NormalizedEntry } from '../types.ts'
-import { resolveConfig, detectDeprecatedOptions, type PluginOptions, type ResolvedConfig } from '../config.ts'
-import { claimHubName, claimRoutePrefix, resetRegistry } from './registry.ts'
-import { buildVirtualModulePlugin, buildVirtualModuleTypes } from '../virtual/module.ts'
+import { detectDeprecatedOptions, type PluginOptions, resolveConfig, type ResolvedConfig } from '../config.ts'
 import { createContentHubProvider, createTopicsProvider } from '../jsonld-provider.ts'
-
-
+import type { EntryTransform, NormalizedEntry } from '../types.ts'
+import { buildVirtualModulePlugin, buildVirtualModuleTypes } from '../virtual/module.ts'
+import { claimHubName, claimRoutePrefix, resetRegistry } from './registry.ts'
 
 // --- Transform registry (additive-only, for external/test registration) ---
 const transformRegistry = new Map<string, ReadonlyArray<EntryTransform>>()
 
-
-
 export const getTransforms = (hubName: string): ReadonlyArray<EntryTransform> =>
   transformRegistry.get(hubName) ?? []
-
-
 
 export const resetTransformRegistry = (): void => {
   transformRegistry.clear()
 }
 
-
-
-export const registerTransforms = (
-  hubName: string,
-  transforms: ReadonlyArray<EntryTransform>,
-): void => {
+export const registerTransforms = (hubName: string, transforms: ReadonlyArray<EntryTransform>): void => {
   transformRegistry.set(hubName, transforms)
 }
-
-
 
 const throwDuplicateName = (name: string): never => {
   throw new Error(
@@ -41,22 +28,16 @@ const throwDuplicateName = (name: string): never => {
   )
 }
 
-
-
 const throwDuplicateRoute = (route: string, hub: string, field: string): never => {
   throw new Error(
     `astro-content-hub: route prefix "${route}" already claimed by hub "${hub}". Use a unique \`${field}\`.`,
   )
 }
 
-
-
 const getRouteConfig = (partial: Omit<ResolvedConfig, 'siteUrl'>) => ({
   articleBase: partial.permalinks.articleBase,
   taxonomyRoute: partial.taxonomy.route,
 })
-
-
 
 const assertClaims = (partial: Omit<ResolvedConfig, 'siteUrl'>): void => {
   const nameResult = claimHubName(partial.name)
@@ -74,8 +55,6 @@ const assertClaims = (partial: Omit<ResolvedConfig, 'siteUrl'>): void => {
     throwDuplicateRoute(taxonomyRoute, topicClaim.claimedBy, 'taxonomy.route')
   }
 }
-
-
 
 const injectRoutes = (
   injectRoute: (route: InjectedRoute) => void,
@@ -118,12 +97,7 @@ type SetupContext = {
   readonly logger: { readonly info: (msg: string) => void }
 }
 
-type BuildDoneContext = {
-  readonly dir: URL
-  readonly logger: { readonly info: (msg: string) => void }
-}
-
-
+type BuildDoneContext = { readonly dir: URL; readonly logger: { readonly info: (msg: string) => void } }
 
 const handleSetup = async (
   ctx: SetupContext,
@@ -138,9 +112,7 @@ const handleSetup = async (
 
   assertClaims(partial)
 
-  ctx.updateConfig({
-    vite: { plugins: [buildVirtualModulePlugin(resolvedFullConfig, ctx.command)] },
-  })
+  ctx.updateConfig({ vite: { plugins: [buildVirtualModulePlugin(resolvedFullConfig, ctx.command)] } })
 
   injectRoutes(ctx.injectRoute, partial)
 
@@ -150,8 +122,6 @@ const handleSetup = async (
     `astro-content-hub [${partial.name}]: registered — ${articleBase}, ${articleBase}/[uid], ${taxonomyRoute}/[topic]${indexLog}`,
   )
 }
-
-
 
 const handleConfigDone = (
   site: string | undefined,
@@ -175,21 +145,18 @@ const handleConfigDone = (
   return resolvedFullConfig
 }
 
-
-
 const resolveOrThrow = (options: PluginOptions): Omit<ResolvedConfig, 'siteUrl'> => {
   const result = resolveConfig(options)
   if (result.isErr()) {
     const e = result.error
-    throw new Error(
-      `astro-content-hub config error: ${e.type === 'ConfigInvalid' ? e.message : e.type}`,
-    )
+    throw new Error(`astro-content-hub config error: ${e.type === 'ConfigInvalid' ? e.message : e.type}`)
   }
   return result.value
 }
 
-const addSchemaContext = (node: Record<string, unknown>): Record<string, unknown> =>
-  ('@context' in node ? node : { '@context': 'https://schema.org', ...node })
+const addSchemaContext = (
+  node: Record<string, unknown>,
+): Record<string, unknown> => ('@context' in node ? node : { '@context': 'https://schema.org', ...node })
 
 const JSONLD_INDENT = 2
 
@@ -199,26 +166,27 @@ const writeJsonLdRoutes = async (
 ): Promise<number> => {
   const baseDir = fileURLToPath(outDir)
 
-  await Promise.all(
-    routes.map(async ({ route, node }) => {
-      const targetDir = join(baseDir, route)
-      const targetFile = join(targetDir, 'index.jsonld')
-      await mkdir(targetDir, { recursive: true })
-      await writeFile(targetFile, `${JSON.stringify(addSchemaContext(node), undefined, JSONLD_INDENT)}\n`, 'utf8')
-    }),
-  )
+  await Promise.all(routes.map(async ({ route, node }) => {
+    const targetDir = join(baseDir, route)
+    const targetFile = join(targetDir, 'index.jsonld')
+    await mkdir(targetDir, { recursive: true })
+    await writeFile(
+      targetFile,
+      `${JSON.stringify(addSchemaContext(node), undefined, JSONLD_INDENT)}\n`,
+      'utf8',
+    )
+  }))
 
   return routes.length
 }
 
-export type ContentHubIntegration = AstroIntegration & {
-  readonly getJsonLdProviders: () => ReadonlyArray<{
-    readonly name: string
-    readonly provide: () => Promise<ReadonlyArray<unknown>>
-  }>
-}
-
-
+export type ContentHubIntegration =
+  & AstroIntegration
+  & {
+    readonly getJsonLdProviders: () => ReadonlyArray<
+      { readonly name: string; readonly provide: () => Promise<ReadonlyArray<unknown>> }
+    >
+  }
 
 // eslint-disable-next-line functional/prefer-readonly-type -- mutated once in astro:config:done lifecycle hook
 type HubState = { resolvedFullConfig: ResolvedConfig }
@@ -227,10 +195,7 @@ const buildResolveHubData = (state: HubState) => async () => {
   const { getCollection } = await import('astro:content')
   const { getHubData } = await import('./hub-data.ts')
   return getHubData(state.resolvedFullConfig, getCollection, {
-    logger: {
-      warn: (msg: string) => console.warn(msg),
-      info: (msg: string) => console.warn(`INFO: ${msg}`),
-    },
+    logger: { warn: (msg: string) => console.warn(msg), info: (msg: string) => console.warn(`INFO: ${msg}`) },
     command: 'build',
   })
 }
@@ -239,7 +204,8 @@ const buildLazyArticles = (state: HubState, resolveHubData: ReturnType<typeof bu
   name: 'content-hub-articles' as const,
   provide: async () => {
     const data = await resolveHubData()
-    const { siteUrl: site, permalinks: { articleBase }, taxonomy: { route: taxonomyRoute } } = state.resolvedFullConfig
+    const { siteUrl: site, permalinks: { articleBase }, taxonomy: { route: taxonomyRoute } } =
+      state.resolvedFullConfig
     const entries: ReadonlyArray<NormalizedEntry> = [...data.uidMap.values()]
     return createContentHubProvider({ site, articleBase, taxonomyRoute, entries }).provide()
   },
@@ -254,7 +220,13 @@ const buildLazyTopics = (state: HubState, resolveHubData: ReturnType<typeof buil
     const { loadTaxonomyGraph } = await import('../transform/ancestors.ts')
     const graph = await loadTaxonomyGraph()
     const hierarchy = getTopicHierarchy(data.published, graph)
-    return createTopicsProvider({ site, taxonomyRoute, topicMap: data.topicMap, groupedEntries: data.grouped, hierarchy }).provide()
+    return createTopicsProvider({
+      site,
+      taxonomyRoute,
+      topicMap: data.topicMap,
+      groupedEntries: data.grouped,
+      hierarchy,
+    }).provide()
   },
 })
 
@@ -273,9 +245,9 @@ export const contentHub = (options: PluginOptions): ContentHubIntegration => {
     name: `astro-content-hub-${partial.name}`,
     getJsonLdProviders,
     hooks: {
-      'astro:config:setup': async (ctx) => {
+      'astro:config:setup': async ctx => {
         await handleSetup(ctx, partial, state.resolvedFullConfig)
-        deprecationWarnings.forEach((warning) => {
+        deprecationWarnings.forEach(warning => {
           ctx.logger.info(warning)
         })
       },
@@ -289,10 +261,12 @@ export const contentHub = (options: PluginOptions): ContentHubIntegration => {
         }
 
         const providers = getJsonLdProviders()
-        const routeSets = await Promise.all(providers.map(async (provider) => provider.provide()))
+        const routeSets = await Promise.all(providers.map(async provider => provider.provide()))
         const written = await writeJsonLdRoutes(dir, routeSets.flat())
 
-        logger.info(`astro-content-hub [${partial.name}]: emitted ${String(written)} JSON-LD files and build complete.`)
+        logger.info(
+          `astro-content-hub [${partial.name}]: emitted ${String(written)} JSON-LD files and build complete.`,
+        )
       },
     },
   }
