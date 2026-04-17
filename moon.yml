@@ -23,7 +23,7 @@ tasks:
     options:
       runInCI: false
       runFromWorkspaceRoot: true
-      affectedFiles: true
+      affectedFiles: args
 
   fmt-check:
     script: "dprint check"
