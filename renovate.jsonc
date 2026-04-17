@@ -1,0 +1,125 @@
+// https://docs.renovatebot.com/configuration-options/
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    "group:monorepos",
+    "group:recommended",
+    "github>kachick/renovate-config-dprint#1.3.0",
+  ],
+  "rangeStrategy": "bump",
+  "minimumReleaseAge": "10 days",
+  "rebaseWhen": "conflicted",
+  "labels": [
+    "dependencies",
+  ],
+  // Conventional commit prefix for dependency PRs.
+  // The conventional-pr action enforces scopes matching moon project IDs.
+  "commitMessagePrefix": "chore(deps):",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security",
+    ],
+    "minimumReleaseAge": "0 days",
+  },
+  // ── Custom managers for non-npm version pins ──────────────
+  "customManagers": [
+    {
+      // Moon toolchain pins: node, pnpm, bun, proto versions in .moon/toolchains.yml
+      "customType": "regex",
+      "fileMatch": [
+        "\\.moon/toolchains\\.yml$",
+      ],
+      "matchStrings": [
+        "(?<depName>node|pnpm|bun|proto):\\n\\s+version:\\s*\"?\\^?(?<currentValue>[\\d.]+)\"?",
+      ],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "{{#if (equals depName 'node')}}node{{else if (equals depName 'proto')}}@moonrepo/proto{{else}}{{{depName}}}{{/if}}",
+      "versioningTemplate": "semver",
+    },
+  ],
+  "packageRules": [
+    {
+      "description": "Group Astro core packages",
+      "matchPackageNames": [
+        "astro",
+        "astro/**",
+        "@astrojs/**",
+      ],
+      "groupName": "Astro",
+    },
+    {
+      "description": "Group Moon tooling",
+      "matchPackageNames": [
+        "@moonrepo/**",
+      ],
+      "groupName": "Moonrepo",
+    },
+    {
+      // Group the moon toolchain version pins together
+      "description": "Group Moon toolchain pins",
+      "matchFileNames": [
+        ".moon/toolchains.yml",
+      ],
+      "groupName": "Moon toolchain versions",
+      "commitMessagePrefix": "chore(repo):",
+    },
+    {
+      "description": "Group all devDependencies minor and patch",
+      "matchDepTypes": [
+        "devDependencies",
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+      ],
+      "groupName": "dev dependencies (non-major)",
+    },
+    {
+      // Scope plugin dependency PRs to the plugin name
+      "description": "Conventional commit scope for content-hub",
+      "matchFileNames": [
+        "plugins/content-hub/**",
+      ],
+      "commitMessagePrefix": "chore(content-hub):",
+    },
+    {
+      "description": "Conventional commit scope for jsonld",
+      "matchFileNames": [
+        "plugins/jsonld/**",
+      ],
+      "commitMessagePrefix": "chore(jsonld):",
+    },
+    {
+      "description": "Conventional commit scope for eslint-config",
+      "matchFileNames": [
+        "packages/eslint-config/**",
+      ],
+      "commitMessagePrefix": "chore(eslint-config):",
+    },
+    {
+      "description": "Conventional commit scope for eslint-config-astro",
+      "matchFileNames": [
+        "packages/eslint-config-astro/**",
+      ],
+      "commitMessagePrefix": "chore(eslint-config-astro):",
+    },
+    {
+      "description": "Automerge non-major updates",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+      ],
+      "automerge": false,
+    },
+    {
+      "description": "Do not automerge major updates",
+      "matchUpdateTypes": [
+        "major",
+      ],
+      "automerge": false,
+    },
+  ],
+}
