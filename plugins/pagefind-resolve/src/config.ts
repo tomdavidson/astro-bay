@@ -33,12 +33,12 @@ export type Smart404Options = {
 
 export const DEFAULTS: Smart404Config = {
   scoreThreshold: 0.55,
-  redirectDominanceFactor: 1.15,
+  redirectDominanceFactor: 1.25,
   maxSuggestions: 5,
   stripBases: [],
   searchRoute: '/search',
   logLevel: 'info',
-  urlPathWeight: 0.9,
+  urlPathWeight: 0.8,
   minUrlPathScoreForRedirect: 0.45,
   pagefindPath: '/pagefind/pagefind.js',
 }
