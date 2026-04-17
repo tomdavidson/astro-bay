@@ -20,7 +20,6 @@ tasks:
     inputs:
       - "/**/*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,md,yml,yaml,css,scss,html,astro}"
       - "/dprint.json"
-      - "/dprint.jsonc"
     options:
       runInCI: false
       runFromWorkspaceRoot: true
@@ -31,7 +30,6 @@ tasks:
     inputs:
       - "/**/*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,md,yml,yaml,css,scss,html,astro}"
       - "/dprint.json"
-      - "/dprint.jsonc"
     options:
       runFromWorkspaceRoot: true
       affectedFiles: true
