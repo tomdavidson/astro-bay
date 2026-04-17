@@ -11,7 +11,11 @@ tasks:
       - "-c"
       - >
           set -euo pipefail;
-          PR="$RAA_PR_NUMBER";
+          PR="${PR_NUMBER:-$(gh pr view --json number --jq .number 2>/dev/null || echo "")}";
+          if [ -z "${PR}" ]; then
+            echo "Could not determine PR number. Set PR_NUMBER or run from a PR branch.";
+            exit 1;
+          fi;
           SHA=$(git rev-parse --short HEAD);
           PKG_NAME=$(jq -r .name package.json);
           BASE_VERSION=$(jq -r .version package.json);
@@ -31,7 +35,11 @@ tasks:
       - "-c"
       - >
           set -euo pipefail;
-          PR="$RAA_PR_NUMBER";
+          PR="${PR_NUMBER:-$(gh pr view --json number --jq .number 2>/dev/null || echo "")}";
+          if [ -z "${PR}" ]; then
+            echo "Could not determine PR number. Set PR_NUMBER or run from a PR branch.";
+            exit 1;
+          fi;
           PKG_NAME=$(jq -r .name package.json);
           TAG="pr-${PR}";
           echo "Unpublishing ${PKG_NAME}@${TAG} from GitHub Packages";
