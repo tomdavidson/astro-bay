@@ -20,18 +20,16 @@ tasks:
     inputs:
       - "/**/*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,md,yml,yaml,css,scss,html,astro}"
       - "/dprint.json"
-      - "/dprint.jsonc"
     options:
       runInCI: false
       runFromWorkspaceRoot: true
-      affectedFiles: true
+      affectedFiles: args
 
   fmt-check:
     script: "dprint check"
     inputs:
       - "/**/*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,md,yml,yaml,css,scss,html,astro}"
       - "/dprint.json"
-      - "/dprint.jsonc"
     options:
       runFromWorkspaceRoot: true
       affectedFiles: true

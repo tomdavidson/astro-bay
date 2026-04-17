@@ -45,6 +45,7 @@
   },
   "excludes": [
     "**/*-lock.json",
+    "**/*-lock.yaml",
     "dist",
     "coverage",
     "node_modules"

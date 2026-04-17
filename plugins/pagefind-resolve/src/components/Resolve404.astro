@@ -6,7 +6,7 @@
  *
  *   ---
  *   import Layout from '../layouts/Base.astro'
- *   import Resolve404 from 'astro-pagefind-resolve/components'
+ *   import Resolve404 from '@astro-bay/pagefind-resolve/components'
  *   ---
  *   <Layout title="Page not found">
  *     <h1>Page not found</h1>
@@ -18,8 +18,8 @@
  *   document.addEventListener('pfr:resolve', (e: PfrResolveEvent) => { ... })
  */
 
-import { mergeConfig } from 'astro-pagefind-resolve/config'
-import type { Smart404Options } from 'astro-pagefind-resolve/config'
+import { mergeConfig } from '@astro-bay/pagefind-resolve/config'
+import type { Smart404Options } from '@astro-bay/pagefind-resolve/config'
 
 export interface Props extends Smart404Options {
   class?: string
@@ -47,7 +47,7 @@ const instanceId = crypto.randomUUID()
 </div>
 
 <script>
-import { initResolve404 } from 'astro-pagefind-resolve/client'
+import { initResolve404 } from '@astro-bay/pagefind-resolve/client'
 
 document.querySelectorAll<HTMLElement>('[data-pfr-config]').forEach(root => {
   initResolve404(root)
