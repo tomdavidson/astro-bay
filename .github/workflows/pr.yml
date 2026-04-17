@@ -2,7 +2,7 @@ name: Pull Request Pipeline
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -14,6 +14,7 @@ concurrency:
 jobs:
   config:
     name: CI Strategy
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 7
     outputs:
@@ -124,29 +125,51 @@ jobs:
         shell: bash
 
   # Review App & Artifacts (RAA)
-  review-open:
-    name: Review Build
-    if: contains(github.event.pull_request.labels.*.name, 'review-app')
+  # Dispatches raa.yml when gate passes and the review-app label is present.
+  review-dispatch:
+    name: Dispatch RAA
+    needs: [gate]
+    if: >-
+      !failure() && !cancelled()
+      && contains(github.event.pull_request.labels.*.name, 'review-app')
     runs-on: ubuntu-latest
-    needs: [ci]
-    timeout-minutes: 15
+    timeout-minutes: 2
     permissions:
-      deployments: write
+      actions: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
         with:
-          fetch-depth: 0
-      - uses: ./.github/actions/setup
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: 'raa.yml',
+              ref: context.payload.pull_request.head.ref,
+              inputs: {
+                command: 'run',
+                'pr-number': String(context.payload.pull_request.number),
+              },
+            })
 
-      - id: raa
-        uses: ./.github/actions/moon-raa
+  # Teardown review environment on PR close.
+  review-teardown:
+    name: Dispatch RAA Teardown
+    if: >-
+      github.event.action == 'closed'
+      && contains(github.event.pull_request.labels.*.name, 'review-app')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/github-script@v7
         with:
-          command: run
-          pr-number: ${{ github.event.pull_request.number }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Summary
-        if: always()
-        run: echo "$SUMMARY" >> "$GITHUB_STEP_SUMMARY"
-        env:
-          SUMMARY: ${{ steps.raa.outputs.summary }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: 'raa.yml',
+              ref: context.repo.default_branch,
+              inputs: {
+                command: 'rm',
+                'pr-number': String(context.payload.pull_request.number),
+              },
+            })
