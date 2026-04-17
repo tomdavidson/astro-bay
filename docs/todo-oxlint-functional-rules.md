@@ -5,16 +5,16 @@ only for what oxlint structurally cannot do.
 
 ## What stays in ESLint (permanently or until oxlint adds capabilities)
 
-| Rule / Plugin | Reason |
-|---|---|
-| `eslint-plugin-boundaries` (element-types) | Layer enforcement via custom element patterns. No oxlint equivalent concept. |
-| `no-restricted-syntax` (ESQuery selectors) | Boolean param ban, `unsafeUnwrap`/`unsafeUnwrapErr` bans. Oxlint has no ESQuery engine, including in its JS plugin system. |
+| Rule / Plugin                               | Reason                                                                                                                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `eslint-plugin-boundaries` (element-types)  | Layer enforcement via custom element patterns. No oxlint equivalent concept.                                                                                 |
+| `no-restricted-syntax` (ESQuery selectors)  | Boolean param ban, `unsafeUnwrap`/`unsafeUnwrapErr` bans. Oxlint has no ESQuery engine, including in its JS plugin system.                                   |
 | `no-restricted-imports` with pattern groups | Domain IO bans (`fs/*`, `pg`, `express`, etc.). Oxlint's `no-restricted-imports` only supports exact strings, not group patterns. File an enhancement issue. |
-| `prefer-arrow-functions` | No oxlint equivalent. Lower priority. |
-| `functional/immutable-data` | Deep mutation tracking. Complex, type-aware. Long-term. |
-| `functional/prefer-readonly-type` | Type-aware. Long-term. |
-| `functional/no-return-void` | Type-aware. Long-term. |
-| `functional/no-expression-statements` | Needs `ignoreVoid` and `ignoreCodePattern` options. Medium complexity. |
+| `prefer-arrow-functions`                    | No oxlint equivalent. Lower priority.                                                                                                                        |
+| `functional/immutable-data`                 | Deep mutation tracking. Complex, type-aware. Long-term.                                                                                                      |
+| `functional/prefer-readonly-type`           | Type-aware. Long-term.                                                                                                                                       |
+| `functional/no-return-void`                 | Type-aware. Long-term.                                                                                                                                       |
+| `functional/no-expression-statements`       | Needs `ignoreVoid` and `ignoreCodePattern` options. Medium complexity.                                                                                       |
 
 ## What can move to oxlint (PR candidates)
 
@@ -22,14 +22,14 @@ These are all simple AST visitors with no type information needed. They would fi
 under a `functional` category or `eslint-plugin-functional` compatibility layer
 in oxlint. Could land as a single PR or small series.
 
-| Rule | Semantics | Complexity |
-|---|---|---|
-| `functional/no-let` | Ban `let` declarations | Trivial — AST node check |
-| `functional/no-loop-statements` | Ban `for`, `while`, `do-while`, `for-in`, `for-of` | Trivial — AST node check |
-| `functional/no-throw-statements` | Ban `throw` | Trivial — AST node check |
-| `functional/no-try-statements` | Ban `try` | Trivial — AST node check |
-| `functional/no-classes` | Ban `class` declarations/expressions | Slightly more complex — needs `ignoreIdentifierPattern` option for infra overrides |
-| `functional/no-this-expressions` | Ban `this` | Trivial — AST node check |
+| Rule                             | Semantics                                          | Complexity                                                                         |
+| -------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `functional/no-let`              | Ban `let` declarations                             | Trivial — AST node check                                                           |
+| `functional/no-loop-statements`  | Ban `for`, `while`, `do-while`, `for-in`, `for-of` | Trivial — AST node check                                                           |
+| `functional/no-throw-statements` | Ban `throw`                                        | Trivial — AST node check                                                           |
+| `functional/no-try-statements`   | Ban `try`                                          | Trivial — AST node check                                                           |
+| `functional/no-classes`          | Ban `class` declarations/expressions               | Slightly more complex — needs `ignoreIdentifierPattern` option for infra overrides |
+| `functional/no-this-expressions` | Ban `this`                                         | Trivial — AST node check                                                           |
 
 ## Approach
 

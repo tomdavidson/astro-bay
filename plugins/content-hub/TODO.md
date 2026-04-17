@@ -1,21 +1,5 @@
 # TODO
 
-## Decision
-
-- [x] Do not ship SSR in the current release.
-- [ ] Treat `src/infra/ssr.ts` as deferred work, not public API.
-- [ ] Remove or revert any in-progress SSR helper code before merge.
-
-## Why SSR is deferred
-
-- [ ] Current plugin architecture is build-first and prerender-first.
-- [ ] `getHubData` cache semantics are defined for build-time use, not request-time SSR.
-- [ ] Route behavior for unknown UID, unknown topic slug, and out-of-range pages is not yet
-      specified for SSR.
-- [ ] JSON-LD behavior is not yet settled for server or hybrid output.
-- [ ] Search and browse boundaries must stay clear so SSR does not accidentally absorb search
-      responsibilities.
-
 ## SSR readiness checklist
 
 ### 1. Product and API contract
@@ -35,6 +19,8 @@
 - [ ] Keep request-time APIs aligned with the existing TanStack Table query contract.
 
 ### 3. Cache semantics
+
+I have arch question about this. Seems like it should be covered by astro.
 
 - [ ] Replace or redesign the module-level hub cache for request-time use.
 - [ ] Define cache keys beyond hub name if runtime inputs can affect results.
@@ -68,21 +54,12 @@
 
 ### 7. Integration boundaries
 
-- [ ] Keep Pagefind as build-time search unless explicitly expanding scope.
-- [ ] Keep content-hub focused on structured browse, routing, and content shaping.
 - [ ] Ensure astro-taxonomy remains the owner of hierarchy semantics.
-- [ ] Ensure astro-bayjsonld integration still works without requiring users to hold fragile runtime
+- [ ] Ensure astro-jsonld integration still works without requiring users to hold fragile runtime
       handles.
 - [ ] Ensure multi-hub behavior remains isolated and deterministic in SSR mode.
 
 ### 8. Testing
-
-- [ ] Add unit tests for request-time lookup helpers once the API is approved.
-- [ ] Add integration tests for Astro `output: 'server'`.
-- [ ] Add integration tests for Astro `output: 'hybrid'` if supported.
-- [ ] Test 404 behavior, alias redirects, page bounds, and cache behavior.
-- [ ] Test multi-hub SSR behavior.
-- [ ] Test parity between SSG and SSR output for the same content set.
 
 ### 9. Docs and rollout
 
@@ -92,11 +69,4 @@
 - [ ] Document operational tradeoffs: cache, freshness, performance, hosting adapter constraints.
 - [ ] Only promote SSR helpers to public API after contracts and tests are stable.
 
-## Suggested order
-
-- [ ] First, finish browse and pagination cleanup.
-- [ ] Second, settle route and cache semantics.
-- [ ] Third, implement article-page SSR only.
-- [ ] Fourth, implement topic and browse SSR.
-- [ ] Fifth, add runtime JSON-LD behavior.
-- [ ] Last, document and stabilize the public SSR API.
+| Content negotiation | ❌ **Missing** | No CDN rewrite rules, no Accept header handling[^1] |
