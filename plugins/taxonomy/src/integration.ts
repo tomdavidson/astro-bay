@@ -2,7 +2,6 @@
 // All domain logic lives in pure modules. No business logic here.
 
 import type { AstroIntegration } from 'astro'
-import { fileURLToPath } from 'node:url'
 import { composeFragments, type ProviderResult } from './compose.ts'
 import { mergeConfig, type TaxonomyOptions } from './config.ts'
 import { emptyGraph } from './graph.ts'

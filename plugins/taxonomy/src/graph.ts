@@ -2,7 +2,7 @@
 // Pure functions. No IO.
 
 import { err, ok, type Result } from 'neverthrow'
-import type { ResolvedGraph, SynonymGroup, TaxonomyEdge, TaxonomyError, TaxonomyFragment } from './types.ts'
+import type { ResolvedGraph, TaxonomyError, TaxonomyFragment } from './types.ts'
 
 // --- Cycle detection ---
 

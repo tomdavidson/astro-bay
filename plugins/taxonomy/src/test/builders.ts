@@ -1,6 +1,5 @@
 import type { CoOccurrenceEntry as CoEntry } from '../cooccurrence.ts'
 import type {
-  CoOccurrenceEntry,
   ResolvedGraph,
   SynonymGroup,
   TaxonomyEdge,
