@@ -2,7 +2,6 @@ $schema: "https://moonrepo.dev/schemas/project.json"
 
 tags:
   - "gh-pkg-npm"
-  - "astro-plugin"
 
 project:
   metadata:

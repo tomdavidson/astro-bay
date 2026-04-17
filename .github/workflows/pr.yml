@@ -137,18 +137,19 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/checkout@v4
         with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              ...context.repo,
-              workflow_id: 'raa.yml',
-              ref: context.payload.pull_request.head.ref,
-              inputs: {
-                command: 'run',
-                'pr-number': String(context.payload.pull_request.number),
-              },
-            })
+          fetch-depth: 1
+      - name: Dispatch RAA run
+        run: |
+          gh workflow run raa.yml \
+            --ref "$HEAD_REF" \
+            -f command=run \
+            -f pr-number="$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
 
   # Teardown review environment on PR close.
   review-teardown:
@@ -161,15 +162,15 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/checkout@v4
         with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              ...context.repo,
-              workflow_id: 'raa.yml',
-              ref: context.repo.default_branch,
-              inputs: {
-                command: 'rm',
-                'pr-number': String(context.payload.pull_request.number),
-              },
-            })
+          fetch-depth: 1
+      - name: Dispatch RAA teardown
+        run: |
+          gh workflow run raa.yml \
+            --ref main \
+            -f command=rm \
+            -f pr-number="$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}

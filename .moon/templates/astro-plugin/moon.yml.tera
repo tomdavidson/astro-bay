@@ -5,4 +5,5 @@ toolchains:
     enabled: true
     
 tags:
-  - 'astro-plugin'
+  - "gh-pkg-npm"
+  - "astro-plugin"

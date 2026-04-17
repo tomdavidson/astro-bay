@@ -5,4 +5,11 @@ toolchains:
     enabled: true
 
 tags:
+  - "gh-pkg-npm"
   - "astro-plugin"
+
+project:
+  metadata:
+    raa:
+      run: publish
+      rm: unpublish
