@@ -1,148 +1,119 @@
 # astro-bay
 
-A shared repo of [Astro](https://astro.build) plugins and integrations. Each plugin has its own independent lifecycle.
+Monorepo of independently published [Astro](https://astro.build) integrations and the
+ESLint configs that support them. Each package has its own version, changelog, and npm
+release.
 
-## Plugins
+## Packages
 
-| Plugin                        | Description                                                                                                                                                                    | Status      |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
-| `@astro-bay/content-hub`      | Aggregates content from multiple sources, normalizes entries, builds taxonomy pages, generates permalinks with alias redirects, and emits Pagefind metadata. The orchestrator. | In progress |
-| `@astro-bay/jsonld`           | Emits JSON-LD structured data as sibling `.jsonld` files per route. Ships an LDES change feed, type index, and SSR content negotiation middleware.                             | In progress |
-| `@astro-bay/taxonomy`         | Hierarchical topic graph with DAG validation, synonym resolution, and virtual module for build-time access. Useful for any Astro site with tags.                               | In progress |
-| `@astro-bay/pagefind-resolve` | Smart 404 recovery using Pagefind index lookups with configurable scoring thresholds.                                                                                          | Planned     |
-| `@astro-bay/taxonomy-enrich`  | CLI tool for ONNX/WordNet-powered taxonomy enrichment. Separate package to keep `astro-taxonomy` lightweight.                                                                  | Planned     |
+| Package                          | Purpose                                                                                                                                                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@astro-bay/content-hub`         | Aggregates Astro content collections into a normalized hub. Handles topic taxonomies, alias redirects, injected article and topic routes, Pagefind attributes, and JSON-LD output (`BlogPosting`, `DefinedTerm`, `CollectionPage` with SKOS `broader`/`narrower`). |
+| `@astro-bay/jsonld`              | Provider interface other plugins implement to contribute structured data during `astro:build:done`.                                                                                                                                                                |
+| `@astro-bay/eslint-config`       | Flat ESLint config for TypeScript. Boundary enforcement, functional rules, oxlint dedup.                                                                                                                                                                           |
+| `@astro-bay/eslint-config-astro` | Flat ESLint config for `.astro` files. Treats them as the view layer with relaxed FP rules and structural limits.                                                                                                                                                  |
 
-## Architecture
+Source layout:
 
-All but the simiplest of plugins follow a layered layered architecture:
+- `plugins/` — published Astro integrations
+- `packages/` — ESLint configs and shared utilities
+- `apps/`, `website/` — internal consumers, not published
 
-- **Domain** (`.domain.ts`) — Pure functions, readonly types, `neverthrow` Result types. No IO, no classes, ect..
-- **Infrastructure** (`.infra.ts`) — Astro hooks, file system, network. Imperative shell around the functional core.
+## Installing a plugin
 
-## Toolchain
+Each plugin is a standard Astro integration. Install only what you need.
 
-| Tool                                | Purpose                                                 |
-| ----------------------------------- | ------------------------------------------------------- |
-| [Moon](https://moonrepo.dev)        | Task runner, project graph, CI orchestration            |
-| [Proto](https://moonrepo.dev/proto) | Toolchain version management                            |
-| [pnpm](https://pnpm.io)             | Package manager (v10)                                   |
-| [dprint](https://dprint.dev)        | Code formatter (TypeScript, JSON, Markdown, YAML, HTML) |
-| [oxlint](https://oxc.rs)            | Fast linter (correctness, complexity, type safety)      |
-| [ESLint](https://eslint.org)        | Functional programming rules, boundary enforcement      |
-| [Vitest](https://vitest.dev)        | Test runner with in-source testing support              |
+```ts
+// astro.config.ts
+import contentHub from '@astro-bay/content-hub'
+import { defineConfig } from 'astro/config'
 
-[instrcution: add fast-check as a tool ]
-
-## Getting Started
-
-### Prerequisites
-
-Install [Proto](https://moonrepo.dev/proto) (manages Node, pnpm, Bun, and Moon versions automatically):
-
-```bash
-curl -fsSL https://moonrepo.dev/install/proto.sh | bash
+export default defineConfig({
+  site: 'https://example.com',
+  integrations: [
+    contentHub({
+      collections: ['vault', 'feed'],
+      permalinks: { articleBase: 'articles' },
+      taxonomy: { route: 'topics', indexPage: true },
+      browse: { pageSize: 20 },
+    }),
+  ],
+})
 ```
 
-### Setup
+Full options are documented in each plugin's README.
+
+## Conventions
+
+The plugins are written to a consistent style. Relevant for contributors and for anyone
+reading the source:
+
+- Functional TypeScript. No `class`, `this`, `let`, `throw`, or `try` in domain or app
+  code. Errors are returned as `Result` via `neverthrow`.
+- Layer suffixes: `.domain.ts`, `.app.ts`, `.infra.ts`. IO is restricted to `.infra.ts`
+  and `.astro` files, enforced by `eslint-plugin-boundaries`.
+- `readonly` by default on types and arrays.
+- Configuration errors (UID collisions, invalid routes, duplicate hub names) fail at
+  `astro:config:setup`, not at runtime.
+- Hub data is computed once per build and cached at module level.
+
+Reference docs in the repo: `toms-clean-code.md`, `toms-clean-arch.md`,
+`lang-typescript.md`, `testing.md`, `testing-typescript.md`.
+
+## Development
+
+Toolchain is pinned in `.moon/toolchains.yml` and installed via proto:
+
+- Node 22.22.1
+- pnpm 10.32.1
+- Bun 1.3.10
+- moon, proto
 
 ```bash
-git clone https://github.com/tomdavidson/astro-bay.git
-cd astro-bay
-moon setup
-```
-
-This installs all toolchain versions defined in `.prototools` and runs `pnpm install`.
-
-### Common Tasks
-
-```bash
-moon run :lint          # Lint all projects
-moon run :test          # Test all projects
-moon run :check-type    # Typecheck all projects
-moon run :fmt           # Format everything
-```
-
-Run tasks for a specific plugin:
-
-```bash
-moon run astro-jsonld:test
-moon run astro-taxonomy:lint
-```
-
-Run only affected tasks (compares against default branch):
-
-```bash
+proto install
+pnpm install
+moon run :build
 moon run :test --affected
+moon run :lint --affected
+moon run :fmt-check
 ```
 
-### Scaffolding a New Plugin
+Per-project tasks:
+
+- `moon run <project>:test` — vitest
+- `moon run <project>:publish` — release via release-please
+- `moon run :sync-release` — sync `release-please-config.json` with current projects
+- `moon run :fmt` — dprint format
+
+Releases use release-please per package. Conventional commit scopes are auto-discovered
+from `.moon/workspace.yml`, so new projects work with commit validation as soon as they
+are added.
+
+## Adding a plugin
 
 ```bash
 moon generate astro-plugin
 ```
 
-Prompts for plugin name, description, and feature flags (content layer support, injected pages).
+The template prompts for name, description, content collection usage, and route injection.
+Output passes lint, format, and boundary rules out of the box.
 
-## CI/CD
+Next steps after generation:
 
-Trunk-based development on `main`. PRs run the full CI pipeline (lint, test, typecheck, audit, CodeQL).
-Merges to `main` trigger [Release Please](https://github.com/googleapis/release-please) for versioning
-and automated npm publishing with OIDC provenance.
+1. Implement Astro hooks in `src/infra/integration.ts`.
+2. Put domain logic in `.domain.ts` files as pure functions returning `Result`.
+3. Add vitest specs next to source as `*.spec.ts`. fast-check is available for property
+   tests.
+4. Add a `fuzz-ci` task only if the plugin parses untrusted input.
 
-| Workflow      | Trigger        | Purpose                               |
-| ------------- | -------------- | ------------------------------------- |
-| `pr.yml`      | Pull request   | CI gate (Moon CI, audit, CodeQL)      |
-| `main.yml`    | Push to main   | CI, then release-please, then publish |
-| `publish.yml` | Called by main | Publish to npm with provenance        |
+## CI
 
-[instruction: add disscpters of RAA workflow ]
-
-## Project Structure
-
-[instuction: simplify and note where benificial for the README.md context]
-
-```
-.
-├── adrs.toml
-├── docs
-├── dprint.json
-├── .editorconfig
-├── eslint.config.mjs
-├── .gitignore
-├── .moon
-│   ├── scripts
-│   ├── tasks
-│   │   ├── astro-plugin.yml
-│   │   ├── astro-website.yml
-│   │   └── typescript.yml
-│   ├── templates
-│   │   └── astro-plugin
-│   ├── toolchains.yml
-│   └── workspace.yml
-├── moon.yml
-├── oxlintrc.json
-├── package.json
-├── packages
-│   ├── eslint-config
-│   ├── eslint-config-astro
-│   └── test-utils
-├── plugins
-│   ├── content-hub
-│   ├── jsonld
-│   ├── pagefind-resolve
-│   └── taxonomy
-├── pnpm-workspace.yaml
-├── .prototools
-├── README.md
-├── release-please-config.json
-├── .release-please-manifest.json
-├── renovate.json
-├── scripts
-└── tsconfig.options.json
-```
-
-[instruction: add a section on the dep managment, the use of catalog: and adding to devdeps to the //paakge.json if they need hoisted]
+- Formatter is dprint. CI fails on `dprint check`.
+- Linting runs oxlint then ESLint. Both must pass.
+- PR titles must be conventional commits with a scope matching a project ID.
+- Moon affected detection drives test and lint runs. Keep `moon.yml` task inputs accurate
+  or tasks will be skipped when they shouldn't be.
 
 ## License
 
-MIT
+MIT, per package. See individual `package.json` files.
