@@ -2,13 +2,10 @@
 // Pure orchestration — no IO. Provider.load() calls happen in the imperative shell.
 
 import { err, ok, type Result } from 'neverthrow'
-import type { TaxonomyFragment, ResolvedGraph, TaxonomyError } from './types.ts'
-import { mergeFragment, emptyGraph } from './graph.ts'
+import { emptyGraph, mergeFragment } from './graph.ts'
+import type { ResolvedGraph, TaxonomyError, TaxonomyFragment } from './types.ts'
 
-export type ProviderResult = {
-  readonly name: string
-  readonly fragment: TaxonomyFragment
-}
+export type ProviderResult = { readonly name: string; readonly fragment: TaxonomyFragment }
 
 export const composeFragments = (
   providerResults: ReadonlyArray<ProviderResult>,
@@ -36,10 +33,7 @@ if (import.meta.vitest) {
     test('composeFragments/singleProvider/appliesFragment', () => {
       const pr: ProviderResult = {
         name: 'file',
-        fragment: {
-          edges: [{ parent: 'housing', child: 'zoning' }],
-          synonyms: [],
-        },
+        fragment: { edges: [{ parent: 'housing', child: 'zoning' }], synonyms: [] },
       }
       const result = composeFragments([pr])
       expect(result.isOk()).toBe(true)
@@ -50,18 +44,11 @@ if (import.meta.vitest) {
     test('composeFragments/laterProviderRejectionWins', () => {
       const base: ProviderResult = {
         name: 'derived',
-        fragment: {
-          edges: [{ parent: 'housing', child: 'zoning' }],
-          synonyms: [],
-        },
+        fragment: { edges: [{ parent: 'housing', child: 'zoning' }], synonyms: [] },
       }
       const curated: ProviderResult = {
         name: 'file',
-        fragment: {
-          edges: [],
-          synonyms: [],
-          rejections: [{ parent: 'housing', child: 'zoning' }],
-        },
+        fragment: { edges: [], synonyms: [], rejections: [{ parent: 'housing', child: 'zoning' }] },
       }
       const result = composeFragments([base, curated])
       expect(result.isOk()).toBe(true)
@@ -72,27 +59,18 @@ if (import.meta.vitest) {
     test('composeFragments/cycle/returnsErr', () => {
       const pr: ProviderResult = {
         name: 'bad',
-        fragment: {
-          edges: [{ parent: 'a', child: 'b' }, { parent: 'b', child: 'a' }],
-          synonyms: [],
-        },
+        fragment: { edges: [{ parent: 'a', child: 'b' }, { parent: 'b', child: 'a' }], synonyms: [] },
       }
       expect(composeFragments([pr]).isErr()).toBe(true)
     })
     test('composeFragments/synonymsMergedAcrossProviders', () => {
       const p1: ProviderResult = {
         name: 'a',
-        fragment: {
-          edges: [],
-          synonyms: [{ canonical: 'public-transit', variants: ['transit'] }],
-        },
+        fragment: { edges: [], synonyms: [{ canonical: 'public-transit', variants: ['transit'] }] },
       }
       const p2: ProviderResult = {
         name: 'b',
-        fragment: {
-          edges: [],
-          synonyms: [{ canonical: 'housing', variants: ['homes'] }],
-        },
+        fragment: { edges: [], synonyms: [{ canonical: 'housing', variants: ['homes'] }] },
       }
       const result = composeFragments([p1, p2])
       expect(result.isOk()).toBe(true)

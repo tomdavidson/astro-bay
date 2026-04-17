@@ -4,6 +4,8 @@
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "devDependencies": {
+    "@astro-bay/eslint-config": "workspace:",
+    "@astro-bay/eslint-config-astro": "workspace:",
     "@astrojs/check": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "astro": "catalog:",
@@ -11,8 +13,8 @@
     "fast-check": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:",
-    "@astro-bay/eslint-config": "workspace:",
-    "@astro-bay/eslint-config-astro": "workspace:"
+    "vitest": "catalog:"
+  },
+  "scripts": {
   }
 }

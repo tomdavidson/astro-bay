@@ -5,15 +5,11 @@
 import type { TaxonomyProvider } from '../types.ts'
 import { fileProvider } from './file.ts'
 
-export type ContentDerivedProviderOptions = {
-  readonly output: string
-}
+export type ContentDerivedProviderOptions = { readonly output: string }
 
 // At build time this behaves identically to fileProvider(output, { optional: true }).
 // The file is absent on first-run before a derive pass has been executed.
-export const contentDerivedProvider = (
-  options: ContentDerivedProviderOptions,
-): TaxonomyProvider => ({
+export const contentDerivedProvider = (options: ContentDerivedProviderOptions): TaxonomyProvider => ({
   ...fileProvider({ path: options.output, optional: true }),
   name: `content-derived:${options.output}`,
   watchPaths: [options.output],

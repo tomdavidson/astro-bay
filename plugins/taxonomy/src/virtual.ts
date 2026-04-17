@@ -1,13 +1,10 @@
 // Vite virtual module plugin for astro-taxonomy:graph (or custom module ID).
 // Exposes the resolved graph to all Astro pages and integrations at build time.
 
-import type { ResolvedGraph } from './types.ts'
 import type { Plugin } from 'vite'
+import type { ResolvedGraph } from './types.ts'
 
-export const makeVirtualModulePlugin = (
-  moduleId: string,
-  getGraph: () => ResolvedGraph | null,
-): Plugin => {
+export const makeVirtualModulePlugin = (moduleId: string, getGraph: () => ResolvedGraph | null): Plugin => {
   const RESOLVED_ID = '\0' + moduleId
 
   return {

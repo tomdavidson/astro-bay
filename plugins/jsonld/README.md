@@ -11,13 +11,13 @@ without requiring authentication or write-access.
 
 JSON-LD endpoints represent **containers and resources**, not API query responses.
 
-| Route kind              | Example                       | Gets `.jsonld`? |
-|-------------------------|------------------------------|-----------------|
-| Canonical resource      | `/articles/my-post/`         | Yes             |
-| Container (collection)  | `/articles/`                 | Yes             |
-| Taxonomy term           | `/topics/typescript/`        | Yes             |
-| UI query / filter view  | `/articles/topic1+topic2/`   | No              |
-| Paginated view          | `/articles/page/2/`          | No              |
+| Route kind             | Example                    | Gets `.jsonld`? |
+| ---------------------- | -------------------------- | --------------- |
+| Canonical resource     | `/articles/my-post/`       | Yes             |
+| Container (collection) | `/articles/`               | Yes             |
+| Taxonomy term          | `/topics/typescript/`      | Yes             |
+| UI query / filter view | `/articles/topic1+topic2/` | No              |
+| Paginated view         | `/articles/page/2/`        | No              |
 
 A filtered page like `/articles/topic1+topic2/index.html` can absolutely be
 prerendered by Astro (via `getStaticPaths`), but it is a **view over existing
@@ -31,8 +31,8 @@ CQRS model, the `.html` is a read-model projection for human convenience. In
 Linked Data, `.jsonld` exists only for stable, addressable things: a resource,
 a container, a term.
 
-**Rule of thumb:** if the URL identifies a *thing* (an article, a topic, a
-collection), it gets a `.jsonld` sibling. If it identifies a *query* (a filter,
+**Rule of thumb:** if the URL identifies a _thing_ (an article, a topic, a
+collection), it gets a `.jsonld` sibling. If it identifies a _query_ (a filter,
 a sort, a page offset), it does not.
 
 ## Installation
@@ -51,7 +51,9 @@ import { defineConfig } from 'astro/config'
 
 const myProvider = {
   name: 'my-articles',
-  provide: async (): Promise<ReadonlyArray<RouteJsonLd>> => [{
+  provide: async (): Promise<
+    ReadonlyArray<RouteJsonLd>
+  > => [{
     route: '/articles/hello/',
     node: {
       '@type': 'BlogPosting',

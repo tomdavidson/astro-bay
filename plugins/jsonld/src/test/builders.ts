@@ -7,21 +7,13 @@ const buildNode = (overrides?: Partial<JsonLdNode>): JsonLdNode => ({
   ...overrides,
 })
 
-export const buildRouteJsonLd = (
-  overrides?: Partial<RouteJsonLd>,
-): RouteJsonLd => {
+export const buildRouteJsonLd = (overrides?: Partial<RouteJsonLd>): RouteJsonLd => {
   const nodeOverrides = overrides?.node as Partial<JsonLdNode> | undefined
 
-  return {
-    route: '/articles/test/',
-    node: buildNode(nodeOverrides),
-    ...overrides,
-  }
+  return { route: '/articles/test/', node: buildNode(nodeOverrides), ...overrides }
 }
 
-export const buildTypeRegistration = (
-  overrides?: Partial<TypeRegistration>,
-): TypeRegistration => ({
+export const buildTypeRegistration = (overrides?: Partial<TypeRegistration>): TypeRegistration => ({
   rdfType: 'https://schema.org/BlogPosting',
   containerPath: '/articles/',
   label: 'Articles',

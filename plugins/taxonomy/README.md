@@ -244,29 +244,19 @@ your layout uses to generate the right attributes for Pagefind indexing.
 Create a component in your site that emits Pagefind filter attributes from the graph:
 
 ```astro
+*** // components/TaxonomyMeta.astro import {graph} from '@astro-bay/taxonomy:graph' import {
+  ancestors, canonicalize, labelFor
+} from '@astro-bay/taxonomy' const {topics = []} = Astro.props const resolved = topics.map((t:
+string) => canonicalize(t, graph)) const allLabels = [...new Set([ ...resolved.map((t: string) =>
+labelFor(t, graph)), ...resolved.flatMap((t: string) => ancestors(t, graph).map(a => a.label)), ])]
 ***
-// components/TaxonomyMeta.astro
-import { graph } from '@astro-bay/taxonomy:graph'
-import { ancestors, canonicalize, labelFor } from '@astro-bay/taxonomy'
-
-const { topics = [] } = Astro.props
-const resolved = topics.map((t: string) => canonicalize(t, graph))
-const allLabels = [...new Set([
-  ...resolved.map((t: string) => labelFor(t, graph)),
-  ...resolved.flatMap((t: string) => ancestors(t, graph).map(a => a.label)),
-])]
-***
-{allLabels.map(label => (
-  <span data-pagefind-filter={`topic:${label}`} />
-))}
+{allLabels.map(label => <span data-pagefind-filter={`topic:${label}`} />)}
 ```
 
 ### Article layout
 
 ```astro
-***
-import TaxonomyMeta from '../components/TaxonomyMeta.astro'
-***
+*** import TaxonomyMeta from '../components/TaxonomyMeta.astro' ***
 <article data-pagefind-body>
   <h1 data-pagefind-meta="title">{entry.data.title}</h1>
   <TaxonomyMeta topics={entry.data.topics} />

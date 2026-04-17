@@ -10,11 +10,10 @@
 //   moon run ~:wf -- 'src/**/*.domain.ts' --watch
 //   moon run ~:wf -- 'src/**/*.domain.ts' --fix --watch
 
-
 import { spawn } from 'bun'
+import { Glob } from 'bun'
 import { watch } from 'fs'
 import { dirname, resolve } from 'path'
-import { Glob } from 'bun'
 
 const args = process.argv.slice(2)
 
@@ -27,9 +26,7 @@ if (patterns.length === 0) {
   process.exit(1)
 }
 
-const files = [...new Set(
-  patterns.flatMap(p => [...new Glob(p).scanSync({ cwd: '.', absolute: false })])
-)]
+const files = [...new Set(patterns.flatMap(p => [...new Glob(p).scanSync({ cwd: '.', absolute: false })]))]
 
 if (files.length === 0) {
   console.error(`No files matched: ${patterns.join(' ')}`)
@@ -44,11 +41,9 @@ const DIM = '\x1b[2m'
 const CYAN = '\x1b[36m'
 const GREEN = '\x1b[32m'
 
-const timestamp = (): string =>
-  new Date().toLocaleTimeString('en-US', { hour12: false })
+const timestamp = (): string => new Date().toLocaleTimeString('en-US', { hour12: false })
 
-const stripAnsi = (s: string): string =>
-  s.replace(/\x1b\[[0-9;]*m/g, '')
+const stripAnsi = (s: string): string => s.replace(/\x1b\[[0-9;]*m/g, '')
 
 const moonRun = async (
   task: string,
@@ -67,49 +62,37 @@ const moonRun = async (
 
   const taskEnd = raw.split('\n').find(l => /^\S+:\S+\s+\(\d/.test(l))
   const timeLine = raw.split('\n').find(l => l.includes('Time:'))
-  const timing =
-    taskEnd?.match(/\((\d\S+)/)?.[1] ??
-    timeLine?.match(/Time:\s*(\S+)/)?.[1] ??
-    ''
+  const timing = taskEnd?.match(/\((\d\S+)/)?.[1] ?? timeLine?.match(/Time:\s*(\S+)/)?.[1] ?? ''
 
   return { output: raw.trim(), exitCode, timing }
 }
 
 const stripMoonChrome = (output: string): string =>
-  output
-    .split('\n')
-    .map(line => line.match(/^\S+:\S+\s+\|\s+(.*)/)?.[1] ?? line)
-    .filter(line =>
-      !line.includes('to the moon') &&
-      !line.includes('Tasks:') &&
-      !line.includes('Time:') &&
-      !line.includes('cached') &&
-      !line.includes('Finished in') &&
-      !line.includes('Found 0 warnings and 0 errors') &&
-      !/\([a-f0-9]{8}\)/.test(line)
-    )
-    .join('\n')
-    .trim()
+  output.split('\n').map(line => line.match(/^\S+:\S+\s+\|\s+(.*)/)?.[1] ?? line).filter(line =>
+    !line.includes('to the moon') &&
+    !line.includes('Tasks:') &&
+    !line.includes('Time:') &&
+    !line.includes('cached') &&
+    !line.includes('Finished in') &&
+    !line.includes('Found 0 warnings and 0 errors') &&
+    !/\([a-f0-9]{8}\)/.test(line)
+  ).join('\n').trim()
 
 const filterToFiles = (output: string): string => {
   const cleaned = stripMoonChrome(output)
   const filePatterns = files.flatMap(f => [f, resolve(f)])
   const blocks = cleaned.split(/\n(?=\S)/)
 
-  return blocks
-    .filter(block => filePatterns.some(p => block.includes(p)))
-    .join('\n')
-    .trim()
+  return blocks.filter(block => filePatterns.some(p => block.includes(p))).join('\n').trim()
 }
 
 const runTypecheck = async (): Promise<string> => {
   const { output, exitCode, timing } = await moonRun('~:check-types')
   const filtered = filterToFiles(output)
   const header = `${CYAN}--- check-types ---${RESET}`
-  return `${header}\n${!filtered && exitCode === 0
-    ? `${GREEN}✓${RESET}${DIM} | ${timing}${RESET}`
-    : filtered || output
-    }`
+  return `${header}\n${
+    !filtered && exitCode === 0 ? `${GREEN}✓${RESET}${DIM} | ${timing}${RESET}` : filtered || output
+  }`
 }
 
 const runEslint = async (): Promise<string> => {
@@ -125,10 +108,11 @@ const runOxlint = async (): Promise<string> => {
   const { output, timing } = await moonRun('~:lint-ox', extra)
   const cleaned = stripMoonChrome(output)
   const header = `${CYAN}--- oxlint${fix ? ' --fix' : ''} ---${RESET}`
-  return `${header}\n${!cleaned || /^Found 0 warnings and 0 errors/.test(cleaned)
-    ? `${GREEN}✓${RESET}${DIM} | ${timing}${RESET}`
-    : cleaned.replace(/^Finished in .+$/m, '').trim()
-    }`
+  return `${header}\n${
+    !cleaned || /^Found 0 warnings and 0 errors/.test(cleaned) ?
+      `${GREEN}✓${RESET}${DIM} | ${timing}${RESET}` :
+      cleaned.replace(/^Finished in .+$/m, '').trim()
+  }`
 }
 
 let running = false
@@ -140,8 +124,7 @@ const runLintsSequential = async (): Promise<string[]> => {
   return [es, ox]
 }
 
-const runLintsParallel = (): Promise<string[]> =>
-  Promise.all([runEslint(), runOxlint()])
+const runLintsParallel = (): Promise<string[]> => Promise.all([runEslint(), runOxlint()])
 
 const runLints = fix ? runLintsSequential : runLintsParallel
 

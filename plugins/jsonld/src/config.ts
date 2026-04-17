@@ -32,32 +32,23 @@ const DEFAULT_LDES: LdesConfig = {
   stateFile: '.astro-jsonld-state.json',
 } as const
 
-const resolveSite = (fallbackSite: string, options?: JsonLdOptions): string =>
-  options?.site ?? fallbackSite
+const resolveSite = (fallbackSite: string, options?: JsonLdOptions): string => options?.site ?? fallbackSite
 
 const resolveContext = (options?: JsonLdOptions): Record<string, string> => ({
   ...DEFAULT_CONTEXT,
   ...options?.context,
 })
 
-const resolveProviders = (options?: JsonLdOptions): ReadonlyArray<JsonLdProvider> =>
-  options?.providers ?? []
+const resolveProviders = (options?: JsonLdOptions): ReadonlyArray<JsonLdProvider> => options?.providers ?? []
 
 const resolveTypeRegistrations = (options?: JsonLdOptions): ReadonlyArray<TypeRegistration> =>
   options?.typeRegistrations ?? []
 
-const resolveLdesConfig = (options?: JsonLdOptions): LdesConfig => ({
-  ...DEFAULT_LDES,
-  ...options?.ldes,
-})
+const resolveLdesConfig = (options?: JsonLdOptions): LdesConfig => ({ ...DEFAULT_LDES, ...options?.ldes })
 
-const resolveValidate = (options?: JsonLdOptions): boolean =>
-  options?.validate ?? true
+const resolveValidate = (options?: JsonLdOptions): boolean => options?.validate ?? true
 
-export const mergeConfig = (
-  site: string,
-  options?: JsonLdOptions,
-): ResolvedConfig => ({
+export const mergeConfig = (site: string, options?: JsonLdOptions): ResolvedConfig => ({
   site: resolveSite(site, options),
   context: resolveContext(options),
   providers: resolveProviders(options),

@@ -27,11 +27,7 @@ export type LdesMember = {
   readonly timestamp: string
 }
 
-export type LdesConfig = {
-  readonly enabled: boolean
-  readonly path: string
-  readonly stateFile: string
-}
+export type LdesConfig = { readonly enabled: boolean; readonly path: string; readonly stateFile: string }
 
 export type JsonLdError =
   | { readonly type: 'DuplicateRoute'; readonly route: string; readonly providers: ReadonlyArray<string> }

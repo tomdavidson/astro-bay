@@ -43,8 +43,8 @@ Use the component inside your existing `src/pages/404.astro` page.
 
 ```astro
 ---
-import Layout from '../layouts/BaseLayout.astro'
 import Resolve404 from '@astro-bay/pagefind-resolve/components'
+import Layout from '../layouts/BaseLayout.astro'
 ---
 
 <Layout title="Page not found">

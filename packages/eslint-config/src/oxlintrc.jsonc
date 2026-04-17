@@ -355,7 +355,7 @@
       "files": [
         "**/*.config.ts",
         "**/*.config.mts",
-        "**/*.config.mts"
+        "**/*.config.mts",
       ],
       "rules": {
         "import/no-default-export": "off",
@@ -370,7 +370,7 @@
       "files": [
         "**/*.spec.ts",
         "**/*.test.ts",
-        "**/src/test/**/*.ts"
+        "**/src/test/**/*.ts",
       ],
       "rules": {
         "max-params": "off",

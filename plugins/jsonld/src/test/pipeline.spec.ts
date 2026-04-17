@@ -2,15 +2,21 @@ import { describe, expect, test } from 'vitest'
 import { buildState, diffState } from '../ldes.domain.ts'
 import { serializeAll } from '../serializer.domain.ts'
 import { buildTypeIndex } from '../type-index.domain.ts'
-import { buildRouteJsonLd, buildTypeRegistration } from './builders.ts'
-import { expectOk, expectErr } from './helpers.ts'
 import { validateAll } from '../validation.domain.ts'
+import { buildRouteJsonLd, buildTypeRegistration } from './builders.ts'
+import { expectErr, expectOk } from './helpers.ts'
 
 describe('jsonld pipeline', () => {
   test('pipeline|validRoutes|serializesAndProducesTypeIndex', () => {
     const routes = [
-      buildRouteJsonLd({ route: '/articles/a/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' } }),
-      buildRouteJsonLd({ route: '/articles/b/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/b/' } }),
+      buildRouteJsonLd({
+        route: '/articles/a/',
+        node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' },
+      }),
+      buildRouteJsonLd({
+        route: '/articles/b/',
+        node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/b/' },
+      }),
     ]
     const context = { '@vocab': 'https://schema.org/' }
 
@@ -18,11 +24,7 @@ describe('jsonld pipeline', () => {
     const serialized = serializeAll(context, validated)
     expect(serialized).toHaveLength(2)
 
-    const typeIndex = buildTypeIndex(
-      'https://example.com',
-      context,
-      [buildTypeRegistration()],
-    )
+    const typeIndex = buildTypeIndex('https://example.com', context, [buildTypeRegistration()])
     const parsed = JSON.parse(typeIndex) as Record<string, unknown>
     expect(parsed['@type']).toBe('WebSite')
     const hasPart = parsed['hasPart'] as ReadonlyArray<unknown>
@@ -30,10 +32,18 @@ describe('jsonld pipeline', () => {
   })
 
   test('pipeline|addedRoute|ldesDetectsCreate', () => {
-    const initial = [buildRouteJsonLd({ route: '/articles/a/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' } })]
+    const initial = [
+      buildRouteJsonLd({
+        route: '/articles/a/',
+        node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' },
+      }),
+    ]
     const updated = [
       ...initial,
-      buildRouteJsonLd({ route: '/articles/b/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/b/' } }),
+      buildRouteJsonLd({
+        route: '/articles/b/',
+        node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/b/' },
+      }),
     ]
 
     const prev = buildState(initial)
@@ -47,8 +57,14 @@ describe('jsonld pipeline', () => {
 
   test('pipeline|removedRoute|ldesDetectsDelete', () => {
     const initial = [
-      buildRouteJsonLd({ route: '/articles/a/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' } }),
-      buildRouteJsonLd({ route: '/articles/b/', node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/b/' } }),
+      buildRouteJsonLd({
+        route: '/articles/a/',
+        node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' },
+      }),
+      buildRouteJsonLd({
+        route: '/articles/b/',
+        node: { '@type': 'BlogPosting', '@id': 'https://example.com/articles/b/' },
+      }),
     ]
     const updated = [initial[0]!]
 

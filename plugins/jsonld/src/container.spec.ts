@@ -12,34 +12,39 @@ describe('wrapAsContainer', () => {
   })
 
   test('wrapAsContainer|withMembers|ldpContainsIdRefs', () => {
-    const members = [
-      { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' },
-      { '@type': 'BlogPosting', '@id': 'https://example.com/articles/b/' },
-    ] as const
-    const result = JSON.parse(
-      wrapAsContainer('https://example.com/articles/', members, {}),
-    ) as Record<string, unknown>
+    const members = [{ '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/' }, {
+      '@type': 'BlogPosting',
+      '@id': 'https://example.com/articles/b/',
+    }] as const
+    const result = JSON.parse(wrapAsContainer('https://example.com/articles/', members, {})) as Record<
+      string,
+      unknown
+    >
     const ldpContains = result['ldp:contains'] as ReadonlyArray<{ readonly '@id': string }>
     expect(ldpContains).toHaveLength(2)
     expect(ldpContains[0]?.['@id']).toBe('https://example.com/articles/a/')
   })
 
   test('wrapAsContainer|withMembers|hasPartIsFullNodes', () => {
-    const members = [
-      { '@type': 'BlogPosting', '@id': 'https://example.com/articles/a/', 'headline': 'A' },
-    ] as const
-    const result = JSON.parse(
-      wrapAsContainer('https://example.com/articles/', members, {}),
-    ) as Record<string, unknown>
+    const members = [{
+      '@type': 'BlogPosting',
+      '@id': 'https://example.com/articles/a/',
+      'headline': 'A',
+    }] as const
+    const result = JSON.parse(wrapAsContainer('https://example.com/articles/', members, {})) as Record<
+      string,
+      unknown
+    >
     const hasPart = result['hasPart'] as ReadonlyArray<Record<string, unknown>>
     expect(hasPart[0]?.['headline']).toBe('A')
   })
 
   test('wrapAsContainer|includesContextInOutput', () => {
     const ctx = { '@vocab': 'https://schema.org/', 'ldp': 'http://www.w3.org/ns/ldp#' }
-    const result = JSON.parse(
-      wrapAsContainer('https://example.com/articles/', [], ctx),
-    ) as Record<string, unknown>
+    const result = JSON.parse(wrapAsContainer('https://example.com/articles/', [], ctx)) as Record<
+      string,
+      unknown
+    >
     expect(result['@context']).toStrictEqual(ctx)
   })
 })

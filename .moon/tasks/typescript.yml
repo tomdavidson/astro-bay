@@ -32,13 +32,12 @@ fileGroups:
     - "tsconfig.*.json"
 
 tasks:
-
   lint-es:
     command: "eslint"
     args:
       - "-c"
       - "$workspaceRoot/eslint.config.mjs"
-    toolchains: ["javascript", "node"] 
+    toolchains: ["javascript", "node"]
     inputs:
       - "@group(sources)"
       - "@group(tests)"
@@ -49,7 +48,7 @@ tasks:
     args:
       - "--config"
       - "$workspaceRoot/oxlintrc.json"
-    toolchains: ["javascript", "node"] 
+    toolchains: ["javascript", "node"]
     inputs:
       - "@group(sources)"
       - "@group(tests)"
@@ -60,7 +59,6 @@ tasks:
     deps:
       - "~:lint-es"
       - "~:lint-ox"
-
 
   lint-es-fix:
     extends: "lint-es"
@@ -82,28 +80,25 @@ tasks:
     options:
       runInCI: false
 
-
   check-types:
     command: "tsc"
     args:
       - "--noEmit"
-    toolchains: ["javascript", "node"] 
+    toolchains: ["javascript", "node"]
     inputs:
       - "@group(sources)"
       - "@group(tests)"
       - "@group(configs)"
       - "/tsconfig.*.json"
 
-
   test:
     command: "vitest"
     args:
       - "run"
-    toolchains: ["javascript", "node"] 
+    toolchains: ["javascript", "node"]
     inputs:
       - "@group(sources)"
       - "@group(tests)"
-
 
   check:
     command: "noop"
@@ -115,9 +110,9 @@ tasks:
   wf:
     command: "bun"
     args:
-    - "$workspaceRoot/.moon/scripts/watch-file.ts"
-    toolchains: ["javascript", "node"] 
-    options:  
+      - "$workspaceRoot/.moon/scripts/watch-file.ts"
+    toolchains: ["javascript", "node"]
+    options:
       persistent: true
       runInCI: false
       cache: false

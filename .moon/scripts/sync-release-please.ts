@@ -28,14 +28,9 @@ const CHECK = process.argv.includes('--check')
 type MoonProject = { id: string; source: string }
 type MoonQueryResult = { projects: ReadonlyArray<MoonProject> }
 
-const graph: MoonQueryResult = JSON.parse(
-  execSync('moon query projects', { cwd: ROOT, encoding: 'utf-8' }),
-)
+const graph: MoonQueryResult = JSON.parse(execSync('moon query projects', { cwd: ROOT, encoding: 'utf-8' }))
 
-const pluginPaths = graph.projects
-  .filter(p => p.source.startsWith('plugins/'))
-  .map(p => p.source)
-  .sort()
+const pluginPaths = graph.projects.filter(p => p.source.startsWith('plugins/')).map(p => p.source).sort()
 
 const readVersion = (source: string): string => {
   try {

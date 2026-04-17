@@ -34,7 +34,7 @@ jobs:
       count: ${{ steps.q.outputs.count }}
 
     steps:
-        # Shallow checkout to resolve local composite actions.
+      # Shallow checkout to resolve local composite actions.
       # Setup action re-checks out with full history.
       - uses: actions/checkout@v4
         with:
@@ -111,7 +111,6 @@ jobs:
           project-id: ${{ matrix.project.id }}
           corpus-path: ${{ steps.paths.outputs.corpus }}
           pr-number: ${{ needs.discover.outputs.pr-number }}
-
 
       - name: Fuzz
         id: fuzz

@@ -3,11 +3,11 @@ import type { Result } from 'neverthrow'
 import { expect } from 'vitest'
 
 export const expectOk = <T, E>(result: Result<T, E>): T => {
-    expect(result.isOk()).toBe(true)
-    return result._unsafeUnwrap()
+  expect(result.isOk()).toBe(true)
+  return result._unsafeUnwrap()
 }
 
 export const expectErr = <T, E>(result: Result<T, E>): E => {
-    expect(result.isErr()).toBe(true)
-    return result._unsafeUnwrapErr()
+  expect(result.isErr()).toBe(true)
+  return result._unsafeUnwrapErr()
 }

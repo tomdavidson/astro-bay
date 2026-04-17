@@ -12,10 +12,7 @@ describe('serializeNode', () => {
   })
 
   test('serializeNode|withMembers|includesHasPart', () => {
-    const input = buildRouteJsonLd({
-      route: '/articles/',
-      members: [buildRouteJsonLd().node],
-    })
+    const input = buildRouteJsonLd({ route: '/articles/', members: [buildRouteJsonLd().node] })
     const result = serializeNode({ '@vocab': 'https://schema.org/' }, input)
     const parsed = JSON.parse(result.content) as Record<string, unknown>
     expect(parsed['hasPart']).toHaveLength(1)
@@ -43,10 +40,7 @@ describe('serializeNode', () => {
 
 describe('serializeAll', () => {
   test('serializeAll|multipleRoutes|serializesEach', () => {
-    const routes = [
-      buildRouteJsonLd({ route: '/a/' }),
-      buildRouteJsonLd({ route: '/b/' }),
-    ]
+    const routes = [buildRouteJsonLd({ route: '/a/' }), buildRouteJsonLd({ route: '/b/' })]
     const result = serializeAll({ '@vocab': 'https://schema.org/' }, routes)
     expect(result).toHaveLength(2)
   })

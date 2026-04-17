@@ -1,14 +1,8 @@
 // Topic slug normalization. No imports from this package.
 
 export const slugifyTopic = (raw: string): string =>
-  raw
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
+  raw.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-').replace(/^-|-$/g, '')
 
 if (import.meta.vitest) {
   const { test, expect, describe } = import.meta.vitest as any
@@ -40,15 +34,11 @@ if (import.meta.vitest) {
 
     t.skipIf(tdd)('slugifyTopic/idempotent', async () => {
       const { default: fc } = await import('fast-check')
-      fc.assert(fc.property(fc.string(), (s: string) =>
-        slugifyTopic(s) === slugifyTopic(slugifyTopic(s))
-      ))
+      fc.assert(fc.property(fc.string(), (s: string) => slugifyTopic(s) === slugifyTopic(slugifyTopic(s))))
     })
     t.skipIf(tdd)('slugifyTopic/outputOnlyValidChars', async () => {
       const { default: fc } = await import('fast-check')
-      fc.assert(fc.property(fc.string(), (s: string) =>
-        /^[a-z0-9-]*$/.test(slugifyTopic(s))
-      ))
+      fc.assert(fc.property(fc.string(), (s: string) => /^[a-z0-9-]*$/.test(slugifyTopic(s))))
     })
     t.skipIf(tdd)('slugifyTopic/noLeadingOrTrailingDashes', async () => {
       const { default: fc } = await import('fast-check')
@@ -59,9 +49,7 @@ if (import.meta.vitest) {
     })
     t.skipIf(tdd)('slugifyTopic/noConsecutiveDashes', async () => {
       const { default: fc } = await import('fast-check')
-      fc.assert(fc.property(fc.string(), (s: string) =>
-        !slugifyTopic(s).includes('--')
-      ))
+      fc.assert(fc.property(fc.string(), (s: string) => !slugifyTopic(s).includes('--')))
     })
   })
 }

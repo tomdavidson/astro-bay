@@ -84,13 +84,13 @@ These validations run after the taxonomy graph is constructed and before any out
 
 ## Tool Summary
 
-| Tool | Role | Runs when | Size | Dependencies |
-|---|---|---|---|---|
-| Transformers.js + ONNX Runtime | Semantic auto-tagging | Build-time data loader | ~23MB model | `@xenova/transformers` |
-| TF-IDF (from `natural` or hand-rolled) | Client-side table filter | Client-side (precomputed stats at build) | ~2KB runtime code | Corpus stats as embedded JSON |
-| WordNet (via `natural`) | Graph relationship suggestions | CLI, periodic | ~30MB dictionary | `natural` |
-| Co-occurrence / PMI | Related-term edge suggestions | CLI or build-time | Zero (just arithmetic) | None |
-| DAG validation | Integrity checks | Build-time, pre-ship gate | Zero | None |
+| Tool                                   | Role                           | Runs when                                | Size                   | Dependencies                  |
+| -------------------------------------- | ------------------------------ | ---------------------------------------- | ---------------------- | ----------------------------- |
+| Transformers.js + ONNX Runtime         | Semantic auto-tagging          | Build-time data loader                   | ~23MB model            | `@xenova/transformers`        |
+| TF-IDF (from `natural` or hand-rolled) | Client-side table filter       | Client-side (precomputed stats at build) | ~2KB runtime code      | Corpus stats as embedded JSON |
+| WordNet (via `natural`)                | Graph relationship suggestions | CLI, periodic                            | ~30MB dictionary       | `natural`                     |
+| Co-occurrence / PMI                    | Related-term edge suggestions  | CLI or build-time                        | Zero (just arithmetic) | None                          |
+| DAG validation                         | Integrity checks               | Build-time, pre-ship gate                | Zero                   | None                          |
 
 ## Decisions Not Made
 

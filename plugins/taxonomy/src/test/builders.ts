@@ -1,5 +1,11 @@
-import type { TaxonomyFragment, TaxonomyEdge, SynonymGroup, ResolvedGraph, CoOccurrenceEntry } from '../types.ts'
 import type { CoOccurrenceEntry as CoEntry } from '../cooccurrence.ts'
+import type {
+  CoOccurrenceEntry,
+  ResolvedGraph,
+  SynonymGroup,
+  TaxonomyEdge,
+  TaxonomyFragment,
+} from '../types.ts'
 
 export const buildEdge = (overrides?: Partial<TaxonomyEdge>): TaxonomyEdge => ({
   parent: 'parent-topic',

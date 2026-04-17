@@ -2,12 +2,12 @@
 // All domain logic lives in pure modules. No business logic here.
 
 import type { AstroIntegration } from 'astro'
-import { mergeConfig, type TaxonomyOptions } from './config.ts'
-import { composeFragments, type ProviderResult } from './compose.ts'
-import { makeVirtualModulePlugin } from './virtual.ts'
-import type { ResolvedGraph, TaxonomyContext, TaxonomyProvider } from './types.ts'
-import { emptyGraph } from './graph.ts'
 import { fileURLToPath } from 'node:url'
+import { composeFragments, type ProviderResult } from './compose.ts'
+import { mergeConfig, type TaxonomyOptions } from './config.ts'
+import { emptyGraph } from './graph.ts'
+import type { ResolvedGraph, TaxonomyContext, TaxonomyProvider } from './types.ts'
+import { makeVirtualModulePlugin } from './virtual.ts'
 
 export default function astroTaxonomy(options?: TaxonomyOptions): AstroIntegration {
   const resolved = mergeConfig(options)
@@ -19,11 +19,7 @@ export default function astroTaxonomy(options?: TaxonomyOptions): AstroIntegrati
     name: 'astro-taxonomy',
     hooks: {
       'astro:config:setup'({ updateConfig, addWatchFile, logger, command }) {
-        updateConfig({
-          vite: {
-            plugins: [makeVirtualModulePlugin(resolved.virtualModule, getGraph)],
-          },
-        })
+        updateConfig({ vite: { plugins: [makeVirtualModulePlugin(resolved.virtualModule, getGraph)] } })
 
         if (command === 'dev') {
           for (const provider of resolved.providers) {

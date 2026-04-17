@@ -16,9 +16,7 @@ describe('mergeConfig', () => {
   })
 
   test('mergeConfig|withContextOverride|mergesContext', () => {
-    const result = mergeConfig('https://example.com', {
-      context: { 'ex': 'https://example.org/' },
-    })
+    const result = mergeConfig('https://example.com', { context: { 'ex': 'https://example.org/' } })
     expect(result.context['@vocab']).toBe('https://schema.org/')
     expect(result.context['ex']).toBe('https://example.org/')
   })
@@ -29,9 +27,7 @@ describe('mergeConfig', () => {
   })
 
   test('mergeConfig|withPartialLdes|mergesLdes', () => {
-    const result = mergeConfig('https://example.com', {
-      ldes: { enabled: false },
-    })
+    const result = mergeConfig('https://example.com', { ldes: { enabled: false } })
     expect(result.ldes.enabled).toBe(false)
     expect(result.ldes.path).toBe('/changes.jsonld')
   })

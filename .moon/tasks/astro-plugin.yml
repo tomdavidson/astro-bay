@@ -1,22 +1,21 @@
-$schema: 'https://moonrepo.dev/schemas/tasks.json'
+$schema: "https://moonrepo.dev/schemas/tasks.json"
 
 inheritedBy:
-  tags: ['astro-plugin']
+  tags: ["astro-plugin"]
   order: 20
 
 fileGroups:
   sources:
-    - 'src/**/*'
-    - 'src/**/*.astro'
+    - "src/**/*"
+    - "src/**/*.astro"
   tests:
-    - 'src/**/*.spec.ts'
-    - 'tests/**/*'
+    - "src/**/*.spec.ts"
+    - "tests/**/*"
 
 tasks:
-
   check-types:
     command: "astro"
-    args: [ "check"]
+    args: ["check"]
     toolchains: ["javascript", "node"]
     inputs:
       - "@group(sources)"
@@ -26,32 +25,27 @@ tasks:
     options:
       mergeArgs: replace
 
-
-      
-
-
   test:
-    command: 'vitest'
-    args: ['run']
-    toolchains: ['javascript', 'node']
+    command: "vitest"
+    args: ["run"]
+    toolchains: ["javascript", "node"]
     inputs:
-      - '@group(sources)'
-      - '@group(tests)'
-      - 'vitest.config.ts'
+      - "@group(sources)"
+      - "@group(tests)"
+      - "vitest.config.ts"
     options:
       runInCI: true
       mergeArgs: replace
 
-
   test-watch:
-    command: 'vitest'
-    args: ['run', "--watch"]
-    toolchains: ['javascript', 'node']
+    command: "vitest"
+    args: ["run", "--watch"]
+    toolchains: ["javascript", "node"]
     env:
-      TDD: '1'
+      TDD: "1"
     inputs:
-      - '@group(sources)'
-      - '@group(tests)'
-      - 'vitest.config.ts'
+      - "@group(sources)"
+      - "@group(tests)"
+      - "vitest.config.ts"
     options:
       runInCI: false

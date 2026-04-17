@@ -1,10 +1,6 @@
 import type { RouteJsonLd } from './types.ts'
 
-export type SerializedJsonLd = {
-  readonly route: string
-  readonly filename: string
-  readonly content: string
-}
+export type SerializedJsonLd = { readonly route: string; readonly filename: string; readonly content: string }
 
 const JSON_INDENT = Number.parseInt('2', 10)
 
@@ -34,5 +30,4 @@ export const serializeNode = (
 export const serializeAll = (
   context: Record<string, string>,
   routes: ReadonlyArray<RouteJsonLd>,
-): ReadonlyArray<SerializedJsonLd> =>
-  routes.map(r => serializeNode(context, r))
+): ReadonlyArray<SerializedJsonLd> => routes.map(r => serializeNode(context, r))

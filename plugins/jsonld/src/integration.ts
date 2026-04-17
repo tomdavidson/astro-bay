@@ -20,15 +20,13 @@ type Logger = {
   readonly error: (msg: string) => void
 }
 
-const logError =
-  (logger: Logger) =>
-    (e: JsonLdError): void =>
-    match(e)
-      .with({ type: 'DuplicateRoute' }, v => logger.error(`Duplicate route: ${v.route}`))
-      .with({ type: 'InvalidNode' }, v => logger.error(`Invalid node at ${v.route}`))
-      .with({ type: 'MissingId' }, v => logger.error(`Missing @id at ${v.route}`))
-      .with({ type: 'LdesStateCorrupt' }, v => logger.error(`LDES state corrupt: ${v.path}`))
-      .exhaustive()
+const logError = (logger: Logger) => (e: JsonLdError): void =>
+  match(e).with({ type: 'DuplicateRoute' }, v => logger.error(`Duplicate route: ${v.route}`)).with({
+    type: 'InvalidNode',
+  }, v => logger.error(`Invalid node at ${v.route}`)).with(
+    { type: 'MissingId' },
+    v => logger.error(`Missing @id at ${v.route}`),
+  ).with({ type: 'LdesStateCorrupt' }, v => logger.error(`LDES state corrupt: ${v.path}`)).exhaustive()
 
 const collectRoutes = async (
   providers: ReadonlyArray<{ readonly provide: () => Promise<ReadonlyArray<RouteJsonLd>> }>,
@@ -42,14 +40,12 @@ const writeJsonLdFiles = async (
   serialized: ReadonlyArray<{ readonly filename: string; readonly content: string }>,
   logger: Logger,
 ): Promise<void> => {
-  await Promise.all(
-    serialized.map(async file => {
-      const outPath = join(dir, file.filename)
-      await mkdir(dirname(outPath), { recursive: true })
-      await writeFile(outPath, file.content, 'utf-8')
-      logger.debug(`wrote ${file.filename}`)
-    }),
-  )
+  await Promise.all(serialized.map(async file => {
+    const outPath = join(dir, file.filename)
+    await mkdir(dirname(outPath), { recursive: true })
+    await writeFile(outPath, file.content, 'utf-8')
+    logger.debug(`wrote ${file.filename}`)
+  }))
 }
 
 const loadPreviousState = async (
@@ -75,7 +71,11 @@ const loadPreviousState = async (
 
 type LdesFeedOptions = {
   readonly dir: string
-  readonly resolved: { readonly site: string; readonly context: Record<string, string>; readonly ldes: { readonly path: string; readonly stateFile: string } }
+  readonly resolved: {
+    readonly site: string
+    readonly context: Record<string, string>
+    readonly ldes: { readonly path: string; readonly stateFile: string }
+  }
   readonly allRoutes: ReadonlyArray<RouteJsonLd>
   readonly logger: Logger
 }
@@ -115,11 +115,7 @@ const writeTypeIndex = async (outDir: string, resolved: ResolvedConfig, logger: 
   logger.info('wrote /index.jsonld (Type Index)')
 }
 
-const handleBuildDone = async (
-  dir: URL,
-  logger: Logger,
-  resolved: ResolvedConfig,
-): Promise<void> => {
+const handleBuildDone = async (dir: URL, logger: Logger, resolved: ResolvedConfig): Promise<void> => {
   if (!resolved.site) {
     logger.warn('astro-jsonld: no site URL configured. @id values will be relative.')
   }

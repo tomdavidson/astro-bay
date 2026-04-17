@@ -1,7 +1,7 @@
 // src/bin/derive.ts
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { extname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
-import { resolve, join, extname } from 'node:path'
 import { buildCoOccurrenceMatrix } from '../cooccurrence.ts'
 import { slugifyTopic } from '../slugify.ts'
 

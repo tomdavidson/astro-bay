@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { validateAll } from './validation.domain.ts'
 import { buildRouteJsonLd } from './test/builders.ts'
-import { expectOk, expectErr } from './test/helpers.ts'
+import { expectErr, expectOk } from './test/helpers.ts'
+import { validateAll } from './validation.domain.ts'
 
 describe('validateAll', () => {
   test('validateAll|validRoutes|returnsOk', () => {
@@ -22,10 +22,7 @@ describe('validateAll', () => {
   })
 
   test('validateAll|duplicateRoute|returnsDuplicateRoute', () => {
-    const routes = [
-      buildRouteJsonLd({ route: '/a/' }),
-      buildRouteJsonLd({ route: '/a/' }),
-    ]
+    const routes = [buildRouteJsonLd({ route: '/a/' }), buildRouteJsonLd({ route: '/a/' })]
     const errors = expectErr(validateAll(routes))
     expect(errors.some(e => e.type === 'DuplicateRoute')).toBe(true)
   })

@@ -4,7 +4,6 @@ tags:
   - "tooling"
 
 tasks:
-
   sync-release:
     script: "bun $MOON_WORKSPACE_ROOT/.moon/scripts/sync-release-please.ts"
     inputs:

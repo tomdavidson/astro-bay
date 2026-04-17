@@ -2,10 +2,16 @@
 // This is an imperative provider — reads a file, returns a fragment.
 // The load() function does IO; it is not in-file tested. Test with a fixture at Layer 2.
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { ok, err, type Result } from 'neverthrow'
+import { err, ok, type Result } from 'neverthrow'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { z } from 'zod'
-import type { TaxonomyProvider, TaxonomyFragment, ResolvedGraph, TaxonomyContext, TaxonomyError } from '../types.ts'
+import type {
+  ResolvedGraph,
+  TaxonomyContext,
+  TaxonomyError,
+  TaxonomyFragment,
+  TaxonomyProvider,
+} from '../types.ts'
 
 const EdgeSchema = z.object({
   parent: z.string(),
@@ -22,10 +28,7 @@ const SynonymSchema = z.object({
   source: z.enum(['derived', 'curated', 'external']).optional(),
 })
 
-const RejectionSchema = z.object({
-  parent: z.string(),
-  child: z.string(),
-})
+const RejectionSchema = z.object({ parent: z.string(), child: z.string() })
 
 const TaxonomyFileSchema = z.object({
   edges: z.array(EdgeSchema).default([]),
@@ -44,11 +47,7 @@ const parseFile = (
     const parsed = TaxonomyFileSchema.parse(raw)
     return ok(parsed as TaxonomyFragment)
   } catch (e) {
-    return err({
-      type: 'ParseError',
-      path: filePath,
-      message: e instanceof Error ? e.message : String(e),
-    })
+    return err({ type: 'ParseError', path: filePath, message: e instanceof Error ? e.message : String(e) })
   }
 }
 
@@ -58,17 +57,14 @@ const serializeGraph = (graph: ResolvedGraph): TaxonomyFragment => ({
   ),
   synonyms: [...new Set(graph.synonyms.values())].map(canonical => ({
     canonical,
-    variants: [...graph.synonyms.entries()]
-      .filter(([v, c]) => c === canonical && v !== canonical)
-      .map(([v]) => v),
+    variants: [...graph.synonyms.entries()].filter(([v, c]) => c === canonical && v !== canonical).map((
+      [v],
+    ) => v),
     source: 'curated' as const,
   })).filter(g => g.variants.length > 0),
 })
 
-export type FileProviderOptions = {
-  readonly path: string
-  readonly optional?: boolean
-}
+export type FileProviderOptions = { readonly path: string; readonly optional?: boolean }
 
 export const fileProvider = (options: FileProviderOptions): TaxonomyProvider => ({
   name: `file:${options.path}`,
@@ -83,7 +79,7 @@ export const fileProvider = (options: FileProviderOptions): TaxonomyProvider => 
     throw new Error(
       `[astro-taxonomy] fileProvider failed: ${result.error.type} — ${
         result.error.type === 'ParseError' ? result.error.message : result.error.path
-      }`
+      }`,
     )
   },
 
@@ -118,11 +114,10 @@ if (import.meta.vitest) {
     test('serializeGraph/synonymWithVariants/serialized', () => {
       const graph: ResolvedGraph = {
         edges: new Map(),
-        synonyms: new Map([
-          ['public-transportation', 'public-transit'],
-          ['transit', 'public-transit'],
-          ['public-transit', 'public-transit'],
-        ]),
+        synonyms: new Map([['public-transportation', 'public-transit'], ['transit', 'public-transit'], [
+          'public-transit',
+          'public-transit',
+        ]]),
         labels: new Map(),
       }
       const f = serializeGraph(graph)

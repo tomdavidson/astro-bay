@@ -1,13 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { buildTypeIndex } from './type-index.domain.ts'
 import { buildTypeRegistration } from './test/builders.ts'
+import { buildTypeIndex } from './type-index.domain.ts'
 
 describe('buildTypeIndex', () => {
   test('buildTypeIndex|singleRegistration|producesWebSite', () => {
     const result = JSON.parse(
-      buildTypeIndex('https://example.com', { '@vocab': 'https://schema.org/' }, [
-        buildTypeRegistration(),
-      ]),
+      buildTypeIndex('https://example.com', { '@vocab': 'https://schema.org/' }, [buildTypeRegistration()]),
     ) as Record<string, unknown>
     expect(result['@type']).toBe('WebSite')
     expect(result['@id']).toBe('https://example.com/')
@@ -18,16 +16,12 @@ describe('buildTypeIndex', () => {
   })
 
   test('buildTypeIndex|emptyRegistrations|hasPartIsEmpty', () => {
-    const result = JSON.parse(
-      buildTypeIndex('https://example.com', {}, []),
-    ) as Record<string, unknown>
+    const result = JSON.parse(buildTypeIndex('https://example.com', {}, [])) as Record<string, unknown>
     expect(result['hasPart']).toStrictEqual([])
   })
 
   test('buildTypeIndex|includesSolidContext', () => {
-    const result = JSON.parse(
-      buildTypeIndex('https://example.com', {}, []),
-    ) as Record<string, unknown>
+    const result = JSON.parse(buildTypeIndex('https://example.com', {}, [])) as Record<string, unknown>
     const ctx = result['@context'] as Record<string, string>
     expect(ctx['solid']).toBe('http://www.w3.org/ns/solid/terms#')
   })

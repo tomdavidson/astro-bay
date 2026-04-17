@@ -4,7 +4,7 @@
 
 _resolve_run_id() {
   local run_id="${1:-}"
-  if [[ -z "$run_id" ]]; then
+  if [[ -z $run_id ]]; then
     run_id=$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
     echo "Using latest run: $run_id" >&2
   fi
@@ -68,7 +68,7 @@ logs() {
   fi
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
   run_id=$(_resolve_run_id "$1")
   timing "$run_id"
   logs "$run_id"

@@ -4,13 +4,9 @@
 
 export type CoOccurrenceMatrix = ReadonlyMap<string, ReadonlyMap<string, number>>
 
-export type CoOccurrenceEntry = {
-  readonly topics: ReadonlyArray<string>
-}
+export type CoOccurrenceEntry = { readonly topics: ReadonlyArray<string> }
 
-export const buildCoOccurrenceMatrix = (
-  entries: ReadonlyArray<CoOccurrenceEntry>,
-): CoOccurrenceMatrix => {
+export const buildCoOccurrenceMatrix = (entries: ReadonlyArray<CoOccurrenceEntry>): CoOccurrenceMatrix => {
   const matrix = new Map<string, Map<string, number>>()
 
   const inc = (a: string, b: string) => {
@@ -40,10 +36,10 @@ export const topCoOccurrences = (
 ): ReadonlyArray<{ slug: string; count: number }> => {
   const row = matrix.get(slug)
   if (!row) return []
-  return [...row.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, topN)
-    .map(([s, count]) => ({ slug: s, count }))
+  return [...row.entries()].sort((a, b) => b[1] - a[1]).slice(0, topN).map(([s, count]) => ({
+    slug: s,
+    count,
+  }))
 }
 
 if (import.meta.vitest) {
@@ -65,11 +61,9 @@ if (import.meta.vitest) {
       expect(m.get('housing')?.get('housing')).toBeUndefined()
     })
     test('buildCoOccurrenceMatrix/multipleEntries/countsAccumulate', () => {
-      const entries = [
-        { topics: ['housing', 'zoning'] },
-        { topics: ['housing', 'zoning'] },
-        { topics: ['housing', 'courts'] },
-      ]
+      const entries = [{ topics: ['housing', 'zoning'] }, { topics: ['housing', 'zoning'] }, {
+        topics: ['housing', 'courts'],
+      }]
       const m = buildCoOccurrenceMatrix(entries)
       expect(m.get('housing')?.get('zoning')).toBe(2)
       expect(m.get('housing')?.get('courts')).toBe(1)
@@ -83,7 +77,7 @@ if (import.meta.vitest) {
       const { default: fc } = await import('fast-check')
       const topicArb = fc.string({ minLength: 1, maxLength: 10 })
       const entryArb = fc.record({ topics: fc.array(topicArb, { maxLength: 5 }) })
-      fc.assert(fc.property(fc.array(entryArb, { maxLength: 10 }), (entries) => {
+      fc.assert(fc.property(fc.array(entryArb, { maxLength: 10 }), entries => {
         const m = buildCoOccurrenceMatrix(entries)
         for (const [a, row] of m) {
           for (const [b, count] of row) {
@@ -101,11 +95,7 @@ if (import.meta.vitest) {
       expect(topCoOccurrences('unknown', new Map(), 5)).toHaveLength(0)
     })
     test('topCoOccurrences/sortedDescending', () => {
-      const entries = [
-        { topics: ['a', 'b'] },
-        { topics: ['a', 'b'] },
-        { topics: ['a', 'c'] },
-      ]
+      const entries = [{ topics: ['a', 'b'] }, { topics: ['a', 'b'] }, { topics: ['a', 'c'] }]
       const m = buildCoOccurrenceMatrix(entries)
       const top = topCoOccurrences('a', m, 5)
       expect(top[0]?.slug).toBe('b')
@@ -113,9 +103,7 @@ if (import.meta.vitest) {
       expect(top[1]?.slug).toBe('c')
     })
     test('topCoOccurrences/topNRespected', () => {
-      const entries = [
-        { topics: ['a', 'b', 'c', 'd'] },
-      ]
+      const entries = [{ topics: ['a', 'b', 'c', 'd'] }]
       const m = buildCoOccurrenceMatrix(entries)
       expect(topCoOccurrences('a', m, 2)).toHaveLength(2)
     })
@@ -124,14 +112,12 @@ if (import.meta.vitest) {
       const { default: fc } = await import('fast-check')
       const topicArb = fc.constantFrom('a', 'b', 'c', 'd', 'e')
       const entryArb = fc.record({ topics: fc.array(topicArb, { maxLength: 5 }) })
-      fc.assert(fc.property(
-        fc.array(entryArb, { maxLength: 10 }),
-        fc.integer({ min: 0, max: 10 }),
-        (entries, n) => {
+      fc.assert(
+        fc.property(fc.array(entryArb, { maxLength: 10 }), fc.integer({ min: 0, max: 10 }), (entries, n) => {
           const m = buildCoOccurrenceMatrix(entries)
           return topCoOccurrences('a', m, n).length <= n
-        }
-      ))
+        }),
+      )
     })
   })
 }

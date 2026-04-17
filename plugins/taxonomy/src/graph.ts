@@ -1,8 +1,8 @@
 // Graph construction, cycle detection, and query helpers.
 // Pure functions. No IO.
 
-import type { TaxonomyEdge, SynonymGroup, TaxonomyFragment, ResolvedGraph, TaxonomyError } from './types.ts'
 import { err, ok, type Result } from 'neverthrow'
+import type { ResolvedGraph, SynonymGroup, TaxonomyEdge, TaxonomyError, TaxonomyFragment } from './types.ts'
 
 // --- Cycle detection ---
 
@@ -49,9 +49,7 @@ export const mergeFragment = (
   fragment: TaxonomyFragment,
 ): Result<ResolvedGraph, TaxonomyError & { type: 'CycleDetected' }> => {
   // Apply rejections first
-  const rejectionSet = new Set(
-    (fragment.rejections ?? []).map(r => `${r.parent}::${r.child}`)
-  )
+  const rejectionSet = new Set((fragment.rejections ?? []).map(r => `${r.parent}::${r.child}`))
 
   // Build mutable working copy of edges
   const edgeMap = new Map<string, Set<string>>()
@@ -75,7 +73,7 @@ export const mergeFragment = (
   }
 
   const frozenEdges = new Map<string, ReadonlySet<string>>(
-    [...edgeMap.entries()].map(([k, v]) => [k, v as ReadonlySet<string>])
+    [...edgeMap.entries()].map(([k, v]) => [k, v as ReadonlySet<string>]),
   )
 
   const cycleResult = detectCycle(frozenEdges)
@@ -107,11 +105,7 @@ export const mergeFragment = (
   })
 }
 
-export const emptyGraph = (): ResolvedGraph => ({
-  edges: new Map(),
-  synonyms: new Map(),
-  labels: new Map(),
-})
+export const emptyGraph = (): ResolvedGraph => ({ edges: new Map(), synonyms: new Map(), labels: new Map() })
 
 // --- Query helpers ---
 
@@ -139,17 +133,13 @@ export const children = (
   slug: string,
   graph: ResolvedGraph,
 ): ReadonlyArray<{ slug: string; label: string }> =>
-  [...(graph.edges.get(slug) ?? [])].map(s => ({
-    slug: s,
-    label: graph.labels.get(s) ?? s,
-  }))
+  [...(graph.edges.get(slug) ?? [])].map(s => ({ slug: s, label: graph.labels.get(s) ?? s }))
 
-export const canonicalize = (slug: string, graph: ResolvedGraph): string =>
-  graph.synonyms.get(slug) ?? slug
+export const canonicalize = (slug: string, graph: ResolvedGraph): string => graph.synonyms.get(slug) ?? slug
 
 export const labelFor = (slug: string, graph: ResolvedGraph): string =>
   graph.labels.get(canonicalize(slug, graph)) ??
-  slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
 if (import.meta.vitest) {
   const { test, expect, describe } = import.meta.vitest as any
@@ -159,18 +149,14 @@ if (import.meta.vitest) {
   // --- detectCycle ---
   describe('detectCycle', () => {
     test('detectCycle/linearChain/ok', () => {
-      const edges = new Map([
-        ['housing', new Set(['affordable-housing'])],
-        ['affordable-housing', new Set(['rent-control'])],
-      ])
+      const edges = new Map([['housing', new Set(['affordable-housing'])], [
+        'affordable-housing',
+        new Set(['rent-control']),
+      ]])
       expect(detectCycle(edges).isOk()).toBe(true)
     })
     test('detectCycle/diamond/ok', () => {
-      const edges = new Map([
-        ['a', new Set(['b', 'c'])],
-        ['b', new Set(['d'])],
-        ['c', new Set(['d'])],
-      ])
+      const edges = new Map([['a', new Set(['b', 'c'])], ['b', new Set(['d'])], ['c', new Set(['d'])]])
       expect(detectCycle(edges).isOk()).toBe(true)
     })
     test('detectCycle/selfLoop/err', () => {
@@ -180,10 +166,7 @@ if (import.meta.vitest) {
       if (result.isErr()) expect(result.error.type).toBe('CycleDetected')
     })
     test('detectCycle/mutualReference/err', () => {
-      const edges = new Map([
-        ['a', new Set(['b'])],
-        ['b', new Set(['a'])],
-      ])
+      const edges = new Map([['a', new Set(['b'])], ['b', new Set(['a'])]])
       expect(detectCycle(edges).isErr()).toBe(true)
     })
     test('detectCycle/empty/ok', () => {
@@ -193,10 +176,9 @@ if (import.meta.vitest) {
     t.skipIf(tdd)('detectCycle/dagAlwaysOk', async () => {
       const { default: fc } = await import('fast-check')
       // A DAG: edges only go from lower index to higher index
-      const dagArb = fc.array(
-        fc.tuple(fc.integer({ min: 0, max: 4 }), fc.integer({ min: 0, max: 4 })),
-        { maxLength: 8 }
-      ).map((pairs: [number, number][]) => {
+      const dagArb = fc.array(fc.tuple(fc.integer({ min: 0, max: 4 }), fc.integer({ min: 0, max: 4 })), {
+        maxLength: 8,
+      }).map((pairs: [number, number][]) => {
         const m = new Map<string, Set<string>>()
         for (const [a, b] of pairs) {
           if (a >= b) continue // enforce DAG direction
@@ -207,7 +189,7 @@ if (import.meta.vitest) {
         }
         return m as ReadonlyMap<string, ReadonlySet<string>>
       })
-      fc.assert(fc.property(dagArb, (edges) => detectCycle(edges).isOk()))
+      fc.assert(fc.property(dagArb, edges => detectCycle(edges).isOk()))
     })
   })
 
@@ -241,10 +223,7 @@ if (import.meta.vitest) {
       }
     })
     test('mergeFragment/cycle/returnsErr', () => {
-      const frag = {
-        edges: [{ parent: 'a', child: 'b' }, { parent: 'b', child: 'a' }],
-        synonyms: [],
-      }
+      const frag = { edges: [{ parent: 'a', child: 'b' }, { parent: 'b', child: 'a' }], synonyms: [] }
       expect(mergeFragment(empty, frag).isErr()).toBe(true)
     })
     test('mergeFragment/synonym/mapped', () => {
@@ -264,9 +243,10 @@ if (import.meta.vitest) {
   // --- ancestors ---
   describe('ancestors', () => {
     const graph: ResolvedGraph = {
-      edges: new Map<string, ReadonlySet<string>>([
-        ['housing', new Set(['affordable-housing', 'rent-control']) as ReadonlySet<string>],
-      ]),
+      edges: new Map<string, ReadonlySet<string>>([[
+        'housing',
+        new Set(['affordable-housing', 'rent-control']) as ReadonlySet<string>,
+      ]]),
       synonyms: new Map(),
       labels: new Map([['housing', 'Housing']]),
     }
@@ -289,14 +269,16 @@ if (import.meta.vitest) {
     t.skipIf(tdd)('ancestors/noDuplicates', async () => {
       const { default: fc } = await import('fast-check')
       const g = graph
-      fc.assert(fc.property(
-        fc.constantFrom('housing', 'affordable-housing', 'rent-control', 'unknown'),
-        (slug: string) => {
-          const result = ancestors(slug, g)
-          const slugs = result.map(a => a.slug)
-          return slugs.length === new Set(slugs).size
-        }
-      ))
+      fc.assert(
+        fc.property(
+          fc.constantFrom('housing', 'affordable-housing', 'rent-control', 'unknown'),
+          (slug: string) => {
+            const result = ancestors(slug, g)
+            const slugs = result.map(a => a.slug)
+            return slugs.length === new Set(slugs).size
+          },
+        ),
+      )
     })
   })
 
@@ -304,10 +286,7 @@ if (import.meta.vitest) {
   describe('canonicalize', () => {
     const graph: ResolvedGraph = {
       edges: new Map(),
-      synonyms: new Map([
-        ['public-transportation', 'public-transit'],
-        ['public-transit', 'public-transit'],
-      ]),
+      synonyms: new Map([['public-transportation', 'public-transit'], ['public-transit', 'public-transit']]),
       labels: new Map(),
     }
 
@@ -323,10 +302,12 @@ if (import.meta.vitest) {
 
     t.skipIf(tdd)('canonicalize/idempotent', async () => {
       const { default: fc } = await import('fast-check')
-      fc.assert(fc.property(
-        fc.constantFrom('public-transit', 'public-transportation', 'housing', 'unknown'),
-        (slug: string) => canonicalize(canonicalize(slug, graph), graph) === canonicalize(slug, graph)
-      ))
+      fc.assert(
+        fc.property(
+          fc.constantFrom('public-transit', 'public-transportation', 'housing', 'unknown'),
+          (slug: string) => canonicalize(canonicalize(slug, graph), graph) === canonicalize(slug, graph),
+        ),
+      )
     })
   })
 }
