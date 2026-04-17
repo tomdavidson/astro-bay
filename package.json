@@ -12,9 +12,9 @@
     "eslint": "catalog:",
     "fast-check": "catalog:",
     "oxlint": "catalog:",
+    "oxlint-tsgolint": "^0.19.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
-  "scripts": {
-  }
+  "scripts": {}
 }
