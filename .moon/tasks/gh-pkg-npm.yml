@@ -26,7 +26,7 @@ tasks:
           npm publish --registry https://npm.pkg.github.com --tag "${TAG}"
     toolchains: ["javascript", "node"]
     options:
-      runInCI: true
+      runInCI: false
       cache: false
 
   unpublish:
@@ -37,8 +37,8 @@ tasks:
           set -euo pipefail;
           PR="${PR_NUMBER:-$(gh pr view --json number --jq .number 2>/dev/null || echo "")}";
           if [ -z "${PR}" ]; then
-            echo "Could not determine PR number. Set PR_NUMBER or run from a PR branch.";
-            exit 1;
+            echo "No PR number available, nothing to unpublish";
+            exit 0;
           fi;
           PKG_NAME=$(jq -r .name package.json);
           TAG="pr-${PR}";
@@ -48,9 +48,9 @@ tasks:
             npm unpublish "${PKG_NAME}@${VERSION}" --registry https://npm.pkg.github.com;
             echo "Unpublished ${PKG_NAME}@${VERSION}";
           else
-            echo "No version found for tag ${TAG}, skipping";
+            echo "No version found for tag ${TAG}, nothing to unpublish";
           fi
     toolchains: ["javascript", "node"]
     options:
-      runInCI: true
+      runInCI: false
       cache: false
